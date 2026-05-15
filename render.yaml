@@ -2,7 +2,7 @@ services:
   - type: web
     name: exam-portal-backend
     env: node
-    buildCommand: "cd server && npm install && npm run build"
+    buildCommand: "cd server && npm install --include=dev && npm run build"
     startCommand: "cd server && npm start"
     envVars:
       - key: NODE_ENV
