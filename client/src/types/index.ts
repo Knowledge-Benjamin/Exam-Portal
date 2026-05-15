@@ -10,6 +10,10 @@ export interface User {
   fullName: string;
   email: string;
   role: UserRole;
+  googleServiceAccountEmail?: string | null;
+  googlePrivateKey?: string | null;
+  googleDriveFolderId?: string | null;
+  sebConfigKey?: string | null;
   createdAt?: string;
 }
 

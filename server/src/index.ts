@@ -60,14 +60,7 @@ app.use(sanitizeInput);
 app.use('/api', apiLimiter);
 
 // ─── Static: Uploaded PDFs ───────────────────────────────────────────────────
-
-app.use(
-  '/uploads',
-  express.static(env.UPLOAD_DIR, {
-    dotfiles: 'deny',
-    index: false,
-  }),
-);
+// PDFs are now streamed via the /api/exams/:id/pdf/download endpoint using Google Drive
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 

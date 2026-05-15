@@ -248,7 +248,7 @@ export function ExamRoom() {
             exam.pdfPath ? (
               <div className="flex-1 overflow-auto flex flex-col items-center py-8 px-4 gap-4">
                 <Document
-                  file={`/uploads/${exam.pdfPath}`}
+                  file={`/api/exams/${exam.id}/pdf/download`}
                   onLoadSuccess={({ numPages }) => setNumPages(numPages)}
                   className="flex flex-col items-center gap-4 w-full"
                 >

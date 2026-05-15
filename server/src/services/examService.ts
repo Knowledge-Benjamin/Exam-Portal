@@ -181,15 +181,45 @@ export async function autoCloseExpiredExams() {
   console.log(`[scheduler] Auto-closed ${expired.length} expired exam(s): ${expired.map((e) => e.id).join(', ')}`);
 }
 
+import { uploadPdfToDrive, deletePdfFromDrive, DriveCredentials } from './driveService';
+import { getUserProfile } from './authService';
+
 export async function deleteExam(examId: string, teacherId: string) {
   const exam = await assertExamOwner(examId, teacherId);
   if (exam.status !== 'draft') {
     throw new AppError(400, 'Only draft exams can be deleted');
   }
+
+  if (exam.pdfPath) {
+    const teacher = await getUserProfile(teacherId);
+    if (teacher && teacher.googleServiceAccountEmail && teacher.googlePrivateKey && teacher.googleDriveFolderId) {
+      const creds: DriveCredentials = {
+        email: teacher.googleServiceAccountEmail,
+        privateKey: teacher.googlePrivateKey,
+        folderId: teacher.googleDriveFolderId,
+      };
+      await deletePdfFromDrive(exam.pdfPath, creds);
+    }
+  }
+
   await db.delete(exams).where(eq(exams.id, examId));
 }
 
-export async function setPdfPath(examId: string, pdfPath: string) {
+export async function setPdfPath(examId: string, teacherId: string, pdfPath: string) {
+  const exam = await assertExamOwner(examId, teacherId);
+
+  if (exam.pdfPath && exam.pdfPath !== pdfPath) {
+    const teacher = await getUserProfile(teacherId);
+    if (teacher && teacher.googleServiceAccountEmail && teacher.googlePrivateKey && teacher.googleDriveFolderId) {
+      const creds: DriveCredentials = {
+        email: teacher.googleServiceAccountEmail,
+        privateKey: teacher.googlePrivateKey,
+        folderId: teacher.googleDriveFolderId,
+      };
+      await deletePdfFromDrive(exam.pdfPath, creds);
+    }
+  }
+
   await db.update(exams).set({ pdfPath, updatedAt: new Date() }).where(eq(exams.id, examId));
 }
 

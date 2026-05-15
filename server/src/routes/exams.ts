@@ -1,6 +1,4 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import path from 'path';
-import fs from 'fs';
 import multer from 'multer';
 import { requireAuth, requireRole } from '../middleware/auth';
 import {
@@ -17,28 +15,18 @@ import {
   republishExam,
   deleteExam,
   setPdfPath,
+  getExamById,
 } from '../services/examService';
+import { getUserProfile } from '../services/authService';
+import { uploadPdfToDrive, getPdfStreamFromDrive, DriveCredentials } from '../services/driveService';
 import { env } from '../config/env';
 
 const router = Router();
 
-// ─── Multer (PDF upload) ─────────────────────────────────────────────────────
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    const dir = path.resolve(env.UPLOAD_DIR);
-    fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
-    cb(null, unique);
-  },
-});
+// ─── Multer (PDF upload via Memory) ───────────────────────────────────────────
 
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: env.MAX_FILE_SIZE_MB * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype === 'application/pdf') {
@@ -162,7 +150,7 @@ router.post(
   },
 );
 
-// POST /api/exams/:id/republish  — reopen a closed exam within valid window
+// POST /api/exams/:id/republish
 router.post(
   '/:id/republish',
   requireAuth,
@@ -189,9 +177,100 @@ router.post(
         res.status(400).json({ error: 'No PDF file provided' });
         return;
       }
-      await assertExamOwner(req.params.id, req.user!.sub);
-      await setPdfPath(req.params.id, req.file.filename);
-      res.json({ filename: req.file.filename });
+      const exam = await assertExamOwner(req.params.id, req.user!.sub);
+      
+      const teacher = await getUserProfile(req.user!.sub);
+      if (!teacher || !teacher.googleServiceAccountEmail || !teacher.googlePrivateKey || !teacher.googleDriveFolderId) {
+        res.status(400).json({ error: 'Google Drive is not configured in your settings. Please configure it to upload PDFs.' });
+        return;
+      }
+
+      const creds: DriveCredentials = {
+        email: teacher.googleServiceAccountEmail,
+        privateKey: teacher.googlePrivateKey,
+        folderId: teacher.googleDriveFolderId,
+      };
+
+      const fileId = await uploadPdfToDrive(req.file.buffer, req.file.originalname, req.file.mimetype, creds);
+      await setPdfPath(req.params.id, req.user!.sub, fileId);
+      
+      res.json({ filename: fileId });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /api/exams/:id/pdf/download
+router.get(
+  '/:id/pdf/download',
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      // Allow if user is teacher OR if student is in an active exam session for this exam
+      const examId = req.params.id;
+      let isAuthorized = false;
+
+      // 1. Check teacher auth
+      const accessToken = req.cookies?.access_token as string | undefined;
+      let teacherIdFromToken: string | null = null;
+      if (accessToken) {
+        const { verifyAccessToken } = await import('../utils/token');
+        try {
+          const user = verifyAccessToken(accessToken);
+          if (user.role === 'admin' || user.role === 'teacher') {
+            isAuthorized = true;
+            teacherIdFromToken = user.sub;
+          }
+        } catch { /* ignore */ }
+      }
+
+      // 2. Check student exam session
+      if (!isAuthorized) {
+        const examToken = req.cookies?.exam_token as string | undefined;
+        if (examToken) {
+          const { verifyExamToken } = await import('../utils/token');
+          try {
+            const session = verifyExamToken(examToken);
+            if (session.examId === examId) {
+              isAuthorized = true;
+            }
+          } catch { /* ignore */ }
+        }
+      }
+
+      if (!isAuthorized) {
+        res.status(401).json({ error: 'Not authorized to view this PDF' });
+        return;
+      }
+
+      const exam = await getExamById(examId);
+      if (!exam || !exam.pdfPath) {
+        res.status(404).json({ error: 'Exam or PDF not found' });
+        return;
+      }
+
+      // Ensure teacher is the owner if accessed via access token
+      if (teacherIdFromToken && exam.teacherId !== teacherIdFromToken) {
+        res.status(403).json({ error: 'You do not own this exam' });
+        return;
+      }
+
+      const teacher = await getUserProfile(exam.teacherId);
+      if (!teacher || !teacher.googleServiceAccountEmail || !teacher.googlePrivateKey || !teacher.googleDriveFolderId) {
+        res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
+        return;
+      }
+
+      const creds: DriveCredentials = {
+        email: teacher.googleServiceAccountEmail,
+        privateKey: teacher.googlePrivateKey,
+        folderId: teacher.googleDriveFolderId,
+      };
+
+      const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="exam.pdf"');
+      stream.pipe(res);
     } catch (err) {
       next(err);
     }

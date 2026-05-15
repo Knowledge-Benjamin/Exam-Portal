@@ -20,12 +20,47 @@ export function Settings() {
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordError, setPasswordError] = useState('');
 
+  // Config state
+  const [googleEmail, setGoogleEmail] = useState('');
+  const [googleFolderId, setGoogleFolderId] = useState('');
+  const [googleKey, setGoogleKey] = useState('');
+  const [sebKey, setSebKey] = useState('');
+  const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
+  const [configSuccess, setConfigSuccess] = useState('');
+  const [configError, setConfigError] = useState('');
+
   useEffect(() => {
     if (user) {
       setFullName(user.fullName);
       setEmail(user.email);
+      setGoogleEmail(user.googleServiceAccountEmail || '');
+      setGoogleFolderId(user.googleDriveFolderId || '');
+      setGoogleKey(user.googlePrivateKey || '');
+      setSebKey(user.sebConfigKey || '');
     }
   }, [user]);
+
+  const handleUpdateConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setConfigError('');
+    setConfigSuccess('');
+    setIsUpdatingConfig(true);
+
+    try {
+      const { data } = await api.patch('/auth/config', {
+        googleServiceAccountEmail: googleEmail,
+        googlePrivateKey: googleKey,
+        googleDriveFolderId: googleFolderId,
+        sebConfigKey: sebKey,
+      });
+      setUser(data.user);
+      setConfigSuccess('System Configuration updated successfully.');
+    } catch (err: any) {
+      setConfigError(err.error || 'Failed to update system configuration.');
+    } finally {
+      setIsUpdatingConfig(false);
+    }
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,6 +210,72 @@ export function Settings() {
         </div>
 
       </div>
+
+      {/* System Configuration Form */}
+      <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <h3 className="text-[12px] tracking-widest uppercase text-[#00ff87] font-bold mb-6 relative z-10">System Configuration</h3>
+        <p className="text-sm text-gray-400 mb-6 relative z-10">Configure your Google Drive integration for secure PDF storage and your Safe Exam Browser Config Key for exam enforcement.</p>
+        
+        <form onSubmit={handleUpdateConfig} className="space-y-5 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Service Account Email</label>
+              <input
+                type="email"
+                value={googleEmail}
+                onChange={(e) => setGoogleEmail(e.target.value)}
+                placeholder="e.g. exam-bot@project.iam.gserviceaccount.com"
+                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Drive Folder ID</label>
+              <input
+                type="text"
+                value={googleFolderId}
+                onChange={(e) => setGoogleFolderId(e.target.value)}
+                placeholder="e.g. 1aBcD2eF..."
+                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
+              />
+            </div>
+          </div>
+          
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Private Key</label>
+            <textarea
+              value={googleKey}
+              onChange={(e) => setGoogleKey(e.target.value)}
+              placeholder="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+              className="w-full h-32 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-xs resize-y custom-scrollbar"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">SEB Config Key (Optional)</label>
+            <input
+              type="text"
+              value={sebKey}
+              onChange={(e) => setSebKey(e.target.value)}
+              placeholder="Enter your cryptographic SEB Config Key hash..."
+              className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
+            />
+            <p className="text-[10px] text-gray-500 mt-2">If left blank, exams will require SEB but won't strictly enforce settings via cryptographic hash.</p>
+          </div>
+
+          {configError && <p className="text-red-400 text-xs">{configError}</p>}
+          {configSuccess && <p className="text-[#00ff87] text-xs">{configSuccess}</p>}
+
+          <button
+            type="submit"
+            disabled={isUpdatingConfig}
+            className="w-full mt-4 px-6 py-3 bg-[#00ff87]/10 hover:bg-[#00ff87]/20 text-[#00ff87] border border-[#00ff87]/50 rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,255,135,0.1)] disabled:opacity-50"
+          >
+            {isUpdatingConfig ? 'Saving...' : 'Save System Configuration'}
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }

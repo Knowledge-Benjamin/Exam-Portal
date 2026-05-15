@@ -34,6 +34,13 @@ export const updatePasswordSchema = z.object({
     .regex(/[0-9]/, 'Must contain at least one number'),
 });
 
+export const updateSystemConfigSchema = z.object({
+  googleServiceAccountEmail: z.string().email().optional().or(z.literal('')),
+  googlePrivateKey: z.string().optional().or(z.literal('')),
+  googleDriveFolderId: z.string().optional().or(z.literal('')),
+  sebConfigKey: z.string().optional().or(z.literal('')),
+});
+
 // ─── Exams ───────────────────────────────────────────────────────────────────
 
 export const createExamSchema = z.object({

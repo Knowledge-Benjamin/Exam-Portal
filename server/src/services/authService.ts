@@ -199,3 +199,45 @@ export async function updatePassword(userId: string, currentPassword: string, ne
     .set({ passwordHash })
     .where(eq(users.id, userId));
 }
+
+export async function updateSystemConfig(userId: string, data: any) {
+  const [updated] = await db
+    .update(users)
+    .set({
+      googleServiceAccountEmail: data.googleServiceAccountEmail || null,
+      googlePrivateKey: data.googlePrivateKey || null,
+      googleDriveFolderId: data.googleDriveFolderId || null,
+      sebConfigKey: data.sebConfigKey || null,
+    })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      fullName: users.fullName,
+      email: users.email,
+      role: users.role,
+      googleServiceAccountEmail: users.googleServiceAccountEmail,
+      googlePrivateKey: users.googlePrivateKey,
+      googleDriveFolderId: users.googleDriveFolderId,
+      sebConfigKey: users.sebConfigKey,
+    });
+
+  return updated;
+}
+
+export async function getUserProfile(userId: string) {
+  const [user] = await db
+    .select({
+      id: users.id,
+      fullName: users.fullName,
+      email: users.email,
+      role: users.role,
+      googleServiceAccountEmail: users.googleServiceAccountEmail,
+      googlePrivateKey: users.googlePrivateKey,
+      googleDriveFolderId: users.googleDriveFolderId,
+      sebConfigKey: users.sebConfigKey,
+    })
+    .from(users)
+    .where(eq(users.id, userId));
+
+  return user;
+}

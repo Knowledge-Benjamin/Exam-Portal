@@ -1,5 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { loginSchema, registerSchema, updateProfileSchema, updatePasswordSchema } from '../utils/validators';
+import { loginSchema, registerSchema, updateProfileSchema, updatePasswordSchema, updateSystemConfigSchema } from '../utils/validators';
 import {
   registerUser,
   loginUser,
@@ -8,6 +8,8 @@ import {
   listUsers,
   updateProfile,
   updatePassword,
+  updateSystemConfig,
+  getUserProfile,
 } from '../services/authService';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { env } from '../config/env';
@@ -101,8 +103,13 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 });
 
 // GET /api/auth/me
-router.get('/me', requireAuth, (req: Request, res: Response) => {
-  res.json({ user: req.user });
+router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await getUserProfile(req.user!.sub);
+    res.json({ user });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // GET /api/auth/users?role=student  (admin/teacher)
@@ -138,6 +145,17 @@ router.patch('/password', requireAuth, async (req: Request, res: Response, next:
     const { currentPassword, newPassword } = updatePasswordSchema.parse(req.body);
     await updatePassword(req.user!.sub, currentPassword, newPassword);
     res.json({ ok: true, message: 'Password updated successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/auth/config
+router.patch('/config', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const data = updateSystemConfigSchema.parse(req.body);
+    const updatedUser = await updateSystemConfig(req.user!.sub, data);
+    res.json({ user: updatedUser });
   } catch (err) {
     next(err);
   }

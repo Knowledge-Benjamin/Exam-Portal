@@ -29,6 +29,10 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   role: userRoleEnum('role').notNull(),
+  googleServiceAccountEmail: text('google_service_account_email'),
+  googlePrivateKey: text('google_private_key'),
+  googleDriveFolderId: text('google_drive_folder_id'),
+  sebConfigKey: text('seb_config_key'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
