@@ -36,7 +36,7 @@ export function ExamJoin() {
         navigate(`/exam/${res.data.examId}`);
       }
     } catch (err: any) {
-      setError(err.error || 'Failed to join the exam. Please check your token or try again.');
+      setError(err.response?.data?.error || err.error || 'Failed to join the exam. Please check your token or try again.');
     } finally {
       setIsLoading(false);
     }
