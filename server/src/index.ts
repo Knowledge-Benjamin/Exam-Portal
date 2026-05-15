@@ -49,7 +49,7 @@ app.use(
     origin: env.CORS_ORIGIN,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'x-safeexambrowser-requesthash'],
+    allowedHeaders: ['Content-Type', 'x-safeexambrowser-requesthash', 'x-safeexambrowser-configkeyhash'],
   }),
 );
 
