@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { env } from '../config/env';
-import { validateSEBHash } from '../utils/crypto';
+import { timingSafeEqual } from '../utils/crypto';
 import { getExamById } from '../services/examService';
 import { getExamByToken } from '../services/sebService';
 import { getUserProfile } from '../services/authService';
