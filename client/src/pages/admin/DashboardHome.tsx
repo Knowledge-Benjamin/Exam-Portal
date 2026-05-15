@@ -32,8 +32,9 @@ export function DashboardHome() {
     );
   }
 
-  const activeExams = exams.filter(e => e.status === 'active').length;
-  const draftExams = exams.filter(e => e.status === 'draft').length;
+  const safeExams = exams || [];
+  const activeExams = safeExams.filter(e => e.status === 'active').length;
+  const draftExams = safeExams.filter(e => e.status === 'draft').length;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
