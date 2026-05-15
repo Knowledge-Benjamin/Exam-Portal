@@ -23,11 +23,7 @@ export function ExamJoin() {
     setError('');
 
     try {
-      const baseUrl = import.meta.env.VITE_API_URL 
-        ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') 
-        : '';
-        
-      const res = await axios.post(`${baseUrl}/seb/join/${token}`, {
+      const res = await axios.post(`/seb/join/${token}`, {
         studentName,
         studentRegNumber,
       }, { withCredentials: true });
