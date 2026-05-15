@@ -24,7 +24,7 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
 
   if (!headerHash) {
     res.status(403).json({
-      error: 'Access denied. This resource is only available inside Safe Exam Browser.',
+      error: `Access denied. This resource is only available inside Safe Exam Browser. (Debug: Missing header. Headers received: ${Object.keys(req.headers).join(', ')})`,
     });
     return;
   }
