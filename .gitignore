@@ -1,0 +1,24 @@
+# Global
+node_modules/
+.DS_Store
+.env
+*.log
+
+# Server
+server/.env
+server/uploads/
+server/dist/
+
+# Client
+client/dist/
+client/dist-ssr/
+client/.local
+
+# Editor
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

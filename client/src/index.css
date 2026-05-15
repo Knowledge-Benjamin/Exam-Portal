@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Base Reset ─────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light; /* Force light mode to prevent OS dark mode conflicts */
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: #0f3261;
+  color: #e2e8f0;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ─── Focus Ring Removed as it causes black borders on forms ───────────────── */
+
+/* ─── Global Utility Classes ─────────────────────────────────────────────── */
+
+.card {
+  background: #1a4478;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #cbd5e1;
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 200ms ease-in-out;
+}
+
+.form-input:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #00f2fe;
+  box-shadow: 0 0 0 1px #00f2fe;
+}
+
+.form-input::placeholder {
+  color: #475569;
+}
+
+.form-input[disabled] {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+textarea.form-input {
+  resize: vertical;
+  min-height: 100px;
+  padding: 12px 16px;
+}
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.badge-draft   { background: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+.badge-active  { background: #ecfdf5; color: #059669; border-color: #d1fae5; }
+.badge-closed  { background: #fef2f2;  color: #dc2626; border-color: #fee2e2; }
+.badge-warning { background: #fffbeb; color: #d97706; border-color: #fef3c7; }
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s infinite;
+  border-radius: 12px;
+}
+
+@keyframes skeleton-pulse {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
