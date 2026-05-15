@@ -18,25 +18,28 @@ export function errorHandler(
   res: Response,
   _next: NextFunction,
 ): void {
-  if (err instanceof ZodError) {
+  const isZodError = err instanceof ZodError || (err && (err as any).name === 'ZodError');
+  if (isZodError) {
+    const zodErr = err as ZodError;
     res.status(400).json({
       error: 'Validation failed',
-      details: err.errors.map((e) => ({
+      details: zodErr.errors ? zodErr.errors.map((e) => ({
         field: e.path.join('.'),
         message: e.message,
-      })),
+      })) : [],
     });
     return;
   }
 
-  if (err instanceof AppError) {
-    res.status(err.statusCode).json({ error: err.message });
+  const isAppError = err instanceof AppError || (err && (err as any).name === 'AppError');
+  if (isAppError) {
+    const appErr = err as AppError;
+    res.status(appErr.statusCode || 400).json({ error: appErr.message });
     return;
   }
 
-  if (!env.isProd) {
-    console.error('[Error]', err);
-  }
+  // Always log unexpected errors so they can be debugged in prod logs
+  console.error('[Unhandled Error]', err);
 
   res.status(500).json({ error: 'An unexpected error occurred' });
 }
