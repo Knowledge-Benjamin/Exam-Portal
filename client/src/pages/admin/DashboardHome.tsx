@@ -54,7 +54,7 @@ export function DashboardHome() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity"></div>
           
           <div className="w-[88px] h-[88px] rounded-full border-[5px] border-[#1f0d36] border-t-[#00f2fe] border-r-[#00f2fe] flex items-center justify-center shadow-[0_0_25px_rgba(0,242,254,0.2)] mb-6">
-            <span className="text-white text-xl font-bold">{exams.length}</span>
+            <span className="text-white text-xl font-bold">{safeExams.length}</span>
           </div>
           
           <h3 className="text-[11px] tracking-widest uppercase text-[#00f2fe] font-bold mb-3">TOTAL EXAMS</h3>
@@ -122,7 +122,7 @@ export function DashboardHome() {
           </div>
         </div>
 
-        {exams.length === 0 ? (
+        {safeExams.length === 0 ? (
           <div className="py-12 text-center border border-dashed border-white/10 rounded-lg">
             <p className="text-sm text-gray-500 tracking-widest uppercase">No data available</p>
           </div>
