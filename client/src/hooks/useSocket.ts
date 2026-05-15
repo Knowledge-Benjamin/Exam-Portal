@@ -43,7 +43,11 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     // We don't manually send the token via query params because the server
     // uses standard HTTP cookies (exam_token is httpOnly).
     // Socket.io automatically includes credentials (cookies) due to withCredentials: true
-    const s = io(import.meta.env.VITE_WS_URL || window.location.origin, {
+    const socketUrl = import.meta.env.VITE_API_URL 
+      ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') 
+      : window.location.origin;
+
+    const s = io(socketUrl, {
       path: '/socket.io',
       withCredentials: true,
       transports: ['websocket', 'polling'],
