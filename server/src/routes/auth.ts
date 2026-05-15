@@ -19,7 +19,7 @@ const router = Router();
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.isProd,
-  sameSite: 'strict' as const,
+  sameSite: env.isProd ? 'none' as const : 'lax' as const,
   domain: env.COOKIE_DOMAIN,
 };
 

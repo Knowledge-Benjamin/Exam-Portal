@@ -48,7 +48,7 @@ router.post(
       res.cookie('exam_token', result.examToken, {
         httpOnly: true,
         secure: env.isProd,
-        sameSite: 'strict',
+        sameSite: env.isProd ? 'none' : 'lax',
         domain: env.COOKIE_DOMAIN,
         maxAge: 90 * 60 * 1000,
       });
