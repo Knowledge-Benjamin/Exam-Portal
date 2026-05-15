@@ -61,9 +61,11 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
 
   // If a key is configured for this teacher, validate it strictly
   if (sebConfigKey) {
-    const protocol = req.protocol;
-    const host = req.get('host') ?? '';
-    const fullUrl = `${protocol}://${host}${req.originalUrl}`;
+    // The SEB client computes the hash using the URL it sees in its address bar.
+    // Since we are proxying from the frontend (CORS_ORIGIN), the Host header here 
+    // is the backend's host, but SEB hashed the frontend's host.
+    const origin = env.CORS_ORIGIN.replace(/\/$/, '');
+    const fullUrl = `${origin}${req.originalUrl}`;
 
     const valid = validateSEBHash(fullUrl, headerHash, sebConfigKey);
     if (!valid) {
