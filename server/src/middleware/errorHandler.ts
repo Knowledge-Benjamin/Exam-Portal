@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { env } from '../config/env';
+import fs from 'fs';
 
 export class AppError extends Error {
   constructor(
@@ -38,8 +39,12 @@ export function errorHandler(
     return;
   }
 
+
   // Always log unexpected errors so they can be debugged in prod logs
   console.error('[Unhandled Error]', err);
+  try {
+    require('fs').appendFileSync('error.log', new Date().toISOString() + ' - ' + (err instanceof Error ? err.stack : JSON.stringify(err)) + '\n');
+  } catch (e) { }
 
   res.status(500).json({ error: 'An unexpected error occurred' });
 }
