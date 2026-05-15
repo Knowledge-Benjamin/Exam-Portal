@@ -63,8 +63,9 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
     } catch { /* ignore */ }
   }
 
-  // If a key is configured for this teacher, validate it strictly
-  if (sebConfigKey) {
+    // Sanitize the config key to prevent copy-paste whitespace or case issues
+    const sanitizedKey = sebConfigKey.trim().toLowerCase();
+
     // The SEB client computes the hash using the URL it sees in its address bar.
     // Since we are proxying from the frontend (CORS_ORIGIN), the Host header here 
     // is the backend's host, but SEB hashed the frontend's host.
@@ -72,15 +73,16 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
     const fullUrl = `${origin}${req.originalUrl}`;
 
     // SEB computes SHA256(URL + Key)
-    const expected = crypto.createHash('sha256').update(fullUrl + sebConfigKey, 'utf8').digest('hex');
+    const expected = crypto.createHash('sha256').update(fullUrl + sanitizedKey, 'utf8').digest('hex');
     
     // Check if the expected hash matches either the BEK header or the CK header
     const matchesBek = bekHash ? timingSafeEqual(expected, bekHash) : false;
     const matchesCk = ckHash ? timingSafeEqual(expected, ckHash) : false;
 
     if (!matchesBek && !matchesCk) {
+      const keySnippet = sanitizedKey.substring(0, 6) + '...';
       res.status(403).json({
-        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${fullUrl}, Expected=${expected}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
+        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${fullUrl}, DB_Key=${keySnippet}, Expected=${expected}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
       });
       return;
     }
