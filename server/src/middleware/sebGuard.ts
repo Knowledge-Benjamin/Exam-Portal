@@ -71,7 +71,7 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
     const valid = validateSEBHash(fullUrl, headerHash, sebConfigKey);
     if (!valid) {
       // DEBUG: We re-calculate the expected hash here just to include it in the error message for the user.
-      const expected = crypto.createHash('sha256').update(Buffer.concat([Buffer.from(fullUrl, 'utf8'), Buffer.from(sebConfigKey, 'hex')])).digest('hex');
+      const expected = crypto.createHash('sha256').update(fullUrl + sebConfigKey, 'utf8').digest('hex');
       res.status(403).json({
         error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${fullUrl}, Expected=${expected}, Received=${headerHash})`,
       });

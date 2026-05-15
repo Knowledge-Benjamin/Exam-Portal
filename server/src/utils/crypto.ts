@@ -44,10 +44,8 @@ export function validateSEBHash(
   configKeyHex: string,
 ): boolean {
   try {
-    const configKeyBytes = Buffer.from(configKeyHex, 'hex');
-    const urlBytes = Buffer.from(requestUrl, 'utf8');
-    const combined = Buffer.concat([urlBytes, configKeyBytes]);
-    const expected = sha256Buffer(combined);
+    const combined = requestUrl + configKeyHex;
+    const expected = crypto.createHash('sha256').update(combined, 'utf8').digest('hex');
     return timingSafeEqual(expected, headerHash);
   } catch {
     return false;
