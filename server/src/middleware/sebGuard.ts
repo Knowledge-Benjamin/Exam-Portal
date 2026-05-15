@@ -62,7 +62,8 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
       }
     } catch { /* ignore */ }
   }
-
+  // If a key is configured for this teacher, validate it strictly
+  if (sebConfigKey) {
     // Sanitize the config key to prevent copy-paste whitespace or case issues
     const sanitizedKey = sebConfigKey.trim().toLowerCase();
 
