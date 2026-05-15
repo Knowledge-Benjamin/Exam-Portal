@@ -20,7 +20,7 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: env.isProd,
   sameSite: env.isProd ? 'none' as const : 'lax' as const,
-  domain: env.COOKIE_DOMAIN,
+  ...(env.isProd && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
 };
 
 // POST /api/auth/register  (admin only)

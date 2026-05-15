@@ -49,7 +49,7 @@ router.post(
         httpOnly: true,
         secure: env.isProd,
         sameSite: env.isProd ? 'none' : 'lax',
-        domain: env.COOKIE_DOMAIN,
+        ...(env.isProd && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
         maxAge: 90 * 60 * 1000,
       });
 
