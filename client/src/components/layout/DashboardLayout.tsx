@@ -49,14 +49,9 @@ export function DashboardLayout() {
       <aside className="w-[280px] flex-shrink-0 bg-[var(--color-primary)] border-r border-white/10 flex flex-col z-20">
         <div className="flex h-full flex-col">
           <div className="px-6 pt-6 pb-4">
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/10 ring-1 ring-white/10 text-cyan-100 text-lg font-semibold">
-                EX
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
-                <h1 className="text-2xl font-semibold text-white">Exam Admin</h1>
-              </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
+              <h1 className="text-2xl font-semibold text-white">Exam Admin</h1>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-300">
               Centralized controls for exams, submissions, and system settings.
