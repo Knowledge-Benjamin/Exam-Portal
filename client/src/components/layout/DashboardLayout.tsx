@@ -44,7 +44,7 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
+    <div className="dashboard-layout flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
       
       {/* Sidebar */}
       <aside className={`${isSidebarCollapsed ? 'w-[72px]' : 'w-[220px]'} flex-shrink-0 border-r border-white/10 flex flex-col z-20 transition-width duration-300`} style={{ backgroundColor: 'var(--color-action)' }}>

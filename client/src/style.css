@@ -69,6 +69,15 @@ h2 {
   color: var(--text-h);
 }
 
+.dashboard-layout h1,
+.dashboard-layout h2,
+.dashboard-layout h3,
+.dashboard-layout h4,
+.dashboard-layout h5,
+.dashboard-layout h6 {
+  color: white;
+}
+
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
