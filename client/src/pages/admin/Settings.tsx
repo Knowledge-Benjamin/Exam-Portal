@@ -275,7 +275,11 @@ export function Settings() {
               <button
                 type="button"
                 onClick={() => {
-                  window.location.href = '/api/auth/google-drive/start';
+                  const apiUrl = import.meta.env.VITE_API_URL;
+                  const backendOrigin = apiUrl
+                    ? apiUrl.replace(/\/api\/?$/, '')
+                    : window.location.origin;
+                  window.location.href = `${backendOrigin}/api/auth/google-drive/start`;
                 }}
                 className="inline-flex items-center justify-center rounded-lg bg-[#00ff87] px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[#0f3261] transition-colors hover:bg-[#7cf0a9]"
               >
