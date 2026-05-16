@@ -46,7 +46,7 @@ export function DashboardHome() {
         <span className="text-cyan-300">HOME</span>
       </div>
 
-      <div className="dashboard-card p-6">
+      <div className="dashboard-card bg-[#170C79] p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-white">Welcome back, administrator</h1>
@@ -64,7 +64,7 @@ export function DashboardHome() {
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1.2fr]">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-          <div className="dashboard-card p-8">
+          <div className="dashboard-card bg-[#170C79] p-8">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Total exams</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">All time</span>
@@ -73,7 +73,7 @@ export function DashboardHome() {
             <p className="mt-4 text-sm text-slate-400">Current number of exams stored in your portal.</p>
           </div>
 
-          <div className="dashboard-card p-8">
+          <div className="dashboard-card bg-[#170C79] p-8">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Published</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">Live</span>
@@ -82,7 +82,7 @@ export function DashboardHome() {
             <p className="mt-4 text-sm text-slate-400">Exams currently available for students.</p>
           </div>
 
-          <div className="dashboard-card p-8">
+          <div className="dashboard-card bg-[#170C79] p-8">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Drafts</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">Pending</span>
@@ -142,7 +142,7 @@ export function DashboardHome() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {exams.map((exam) => (
-              <div key={exam.id} className="group relative overflow-hidden dashboard-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
+              <div key={exam.id} className="group relative overflow-hidden dashboard-card bg-[#170C79] p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
                 <div className="flex items-start justify-between mb-6 gap-4">
                   <h3 className="text-base font-semibold text-white tracking-wide truncate">{exam.title}</h3>
                   <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${
