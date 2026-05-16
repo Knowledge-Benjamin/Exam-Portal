@@ -44,7 +44,7 @@ export function DashboardHome() {
       <div className="dashboard-card bg-[#170C79] p-4 mb-40 w-full md:w-1/2 mt-8 ml-8 h-32">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl md:text-3xl font-semibold text-white">Welcome back, {firstName}</h1>
+            <h1 className="text-xs md:text-sm font-semibold text-white">Welcome back, {firstName}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
               Review your exams, monitor activity, and launch secure assessments from one premium command center.
             </p>
