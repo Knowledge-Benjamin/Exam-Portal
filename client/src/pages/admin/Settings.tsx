@@ -43,6 +43,11 @@ export function Settings() {
     setConfigError('');
     setConfigSuccess('');
 
+    if (googleKey && /(\\n|&#x5C;n|&#92;n|&amp;#x5C;n|&amp;#92;n)/.test(googleKey)) {
+      setConfigError('Google Private Key must be pasted as a real multiline PEM block, not as escaped \n sequences or HTML entities.');
+      return;
+    }
+
     if (googleKey && !googleKey.includes('-----BEGIN PRIVATE KEY-----')) {
       setConfigError('Google Private Key must include a valid PEM block: -----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----.');
       return;

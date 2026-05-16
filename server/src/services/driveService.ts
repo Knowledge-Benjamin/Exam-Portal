@@ -13,6 +13,13 @@ function getDriveClient(creds: DriveCredentials) {
     throw new AppError(500, 'Google Drive credentials are not fully configured for this teacher.');
   }
 
+  if (/(\\n|&#x5C;n|&#92;n|&amp;#x5C;n|&amp;#92;n)/.test(creds.privateKey)) {
+    throw new AppError(
+      500,
+      'Google Drive private key contains escaped newline sequences. Paste the service account key as a real multiline PEM block, not as literal \\n or HTML-escaped entities.',
+    );
+  }
+
   // Normalize private key formatting so PEM headers and newlines are valid.
   let formattedKey = creds.privateKey.trim();
   if ((formattedKey.startsWith('"') && formattedKey.endsWith('"')) || (formattedKey.startsWith("'") && formattedKey.endsWith("'"))) {
