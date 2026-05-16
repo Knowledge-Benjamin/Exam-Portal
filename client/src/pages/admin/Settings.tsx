@@ -42,6 +42,12 @@ export function Settings() {
     e.preventDefault();
     setConfigError('');
     setConfigSuccess('');
+
+    if (googleKey && !googleKey.includes('-----BEGIN PRIVATE KEY-----')) {
+      setConfigError('Google Private Key must include a valid PEM block: -----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----.');
+      return;
+    }
+
     setIsUpdatingConfig(true);
 
     try {

@@ -13,8 +13,21 @@ function getDriveClient(creds: DriveCredentials) {
     throw new AppError(500, 'Google Drive credentials are not fully configured for this teacher.');
   }
 
-  // Format the private key properly (replace literal \n with actual newlines if necessary)
-  const formattedKey = creds.privateKey.replace(/\\n/g, '\n');
+  // Normalize private key formatting so PEM headers and newlines are valid.
+  let formattedKey = creds.privateKey.trim();
+  if ((formattedKey.startsWith('"') && formattedKey.endsWith('"')) || (formattedKey.startsWith("'") && formattedKey.endsWith("'"))) {
+    formattedKey = formattedKey.slice(1, -1).trim();
+  }
+  formattedKey = formattedKey
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .trim();
+
+  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----') || !formattedKey.includes('-----END PRIVATE KEY-----')) {
+    throw new AppError(500, 'Google Drive private key is invalid. It must be the service account private key PEM block with BEGIN/END PRIVATE KEY headers.');
+  }
 
   const auth = new google.auth.JWT({
     email: creds.email,
