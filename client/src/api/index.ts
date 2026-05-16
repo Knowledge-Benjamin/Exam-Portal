@@ -1,8 +1,10 @@
 import axios from 'axios';
 import type { ApiError } from '../types';
 
+const apiBaseUrl = import.meta.env.VITE_API_URL || '/api';
+
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
