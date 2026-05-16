@@ -45,74 +45,73 @@ export function DashboardLayout() {
     <div className="flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
       
       {/* Sidebar */}
-      <aside className="w-[280px] flex-shrink-0 bg-[#0a2b55] border-r border-white/10 flex flex-col z-20">
+      <aside className="w-[260px] flex-shrink-0 bg-[#081f3d] border-r border-white/10 flex flex-col z-20">
         <div className="flex h-full flex-col">
-          <div className="px-6 pt-6 pb-4">
-            <div className="flex items-center gap-4">
+          <div className="px-6 pt-6 pb-5">
+            <div className="flex items-center gap-3">
               <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-white/10 ring-1 ring-white/10 text-cyan-100 text-lg font-semibold">
                 EX
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
-                <h1 className="text-2xl font-semibold text-white">Exam Admin</h1>
+                <p className="text-[10px] uppercase tracking-[0.35em] text-slate-500">The App</p>
+                <h1 className="text-xl font-semibold text-white">Exam Admin</h1>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-300">
-              Centralized controls for exams, submissions, and system settings.
-            </p>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)]">
-              <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
-              <Link
-                to="/dashboard"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
-                  location.pathname === '/dashboard'
-                    ? 'bg-[#0c3c72] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span className="font-semibold">Dashboard</span>
-              </Link>
-              <Link
-                to="/dashboard/exams/create"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
-                  location.pathname === '/dashboard/exams/create'
-                    ? 'bg-[#0c3c72] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <span className="font-semibold">Create exam</span>
-              </Link>
-              <Link
-                to="/dashboard/submissions"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
-                  location.pathname === '/dashboard/submissions'
-                    ? 'bg-[#0c3c72] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="font-semibold">Submissions</span>
-              </Link>
+          <nav className="flex-1 overflow-y-auto px-4 pb-6">
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
+              <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Navigation</div>
+              <div className="space-y-2">
+                <Link
+                  to="/dashboard"
+                  className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                    location.pathname === '/dashboard'
+                      ? 'bg-[#0d3f76] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
+                      : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  <span className="font-semibold">Dashboard</span>
+                </Link>
+                <Link
+                  to="/dashboard/exams/create"
+                  className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                    location.pathname === '/dashboard/exams/create'
+                      ? 'bg-[#0d3f76] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
+                      : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  <span className="font-semibold">Create exam</span>
+                </Link>
+                <Link
+                  to="/dashboard/submissions"
+                  className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                    location.pathname === '/dashboard/submissions'
+                      ? 'bg-[#0d3f76] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
+                      : 'text-slate-300 hover:text-white hover:bg-white/10'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="font-semibold">Submissions</span>
+                </Link>
+              </div>
             </div>
 
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)]">
+            <div className="mt-4 rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)]">
               <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Account</div>
               <Link
                 to="/dashboard/settings"
                 className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
                   location.pathname === '/dashboard/settings'
-                    ? 'bg-[#0c3c72] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
+                    ? 'bg-[#0d3f76] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -126,7 +125,8 @@ export function DashboardLayout() {
           </nav>
 
           <div className="border-t border-white/10 px-6 py-5">
-            <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+            <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-4"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-200 font-semibold">
                 {user?.fullName?.charAt(0) ?? 'A'}
               </div>
@@ -144,8 +144,6 @@ export function DashboardLayout() {
           </div>
         </div>
       </aside>
-
-      {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {/* Topbar */}
