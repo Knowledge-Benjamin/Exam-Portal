@@ -60,7 +60,7 @@ function getServiceAccountAuth(creds: DriveCredentials) {
   const auth = new google.auth.JWT({
     email: creds.email,
     key: normalizePrivateKey(creds.privateKey),
-    scopes: ['https://www.googleapis.com/auth/drive.file'],
+    scopes: ['https://www.googleapis.com/auth/drive'],
   });
 
   return auth;

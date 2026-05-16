@@ -259,7 +259,7 @@ export function Settings() {
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div>
                 <h4 className="text-sm uppercase tracking-[0.25em] text-[#00ff87] font-bold mb-2">OAuth Drive Connection</h4>
-                <p className="text-xs text-gray-400">Connect your Google account once, then uploads will use your Drive without needing a service account PEM key.</p>
+                <p className="text-xs text-gray-400">Connect your Google account once to enable uploads directly to your Google Drive without needing a service account PEM key.</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-300">Status:</span>
@@ -270,7 +270,7 @@ export function Settings() {
             </div>
             <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
               <p className="text-xs text-gray-400 md:max-w-2xl">
-                Use OAuth2 if you do not have a shared drive service account. This avoids the Shared Drive requirement and uploads directly to your Google Drive.
+                OAuth uploads will use your personal Google Drive folder. After connecting, verify the folder ID below is set to your desired location. You can use either a personal folder or a shared drive folder.
               </p>
               <button
                 type="button"
@@ -301,19 +301,19 @@ export function Settings() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Shared Drive Folder ID</label>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Drive Folder ID</label>
               <input
                 type="text"
                 value={googleFolderId}
                 onChange={(e) => setGoogleFolderId(e.target.value)}
-                placeholder="e.g. 1aBcD2eF... (shared drive folder ID)"
+                placeholder="e.g. 1aBcD2eF... (personal or shared drive folder ID)"
                 className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
               />
             </div>
           </div>
           
           <div>
-            <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Private Key</label>
+            <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Private Key (Service Account)</label>
             <textarea
               value={googleKey}
               onChange={(e) => setGoogleKey(e.target.value)}
@@ -322,7 +322,7 @@ export function Settings() {
 -----END PRIVATE KEY-----"
               className="w-full h-32 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-xs resize-y custom-scrollbar"
             />
-            <p className="text-[10px] text-gray-500 mt-2">Paste the key as a multiline PEM block. Do not submit literal backslash-n sequences (\n). Use a shared drive folder ID, and make sure the service account is a member of that shared drive.</p>
+            <p className="text-[10px] text-gray-500 mt-2">Optional: Provide a service account private key (PEM format) for advanced shared drive setups. If you've connected OAuth above, you can leave this blank for most use cases. Do not submit literal backslash-n sequences (\n). Use a shared drive folder ID with service account keys.</p>
           </div>
 
           {/* SEB Config Key moved to per-exam settings in the Exam Builder */}

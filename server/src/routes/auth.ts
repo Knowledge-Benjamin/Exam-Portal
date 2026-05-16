@@ -148,7 +148,7 @@ router.get('/google-drive/start', requireAuth, async (req: Request, res: Respons
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       prompt: 'consent',
-      scope: ['https://www.googleapis.com/auth/drive.file'],
+      scope: ['https://www.googleapis.com/auth/drive'],
       state,
     });
 
