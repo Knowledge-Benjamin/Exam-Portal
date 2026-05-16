@@ -78,8 +78,15 @@ h2 {
   color: white;
 }
 
-.dashboard-layout .exam-admin-title {
+..dashboard-layout .exam-admin-title {
   font-size: 0.875rem;
+}
+
+.dashboard-card {
+  background: #170C79;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+  border-radius: 28px;
 }
 
 h1 {
