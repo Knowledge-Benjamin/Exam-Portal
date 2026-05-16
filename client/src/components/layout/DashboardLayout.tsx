@@ -138,21 +138,31 @@ export function DashboardLayout() {
           </nav>
 
           <div className="border-t border-white/10 px-6 py-5">
-            <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-200 font-semibold">
-                {user?.fullName?.charAt(0) ?? 'A'}
+            {!isSidebarCollapsed ? (
+              <>
+                <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-200 font-semibold">
+                    {user?.fullName?.charAt(0) ?? 'A'}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-white truncate">{user?.fullName || 'Administrator'}</p>
+                    <p className="text-xs text-slate-400 uppercase tracking-[0.25em]">Admin access</p>
+                  </div>
+                </div>
+                <button
+                  onClick={logout}
+                  className="mt-4 w-full rounded-3xl border border-transparent bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
+                >
+                  Log out
+                </button>
+              </>
+            ) : (
+              <div className="flex justify-center">
+                <div className="w-8 h-8 rounded-full bg-[var(--color-action)] flex items-center justify-center text-xs font-semibold text-white">
+                  {user?.fullName?.charAt(0) ?? 'A'}
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{user?.fullName || 'Administrator'}</p>
-                <p className="text-xs text-slate-400 uppercase tracking-[0.25em]">Admin access</p>
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              className="mt-4 w-full rounded-3xl border border-transparent bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
-            >
-              Log out
-            </button>
+            )}
           </div>
         </div>
       </aside>
