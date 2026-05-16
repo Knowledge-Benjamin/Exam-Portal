@@ -20,7 +20,7 @@ html {
 
 body {
   font-family: var(--font-family-sans);
-  background-color: #0f3261;
+  background-color: #081d38;
   color: #e2e8f0;
   line-height: 1.5;
   min-height: 100vh;
@@ -31,10 +31,10 @@ body {
 /* ─── Global Utility Classes ─────────────────────────────────────────────── */
 
 .card {
-  background: #1a4478;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  background: #0d345f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
 }
 
 .form-label {

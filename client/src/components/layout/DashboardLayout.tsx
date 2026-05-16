@@ -42,10 +42,10 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="flex h-screen bg-[#0f3261] text-white overflow-hidden font-sans">
+    <div className="flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
       
       {/* Sidebar */}
-      <aside className="w-[240px] flex-shrink-0 bg-[#092955] border-r border-white/5 flex flex-col z-20">
+      <aside className="w-[240px] flex-shrink-0 bg-[#0d305d] border-r border-white/10 flex flex-col z-20">
         
         {/* Logo Area */}
         <div className="h-[72px] flex items-center px-6 border-b border-white/5">
@@ -62,10 +62,10 @@ export function DashboardLayout() {
           
           <Link 
             to="/dashboard" 
-            className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+            className={`flex items-center gap-4 px-4 py-3 rounded-3xl transition-all ${
               location.pathname === '/dashboard' 
-                ? 'bg-[#1a4478] text-[#fe0979] font-medium border-l-2 border-[#fe0979]' 
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? 'bg-[#0b3561] text-cyan-100 font-semibold border-l-2 border-cyan-300' 
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,10 +76,10 @@ export function DashboardLayout() {
 
           <Link 
             to="/dashboard/exams/create" 
-            className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+            className={`flex items-center gap-4 px-4 py-3 rounded-3xl transition-all ${
               location.pathname === '/dashboard/exams/create' 
-                ? 'bg-[#1a4478] text-[#00f2fe] font-medium border-l-2 border-[#00f2fe]' 
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? 'bg-[#0b3561] text-cyan-100 font-semibold border-l-2 border-cyan-300' 
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,10 +90,10 @@ export function DashboardLayout() {
 
           <Link 
             to="/dashboard/submissions" 
-            className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+            className={`flex items-center gap-4 px-4 py-3 rounded-3xl transition-all ${
               location.pathname === '/dashboard/submissions' 
-                ? 'bg-[#1a4478] text-[#00ff87] font-medium border-l-2 border-[#00ff87]' 
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? 'bg-[#0b3561] text-cyan-100 font-semibold border-l-2 border-cyan-300' 
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -108,10 +108,10 @@ export function DashboardLayout() {
 
           <Link 
             to="/dashboard/settings" 
-            className={`flex items-center gap-4 px-4 py-3 rounded-lg transition-all ${
+            className={`flex items-center gap-4 px-4 py-3 rounded-3xl transition-all ${
               location.pathname === '/dashboard/settings' 
-                ? 'bg-[#1a4478] text-white font-medium border-l-2 border-white' 
-                : 'text-gray-400 hover:text-gray-200 hover:bg-white/5'
+                ? 'bg-[#0b3561] text-cyan-100 font-semibold border-l-2 border-cyan-300' 
+                : 'text-slate-300 hover:text-white hover:bg-white/5'
             }`}
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -138,7 +138,7 @@ export function DashboardLayout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {/* Topbar */}
-        <header className="h-[72px] bg-[#0c3975] border-b border-white/5 flex items-center justify-between px-8 shrink-0 z-10">
+<header className="h-[72px] bg-[#0a3159] border-b border-white/10 flex items-center justify-between px-8 shrink-0 z-10 shadow-[0_5px_35px_rgba(0,0,0,0.15)]">
           
           {/* Search Bar */}
           <div className="relative w-full max-w-md">
@@ -150,7 +150,7 @@ export function DashboardLayout() {
             <input 
               type="text" 
               placeholder="SEARCH" 
-              className="w-full bg-[#1a4a85] text-white placeholder-gray-500 text-xs tracking-widest border-none rounded-full py-3 pl-14 pr-4 focus:outline-none focus:ring-1 focus:ring-[#fe0979]"
+              className="w-full bg-[#102f55] text-white placeholder-slate-500 text-xs tracking-widest border border-white/10 rounded-full py-3 pl-14 pr-4 focus:outline-none focus:ring-2 focus:ring-cyan-300"
             />
           </div>
 
@@ -172,7 +172,7 @@ export function DashboardLayout() {
               <span className="text-xs tracking-widest uppercase font-semibold text-gray-300">
                 {user?.fullName?.split(' ')[0] || 'ADMIN'}
               </span>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#00f2fe] to-[#4facfe] flex items-center justify-center shadow-lg shadow-[#00f2fe]/20">
+              <div className="w-8 h-8 rounded-full bg-[#0c3d70] flex items-center justify-center shadow-lg shadow-[#0b3d6f]/20">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
