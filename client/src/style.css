@@ -78,6 +78,10 @@ h2 {
   color: white;
 }
 
+.dashboard-layout .exam-admin-title {
+  font-size: 0.875rem;
+}
+
 h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
