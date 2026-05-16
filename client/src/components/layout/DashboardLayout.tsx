@@ -222,7 +222,7 @@ export function DashboardLayout() {
 
         {/* Main Viewport */}
         <main className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-7xl mx-auto flex flex-col justify-between items-center">
+          <div className="max-w-7xl mx-auto h-[200vh] flex flex-col justify-between items-center">
             <Outlet />
           </div>
         </main>
