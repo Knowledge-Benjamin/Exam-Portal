@@ -50,10 +50,16 @@ export function Settings() {
 
     setIsUpdatingConfig(true);
 
+    const normalizedPrivateKey = googleKey
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n');
+
     try {
       const { data } = await api.patch('/auth/config', {
         googleServiceAccountEmail: googleEmail,
-        googlePrivateKey: googleKey,
+        googlePrivateKey: normalizedPrivateKey,
         googleDriveFolderId: googleFolderId,
       });
       setUser(data.user);

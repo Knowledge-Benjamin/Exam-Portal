@@ -4,16 +4,21 @@ import validator from 'validator';
 /**
  * Recursively escapes all string values in an object.
  */
-function escapeStrings(value: unknown): unknown {
+const RAW_STRING_KEYS = new Set(['googlePrivateKey', 'sebConfigKey']);
+
+function escapeStrings(value: unknown, key?: string): unknown {
   if (typeof value === 'string') {
+    if (key && RAW_STRING_KEYS.has(key)) {
+      return value;
+    }
     return validator.escape(value.trim());
   }
   if (Array.isArray(value)) {
-    return value.map(escapeStrings);
+    return value.map((item) => escapeStrings(item));
   }
   if (value !== null && typeof value === 'object') {
     return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, escapeStrings(v)]),
+      Object.entries(value as Record<string, unknown>).map(([k, v]) => [k, escapeStrings(v, k)]),
     );
   }
   return value;
