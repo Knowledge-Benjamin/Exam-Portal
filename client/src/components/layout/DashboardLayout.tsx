@@ -62,8 +62,8 @@ export function DashboardLayout() {
             </p>
           </div>
 
-          <nav className="flex-1 flex flex-col justify-evenly items-center overflow-y-auto px-4 pb-6">
-            <div className="rounded-[32px] bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)] w-full max-w-[260px] mx-auto">
+          <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-4 pb-6 w-full">
+            <div className="flex-1 flex flex-col justify-evenly items-center w-full">
               <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
               <Link
                 to="/dashboard"
@@ -106,7 +106,7 @@ export function DashboardLayout() {
               </Link>
             </div>
 
-            <div className="rounded-[32px] bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)] w-full max-w-[260px] mx-auto">
+            <div className="rounded-[32px] bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)] w-full">
               <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Account</div>
               <Link
                 to="/dashboard/settings"
