@@ -10,6 +10,17 @@ import { env } from '../config/env';
 
 const router = Router();
 
+// Helper to compute cookie options based on request protocol (mirrors auth route behavior)
+function getCookieOptions(req: Request) {
+  const isSecure = req.secure || req.get('x-forwarded-proto') === 'https';
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? ('none' as const) : ('lax' as const),
+    ...(isSecure && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
+  };
+}
+
 /**
  * GET /seb/gate/:token
  *
@@ -45,11 +56,9 @@ router.post(
         ipAddress,
       );
 
+      const cookieOpts = getCookieOptions(req);
       res.cookie('exam_token', result.examToken, {
-        httpOnly: true,
-        secure: env.isProd,
-        sameSite: env.isProd ? 'none' : 'lax',
-        ...(env.isProd && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
+        ...cookieOpts,
         maxAge: 90 * 60 * 1000,
       });
 
