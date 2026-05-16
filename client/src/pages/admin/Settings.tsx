@@ -279,7 +279,7 @@ export function Settings() {
 -----END PRIVATE KEY-----"
               className="w-full h-32 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-xs resize-y custom-scrollbar"
             />
-            <p className="text-[10px] text-gray-500 mt-2">Paste the key as a multiline PEM block. Do not submit literal backslash-n sequences (\n).</p>
+            <p className="text-[10px] text-gray-500 mt-2">Paste the key as a multiline PEM block. Do not submit literal backslash-n sequences (\n). The folder ID should be a shared drive folder and the service account must have access.</p>
           </div>
 
           {/* SEB Config Key moved to per-exam settings in the Exam Builder */}

@@ -82,6 +82,8 @@ export async function uploadPdfToDrive(
       requestBody: fileMetadata,
       media: media,
       fields: 'id',
+      supportsAllDrives: true,
+      supportsTeamDrives: true,
     });
 
     if (!response.data.id) {
@@ -91,6 +93,14 @@ export async function uploadPdfToDrive(
     return response.data.id;
   } catch (err: any) {
     console.error('Google Drive Upload Error:', err);
+
+    if (err?.cause?.message?.includes('storage quota')) {
+      throw new AppError(
+        500,
+        'Google Drive upload failed because service accounts do not have storage quota. Use a shared drive folder that the service account is a member of, or configure OAuth delegation for a user account.',
+      );
+    }
+
     throw new AppError(500, 'Failed to upload PDF to Google Drive. Check configuration.');
   }
 }
@@ -98,7 +108,7 @@ export async function uploadPdfToDrive(
 export async function deletePdfFromDrive(fileId: string, creds: DriveCredentials): Promise<void> {
   try {
     const drive = getDriveClient(creds);
-    await drive.files.delete({ fileId });
+    await drive.files.delete({ fileId, supportsAllDrives: true, supportsTeamDrives: true });
   } catch (err: any) {
     console.error(`Google Drive Delete Error (File: ${fileId}):`, err.message);
     // We don't throw here to avoid blocking other operations if the file is already deleted or missing.
@@ -110,7 +120,7 @@ export async function getPdfStreamFromDrive(fileId: string, creds: DriveCredenti
     const drive = getDriveClient(creds);
     
     const response = await drive.files.get(
-      { fileId, alt: 'media' },
+      { fileId, alt: 'media', supportsAllDrives: true, supportsTeamDrives: true },
       { responseType: 'stream' }
     );
 
