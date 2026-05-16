@@ -159,7 +159,7 @@ export function DashboardLayout() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {/* Topbar */}
-<header className="h-[72px] bg-[var(--color-primary)] border-b border-white/10 flex items-center justify-between px-8 shrink-0 z-10 shadow-[0_5px_35px_rgba(0,0,0,0.15)]">
+<header className="h-[72px] bg-[var(--color-action)] border-b border-white/10 flex items-center justify-between px-8 shrink-0 z-10 shadow-[0_5px_35px_rgba(0,0,0,0.15)]">
           
           {/* Search Bar */}
           <div className="relative w-full max-w-md">
@@ -171,7 +171,7 @@ export function DashboardLayout() {
             <input 
               type="text" 
               placeholder="SEARCH" 
-              className="w-full bg-[var(--color-primary)] text-white placeholder-slate-500 text-xs tracking-widest border border-white/10 rounded-full py-3 pl-14 pr-4 focus:outline-none focus:ring-2 focus:ring-cyan-300"
+              className="w-full bg-[var(--color-action)] text-white placeholder-slate-500 text-xs tracking-widest border border-white/10 rounded-full py-3 pl-14 pr-4 focus:outline-none focus:ring-2 focus:ring-cyan-300"
             />
           </div>
 
@@ -193,7 +193,7 @@ export function DashboardLayout() {
               <span className="text-xs tracking-widest uppercase font-semibold text-gray-300">
                 {user?.fullName?.split(' ')[0] || 'ADMIN'}
               </span>
-              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)] flex items-center justify-center shadow-lg shadow-[#0b3d6f]/20">
+              <div className="w-8 h-8 rounded-full bg-[var(--color-action)] flex items-center justify-center shadow-lg shadow-[#0b3d6f]/20">
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
