@@ -58,7 +58,7 @@ export function DashboardLayout() {
             </p>
           </div>
 
-          <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-4 pb-6 w-full">
+          <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-6 py-6 w-full">
             <div className={`flex-1 flex flex-col ${isPrimaryCollapsed ? 'h-0 overflow-hidden' : 'justify-evenly'} items-center w-full transition-all duration-300`}>
               <div className="flex items-center justify-between w-full mb-4">
                 <div className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
