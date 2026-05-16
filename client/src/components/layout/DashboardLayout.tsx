@@ -105,13 +105,9 @@ export function DashboardLayout() {
                 </svg>
                 <span className="font-semibold">Submissions</span>
               </Link>
-            </div>
-
-            <div className="rounded-[32px] bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)] w-full">
-              <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Account</div>
               <Link
                 to="/dashboard/settings"
-                className={`flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
+                className={`nav-link-animated flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
                   location.pathname === '/dashboard/settings'
                     ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
