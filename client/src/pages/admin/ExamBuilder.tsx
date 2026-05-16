@@ -13,6 +13,8 @@ export function ExamBuilder() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [editingSebKey, setEditingSebKey] = useState(false);
+  const [sebKeyInput, setSebKeyInput] = useState('');
 
   // New question form
   const [showForm, setShowForm] = useState(false);
@@ -24,6 +26,10 @@ export function ExamBuilder() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    if (exam) setSebKeyInput(exam.sebConfigKey ?? '');
+  }, [exam]);
 
   const fetchData = async () => {
     try {
@@ -128,6 +134,41 @@ export function ExamBuilder() {
           <h2 className="text-3xl font-bold text-white tracking-wide">Content Builder</h2>
           <p className="text-[#00f2fe] text-sm tracking-widest uppercase mt-1">{exam.title}</p>
         </div>
+        {exam.status === 'draft' && (
+          <div className="ml-4">
+            {!editingSebKey ? (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-400">SEB Key: {exam.sebConfigKey ? 'Set' : 'Not set'}</span>
+                <button onClick={() => setEditingSebKey(true)} className="px-3 py-2 bg-[#00f2fe] text-[#0f3261] rounded-lg text-xs font-bold">Edit</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  value={sebKeyInput}
+                  onChange={(e) => setSebKeyInput(e.target.value)}
+                  placeholder="SEB Config Key"
+                  className="bg-[#0f3261] border border-white/10 rounded-lg p-2 text-sm text-white"
+                />
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.patch(`/exams/${id}`, { sebConfigKey: sebKeyInput });
+                      setExam((prev) => prev ? { ...prev, sebConfigKey: sebKeyInput } : prev);
+                      setEditingSebKey(false);
+                      alert('SEB Config Key saved');
+                    } catch (err: any) {
+                      alert(err.error || 'Failed to save SEB Config Key');
+                    }
+                  }}
+                  className="px-3 py-2 bg-[#00ff87] text-[#0f3261] rounded-lg text-xs font-bold"
+                >
+                  Save
+                </button>
+                <button onClick={() => { setEditingSebKey(false); setSebKeyInput(exam.sebConfigKey ?? ''); }} className="px-3 py-2 text-sm text-gray-400">Cancel</button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {exam.status !== 'draft' && (

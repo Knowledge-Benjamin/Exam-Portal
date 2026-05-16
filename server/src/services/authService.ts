@@ -207,7 +207,6 @@ export async function updateSystemConfig(userId: string, data: any) {
       googleServiceAccountEmail: data.googleServiceAccountEmail || null,
       googlePrivateKey: data.googlePrivateKey || null,
       googleDriveFolderId: data.googleDriveFolderId || null,
-      sebConfigKey: data.sebConfigKey || null,
     })
     .where(eq(users.id, userId))
     .returning({
@@ -218,7 +217,6 @@ export async function updateSystemConfig(userId: string, data: any) {
       googleServiceAccountEmail: users.googleServiceAccountEmail,
       googlePrivateKey: users.googlePrivateKey,
       googleDriveFolderId: users.googleDriveFolderId,
-      sebConfigKey: users.sebConfigKey,
     });
 
   return updated;
@@ -234,7 +232,6 @@ export async function getUserProfile(userId: string) {
       googleServiceAccountEmail: users.googleServiceAccountEmail,
       googlePrivateKey: users.googlePrivateKey,
       googleDriveFolderId: users.googleDriveFolderId,
-      sebConfigKey: users.sebConfigKey,
     })
     .from(users)
     .where(eq(users.id, userId));

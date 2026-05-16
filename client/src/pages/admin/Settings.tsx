@@ -24,7 +24,6 @@ export function Settings() {
   const [googleEmail, setGoogleEmail] = useState('');
   const [googleFolderId, setGoogleFolderId] = useState('');
   const [googleKey, setGoogleKey] = useState('');
-  const [sebKey, setSebKey] = useState('');
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
   const [configSuccess, setConfigSuccess] = useState('');
   const [configError, setConfigError] = useState('');
@@ -36,7 +35,6 @@ export function Settings() {
       setGoogleEmail(user.googleServiceAccountEmail || '');
       setGoogleFolderId(user.googleDriveFolderId || '');
       setGoogleKey(user.googlePrivateKey || '');
-      setSebKey(user.sebConfigKey || '');
     }
   }, [user]);
 
@@ -51,7 +49,6 @@ export function Settings() {
         googleServiceAccountEmail: googleEmail,
         googlePrivateKey: googleKey,
         googleDriveFolderId: googleFolderId,
-        sebConfigKey: sebKey,
       });
       setUser(data.user);
       setConfigSuccess('System Configuration updated successfully.');
@@ -251,17 +248,7 @@ export function Settings() {
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">SEB Config Key (Optional)</label>
-            <input
-              type="text"
-              value={sebKey}
-              onChange={(e) => setSebKey(e.target.value)}
-              placeholder="Enter your cryptographic SEB Config Key hash..."
-              className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
-            />
-            <p className="text-[10px] text-gray-500 mt-2">If left blank, exams will require SEB but won't strictly enforce settings via cryptographic hash.</p>
-          </div>
+          {/* SEB Config Key moved to per-exam settings in the Exam Builder */}
 
           {configError && <p className="text-red-400 text-xs">{configError}</p>}
           {configSuccess && <p className="text-[#00ff87] text-xs">{configSuccess}</p>}

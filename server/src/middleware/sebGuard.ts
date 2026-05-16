@@ -55,9 +55,8 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
     try {
       const exam = await getExamById(examId);
       if (exam) {
-        const teacher = await getUserProfile(exam.teacherId);
-        if (teacher?.sebConfigKey) {
-          sebConfigKey = teacher.sebConfigKey;
+        if (exam.sebConfigKey) {
+          sebConfigKey = exam.sebConfigKey;
         }
       }
     } catch { /* ignore */ }

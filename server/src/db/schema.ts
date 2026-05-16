@@ -32,7 +32,6 @@ export const users = pgTable('users', {
   googleServiceAccountEmail: text('google_service_account_email'),
   googlePrivateKey: text('google_private_key'),
   googleDriveFolderId: text('google_drive_folder_id'),
-  sebConfigKey: text('seb_config_key'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
@@ -50,6 +49,7 @@ export const exams = pgTable('exams', {
   durationMinutes: integer('duration_minutes').notNull(),
   windowBufferMinutes: integer('window_buffer_minutes').notNull().default(5),
   sebExamToken: text('seb_exam_token').unique(),
+  sebConfigKey: text('seb_config_key'),
   status: examStatusEnum('status').notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

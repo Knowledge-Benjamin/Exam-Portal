@@ -26,6 +26,7 @@ const httpServer = http.createServer(app);
 // ─── Socket.io ───────────────────────────────────────────────────────────────
 
 const io = new SocketIOServer(httpServer, {
+  path: '/api/socket.io',
   cors: {
     origin: env.CORS_ORIGIN,
     credentials: true,

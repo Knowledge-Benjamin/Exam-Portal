@@ -48,7 +48,7 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       : window.location.origin;
 
     const s = io(socketUrl, {
-      path: '/socket.io',
+      path: '/api/socket.io',
       withCredentials: true,
       transports: ['websocket', 'polling'],
     });

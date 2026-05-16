@@ -38,7 +38,6 @@ export const updateSystemConfigSchema = z.object({
   googleServiceAccountEmail: z.string().email().optional().or(z.literal('')),
   googlePrivateKey: z.string().optional().or(z.literal('')),
   googleDriveFolderId: z.string().optional().or(z.literal('')),
-  sebConfigKey: z.string().optional().or(z.literal('')),
 });
 
 // ─── Exams ───────────────────────────────────────────────────────────────────
@@ -50,6 +49,7 @@ export const createExamSchema = z.object({
   startTime: z.string().datetime(),
   durationMinutes: z.number().int().min(5).max(480),
   windowBufferMinutes: z.number().int().min(0).max(30).default(5),
+  sebConfigKey: z.string().optional().or(z.literal('')),
 });
 
 export const updateExamSchema = createExamSchema.partial();

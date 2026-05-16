@@ -13,7 +13,6 @@ export interface User {
   googleServiceAccountEmail?: string | null;
   googlePrivateKey?: string | null;
   googleDriveFolderId?: string | null;
-  sebConfigKey?: string | null;
   createdAt?: string;
 }
 
@@ -28,6 +27,7 @@ export interface Exam {
   endTime: string;
   durationMinutes: number;
   windowBufferMinutes: number;
+  sebConfigKey?: string | null;
   sebExamToken?: string;
   status: ExamStatus;
   createdAt: string;
@@ -75,6 +75,7 @@ export interface CreateExamForm {
   startTime: string;
   durationMinutes: number;
   windowBufferMinutes: number;
+  sebConfigKey?: string;
 }
 
 // Question builder form state

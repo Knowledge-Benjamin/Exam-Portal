@@ -35,6 +35,7 @@ export async function createExam(
     startTime: string;
     durationMinutes: number;
     windowBufferMinutes: number;
+    sebConfigKey?: string;
   },
 ) {
   const start = new Date(data.startTime);
@@ -51,6 +52,7 @@ export async function createExam(
       endTime: end,
       durationMinutes: data.durationMinutes,
       windowBufferMinutes: data.windowBufferMinutes,
+      sebConfigKey: data.sebConfigKey,
       status: 'draft',
     })
     .returning();
@@ -67,6 +69,7 @@ export async function updateExam(
     startTime: string;
     durationMinutes: number;
     windowBufferMinutes: number;
+    sebConfigKey: string;
   }>,
 ) {
   const exam = await assertExamOwner(examId, teacherId);
@@ -79,6 +82,7 @@ export async function updateExam(
   if (data.description !== undefined) updates.description = data.description;
   if (data.durationMinutes) updates.durationMinutes = data.durationMinutes;
   if (data.windowBufferMinutes !== undefined) updates.windowBufferMinutes = data.windowBufferMinutes;
+  if (data.sebConfigKey !== undefined) updates.sebConfigKey = data.sebConfigKey;
   if (data.startTime) {
     const start = new Date(data.startTime);
     const duration = data.durationMinutes ?? exam.durationMinutes;
