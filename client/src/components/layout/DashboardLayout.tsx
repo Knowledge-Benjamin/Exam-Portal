@@ -47,12 +47,12 @@ export function DashboardLayout() {
     <div className="flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
       
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-[72px]' : 'w-[220px]'} flex-shrink-0 bg-[var(--color-primary)] border-r border-white/10 flex flex-col z-20 transition-width duration-300`}>
+      <aside className={`${isSidebarCollapsed ? 'w-[72px]' : 'w-[220px]'} flex-shrink-0 border-r border-white/10 flex flex-col z-20 transition-width duration-300`} style={{ backgroundColor: 'var(--color-action)' }}>
         <div className="flex h-full flex-col">
           <div className="px-4 pt-6 pb-4 text-center flex items-center justify-between">
             {!isSidebarCollapsed && (
               <div className="flex-1 text-center">
-                <h1 className="text-2xl font-semibold text-[var(--color-action)]">Exam Admin</h1>
+                <h1 className="text-lg font-semibold text-white">Exam Admin</h1>
                 <p className="mt-1 text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
               </div>
             )}
