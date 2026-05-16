@@ -51,7 +51,13 @@ export const createExamSchema = z.object({
   windowBufferMinutes: z.number().int().min(0).max(30).default(5),
 });
 
-export const updateExamSchema = createExamSchema.partial();
+// Update schema: allow all create fields to be optional for edits,
+// and explicitly allow `sebConfigKey` on update so teachers can set it post-publish.
+export const updateExamSchema = createExamSchema
+  .partial()
+  .extend({
+    sebConfigKey: z.string().optional().or(z.literal('')),
+  });
 
 // ─── Questions ───────────────────────────────────────────────────────────────
 
