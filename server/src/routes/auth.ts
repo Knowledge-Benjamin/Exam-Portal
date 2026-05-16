@@ -209,7 +209,7 @@ router.get('/google-drive/callback', async (req: Request, res: Response, next: N
 
     await updateGoogleOAuthRefreshToken(userId, tokens.refresh_token);
 
-    const frontendRedirect = `${req.protocol}://${req.get('host')}/dashboard/settings?drive=connected`;
+    const frontendRedirect = `${env.CORS_ORIGIN}/dashboard/settings?drive=connected`;
     res.redirect(frontendRedirect);
   } catch (err) {
     next(err);
