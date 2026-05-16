@@ -67,6 +67,8 @@ export function DashboardLayout() {
             </button>
           </div>
 
+          <div className="border-t border-white/10 mx-4 my-2" />
+
           <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-6 py-6 w-full">
             {!isSidebarCollapsed && (
               <div className="flex items-center justify-between w-full mb-4">
