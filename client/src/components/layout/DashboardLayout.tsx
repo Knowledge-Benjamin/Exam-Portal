@@ -46,7 +46,7 @@ export function DashboardLayout() {
     <div className="flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
       
       {/* Sidebar */}
-      <aside className="w-[280px] flex-shrink-0 bg-[var(--color-primary)] border-r border-white/10 flex flex-col z-20">
+      <aside className="w-[220px] flex-shrink-0 bg-[var(--color-primary)] border-r border-white/10 flex flex-col z-20">
         <div className="flex h-full flex-col">
           <div className="px-6 pt-6 pb-4 text-center">
               <h1 className="text-2xl font-semibold text-white">Exam Admin</h1>
