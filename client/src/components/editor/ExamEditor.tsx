@@ -80,7 +80,7 @@ export function ExamEditor({ content, onChange, readOnly = false }: ExamEditorPr
         .exam-prose em { font-style: italic; }
         .exam-prose u { text-decoration: underline; }
         .exam-prose s { text-decoration: line-through; }
-        .exam-prose blockquote { border-left: 3px solid #2d6fba; padding-left: 1rem; margin: 1em 0; color: #4b5563; font-style: italic; }
+        .exam-prose blockquote { border-left: 3px solid var(--color-primary); padding-left: 1rem; margin: 1em 0; color: #4b5563; font-style: italic; }
         .exam-prose hr { border: none; border-top: 1px solid #e5e7eb; margin: 1.5em 0; }
         .exam-prose code { background: #f3f4f6; padding: 0.15em 0.35em; border-radius: 3px; font-size: 0.9em; font-family: monospace; }
         .exam-prose pre { background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 6px; overflow-x: auto; margin-bottom: 1em; }
@@ -89,3 +89,5 @@ export function ExamEditor({ content, onChange, readOnly = false }: ExamEditorPr
     </div>
   );
 }
+
+

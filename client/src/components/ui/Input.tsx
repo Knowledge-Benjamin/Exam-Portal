@@ -22,7 +22,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             w-full h-12 px-4 rounded-xl border bg-white
             text-[15px] text-gray-900 placeholder:text-gray-400
             transition-all duration-200 ease-in-out
-            focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 focus:ring-offset-0
+            focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] focus:ring-offset-0
             disabled:opacity-50 disabled:bg-gray-50 disabled:cursor-not-allowed
             ${error 
               ? 'border-red-300 focus:border-red-500 focus:ring-red-500' 
@@ -39,3 +39,4 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
+

@@ -132,7 +132,7 @@ export function ExamBuilder() {
             ← Back to Exam
           </button>
           <h2 className="text-3xl font-bold text-white tracking-wide">Content Builder</h2>
-          <p className="text-[#00f2fe] text-sm tracking-widest uppercase mt-1">{exam.title}</p>
+          <p className="text-[var(--color-primary)] text-sm tracking-widest uppercase mt-1">{exam.title}</p>
         </div>
         {/* Allow editing SEB key even after publish so teachers can paste the key after generating it from the SEB tool. */}
         {(
@@ -140,7 +140,7 @@ export function ExamBuilder() {
             {!editingSebKey ? (
               <div className="flex items-center gap-3">
                 <span className="text-sm text-gray-400">SEB Key: {exam.sebConfigKey ? 'Set' : 'Not set'}</span>
-                <button onClick={() => setEditingSebKey(true)} className="px-3 py-2 bg-[#00f2fe] text-[#0f3261] rounded-lg text-xs font-bold">Edit</button>
+                <button onClick={() => setEditingSebKey(true)} className="px-3 py-2 bg-[var(--color-primary)] text-[var(--color-primary)] rounded-lg text-xs font-bold">Edit</button>
               </div>
             ) : (
               <div className="flex items-center gap-2">
@@ -148,7 +148,7 @@ export function ExamBuilder() {
                   value={sebKeyInput}
                   onChange={(e) => setSebKeyInput(e.target.value)}
                   placeholder="SEB Config Key"
-                  className="bg-[#0f3261] border border-white/10 rounded-lg p-2 text-sm text-white"
+                  className="bg-[var(--color-primary)] border border-white/10 rounded-lg p-2 text-sm text-white"
                 />
                 <button
                   onClick={async () => {
@@ -161,7 +161,7 @@ export function ExamBuilder() {
                       alert(err.error || 'Failed to save SEB Config Key');
                     }
                   }}
-                  className="px-3 py-2 bg-[#00ff87] text-[#0f3261] rounded-lg text-xs font-bold"
+                  className="px-3 py-2 bg-[var(--color-highlight)] text-[var(--color-primary)] rounded-lg text-xs font-bold"
                 >
                   Save
                 </button>
@@ -173,18 +173,18 @@ export function ExamBuilder() {
       </div>
 
       {exam.status !== 'draft' && (
-        <div className="bg-[#fe0979]/10 border border-[#fe0979]/20 text-[#fe0979] p-4 rounded-xl text-sm flex items-center gap-3">
-          <span className="w-2 h-2 rounded-full bg-[#fe0979] animate-pulse"></span>
+        <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)] p-4 rounded-xl text-sm flex items-center gap-3">
+          <span className="w-2 h-2 rounded-full bg-[var(--color-danger)] animate-pulse"></span>
           This exam is {exam.status}. You cannot modify its content.
         </div>
       )}
 
       {/* PDF Upload Section */}
       {exam.questionSource === 'pdf' && (
-        <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-danger)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
           
-          <h3 className="text-[12px] tracking-widest uppercase text-[#fe0979] font-bold mb-4 relative z-10">Upload Question Paper</h3>
+          <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-danger)] font-bold mb-4 relative z-10">Upload Question Paper</h3>
           <p className="text-sm text-gray-400 mb-6 relative z-10 max-w-lg">
             Upload the PDF that students will see on the left side of their screen during the exam.
           </p>
@@ -201,12 +201,12 @@ export function ExamBuilder() {
             <button 
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading || exam.status !== 'draft'}
-              className="px-6 py-3 bg-[#1a4a85] border border-[#fe0979]/50 hover:bg-[#fe0979]/10 text-[#fe0979] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50"
+              className="px-6 py-3 bg-[#1a4a85] border border-[var(--color-danger)]/50 hover:bg-[var(--color-danger)]/10 text-[var(--color-danger)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50"
             >
               {isUploading ? 'Uploading...' : 'Select PDF File'}
             </button>
             {exam.pdfPath && (
-              <span className="text-sm text-[#00ff87] font-medium flex items-center gap-2">
+              <span className="text-sm text-[var(--color-highlight)] font-medium flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                 {exam.pdfPath}
               </span>
@@ -216,12 +216,12 @@ export function ExamBuilder() {
       )}
 
       {/* Questions Section */}
-      <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"></div>
+      <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"></div>
         
         <div className="flex justify-between items-start mb-8 relative z-10">
           <div>
-            <h3 className="text-[12px] tracking-widest uppercase text-[#00f2fe] font-bold mb-2">Questions List</h3>
+            <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-primary)] font-bold mb-2">Questions List</h3>
             <p className="text-sm text-gray-400">
               {exam.questionSource === 'pdf' 
                 ? 'Add answer fields for the students to fill in corresponding to your PDF.' 
@@ -231,7 +231,7 @@ export function ExamBuilder() {
           {exam.status === 'draft' && !showForm && (
             <button 
               onClick={() => setShowForm(true)} 
-              className="px-6 py-3 bg-[#00f2fe] hover:bg-[#00d0db] text-[#0f3261] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,242,254,0.4)]"
+              className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[#00d0db] text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)]"
             >
               Add Question
             </button>
@@ -240,12 +240,12 @@ export function ExamBuilder() {
 
         {/* Question Form */}
         {showForm && exam.status === 'draft' && (
-          <form onSubmit={handleAddQuestion} className="bg-[#0f3261] p-6 rounded-xl border border-[#00f2fe]/30 mb-8 space-y-6 relative z-10 shadow-[0_0_20px_rgba(0,242,254,0.05)]">
+          <form onSubmit={handleAddQuestion} className="bg-[var(--color-primary)] p-6 rounded-xl border border-[var(--color-primary)]/30 mb-8 space-y-6 relative z-10 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.05)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-[10px] tracking-widest uppercase text-gray-400 font-bold">Type</label>
                 <select 
-                  className="w-full bg-[#1a4478] text-white border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-colors" 
+                  className="w-full bg-[var(--color-primary)] text-white border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors" 
                   value={qType} 
                   onChange={(e) => setQType(e.target.value as QuestionType)}
                 >
@@ -262,7 +262,7 @@ export function ExamBuilder() {
                   required
                   value={qMarks}
                   onChange={(e) => setQMarks(parseInt(e.target.value) || 1)}
-                  className="w-full bg-[#1a4478] text-white border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-colors"
+                  className="w-full bg-[var(--color-primary)] text-white border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors"
                 />
               </div>
             </div>
@@ -275,7 +275,7 @@ export function ExamBuilder() {
                 value={qPrompt}
                 onChange={(e) => setQPrompt(e.target.value)}
                 placeholder={exam.questionSource === 'pdf' ? 'e.g. Question 1 (a)' : 'What is the capital of France?'}
-                className="w-full bg-[#1a4478] text-white placeholder-gray-600 border border-white/10 rounded-lg p-4 text-sm focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-colors resize-y custom-scrollbar"
+                className="w-full bg-[var(--color-primary)] text-white placeholder-gray-600 border border-white/10 rounded-lg p-4 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors resize-y custom-scrollbar"
               />
             </div>
 
@@ -294,13 +294,13 @@ export function ExamBuilder() {
                         }}
                         placeholder={`Option ${idx + 1}`}
                         required={idx < 2}
-                        className="flex-1 bg-[#1a4478] text-white placeholder-gray-600 border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-colors"
+                        className="flex-1 bg-[var(--color-primary)] text-white placeholder-gray-600 border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors"
                       />
                       <button 
                         type="button" 
                         onClick={() => setQOptions(qOptions.filter((_, i) => i !== idx))}
                         disabled={qOptions.length <= 2}
-                        className="px-4 bg-[#1a4478] border border-red-500/30 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors disabled:opacity-50"
+                        className="px-4 bg-[var(--color-primary)] border border-red-500/30 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors disabled:opacity-50"
                       >
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
@@ -310,7 +310,7 @@ export function ExamBuilder() {
                 <button 
                   type="button" 
                   onClick={() => setQOptions([...qOptions, ''])}
-                  className="px-4 py-2 border border-[#00f2fe]/30 hover:bg-[#00f2fe]/10 text-[#00f2fe] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all"
+                  className="px-4 py-2 border border-[var(--color-primary)]/30 hover:bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all"
                 >
                   Add Option
                 </button>
@@ -327,7 +327,7 @@ export function ExamBuilder() {
               </button>
               <button 
                 type="submit"
-                className="px-6 py-2.5 bg-[#00f2fe] hover:bg-[#00d0db] text-[#0f3261] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,242,254,0.4)]"
+                className="px-6 py-2.5 bg-[var(--color-primary)] hover:bg-[#00d0db] text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)]"
               >
                 Save Question
               </button>
@@ -338,20 +338,20 @@ export function ExamBuilder() {
         {/* Questions List */}
         <div className="space-y-4 relative z-10">
           {questions.length === 0 && !showForm ? (
-            <div className="text-center py-16 border border-white/5 border-dashed rounded-xl bg-[#0f3261]/50">
+            <div className="text-center py-16 border border-white/5 border-dashed rounded-xl bg-[var(--color-primary)]/50">
               <p className="text-gray-500 text-sm tracking-wide">No questions added yet.</p>
             </div>
           ) : (
             questions.map((q, idx) => (
-              <div key={q.id} className="bg-[#0f3261] border border-white/5 rounded-xl p-6 flex justify-between items-start group hover:border-[#00f2fe]/50 transition-all duration-300 shadow-lg relative overflow-hidden">
-                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#00f2fe]/0 group-hover:bg-[#00f2fe] transition-colors duration-300"></div>
+              <div key={q.id} className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-6 flex justify-between items-start group hover:border-[var(--color-primary)]/50 transition-all duration-300 shadow-lg relative overflow-hidden">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-primary)]/0 group-hover:bg-[var(--color-primary)] transition-colors duration-300"></div>
                 <div className="pl-2">
                   <div className="flex items-center gap-3 mb-3">
-                    <span className="text-[#00f2fe] font-black text-lg tracking-wider">Q{idx + 1}.</span>
+                    <span className="text-[var(--color-primary)] font-black text-lg tracking-wider">Q{idx + 1}.</span>
                     <span className="text-[10px] font-bold uppercase tracking-widest bg-white/5 px-2 py-1 rounded text-gray-300 border border-white/10">
                       {QUESTION_TYPE_LABELS[q.type]}
                     </span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-[#00ff87]">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-highlight)]">
                       {q.marks} mark{q.marks !== 1 ? 's' : ''}
                     </span>
                   </div>
@@ -388,3 +388,5 @@ export function ExamBuilder() {
     </div>
   );
 }
+
+

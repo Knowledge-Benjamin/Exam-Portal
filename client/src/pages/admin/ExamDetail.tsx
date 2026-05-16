@@ -92,14 +92,14 @@ export function ExamDetail() {
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in duration-500">
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#1a4478] border border-white/5 p-6 sm:p-8 rounded-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--color-primary)] border border-white/5 p-6 sm:p-8 rounded-xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
         <div className="relative z-10">
           <div className="flex items-center gap-4 mb-2">
             <h2 className="text-2xl md:text-3xl font-bold text-white tracking-wide">{exam.title}</h2>
             <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-sm border ${
-              exam.status === 'active' ? 'text-[#fe0979] border-[#fe0979]/30 bg-[#fe0979]/10' :
-              exam.status === 'draft' ? 'text-[#00ff87] border-[#00ff87]/30 bg-[#00ff87]/10' :
+              exam.status === 'active' ? 'text-[var(--color-danger)] border-[var(--color-danger)]/30 bg-[var(--color-danger)]/10' :
+              exam.status === 'draft' ? 'text-[var(--color-highlight)] border-[var(--color-highlight)]/30 bg-[var(--color-highlight)]/10' :
               'text-gray-400 border-gray-400/30 bg-gray-400/10'
             }`}>
               {exam.status}
@@ -113,7 +113,7 @@ export function ExamDetail() {
             <button 
               onClick={handlePublish} 
               disabled={isPublishing} 
-              className="px-6 py-2.5 bg-[#fe0979] hover:bg-[#d60665] text-white rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(254,9,121,0.4)] disabled:opacity-50"
+              className="px-6 py-2.5 bg-[var(--color-danger)] hover:bg-[#d60665] text-white rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-danger-rgb),0.4)] disabled:opacity-50"
             >
               {isPublishing ? 'Publishing...' : 'Publish Exam'}
             </button>
@@ -132,7 +132,7 @@ export function ExamDetail() {
                 onClick={handleRepublish}
                 disabled={isRepublishing || !canRepublish}
                 title={!canRepublish ? 'Exam window has passed — republishing is disabled' : 'Reopen exam for students'}
-                className="px-6 py-2.5 bg-[#f5a623] hover:bg-[#e09600] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(245,166,35,0.3)]"
+                className="px-6 py-2.5 bg-[var(--color-highlight)] hover:bg-[#e09600] disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-highlight-rgb),0.3)]"
               >
                 {isRepublishing ? 'Republishing...' : 'Republish Exam'}
               </button>
@@ -153,18 +153,18 @@ export function ExamDetail() {
       {/* SEB Gate URL & Config Key Section */}
       {exam.sebGateUrl && (
         <div className="space-y-6">
-          <div className="bg-[#1a4478] border border-[#00ff87]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(0,255,135,0.05)]">
-            <div className="absolute right-0 top-0 w-64 h-64 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
-            <h3 className="text-[#00ff87] font-bold tracking-widest text-sm uppercase mb-3 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#00ff87] animate-pulse"></span>
+          <div className="bg-[var(--color-primary)] border border-[var(--color-highlight)]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(var(--color-highlight-rgb),0.05)]">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-[var(--color-highlight)] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
+            <h3 className="text-[var(--color-highlight)] font-bold tracking-widest text-sm uppercase mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[var(--color-highlight)] animate-pulse"></span>
               Exam is Published
             </h3>
             <p className="mb-4 text-sm text-gray-400">
-              Embed this URL in your Safe Exam Browser <code className="text-[#00ff87]">.seb</code> configuration file.
+              Embed this URL in your Safe Exam Browser <code className="text-[var(--color-highlight)]">.seb</code> configuration file.
               Students must use this exact SEB profile to take the exam.
             </p>
             <div className="flex items-center gap-3">
-              <code className="bg-[#0f3261] px-4 py-3 rounded-lg flex-1 select-all overflow-x-auto text-[#00ff87] border border-white/10 font-mono text-sm tracking-tight shadow-inner">
+              <code className="bg-[var(--color-primary)] px-4 py-3 rounded-lg flex-1 select-all overflow-x-auto text-[var(--color-highlight)] border border-white/10 font-mono text-sm tracking-tight shadow-inner">
                 {exam.sebGateUrl}
               </code>
               <button 
@@ -172,7 +172,7 @@ export function ExamDetail() {
                   navigator.clipboard.writeText(exam.sebGateUrl!);
                   alert('Copied to clipboard');
                 }}
-                className="px-6 py-3 border border-[#00ff87]/50 hover:bg-[#00ff87]/10 text-[#00ff87] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all whitespace-nowrap"
+                className="px-6 py-3 border border-[var(--color-highlight)]/50 hover:bg-[var(--color-highlight)]/10 text-[var(--color-highlight)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all whitespace-nowrap"
               >
                 Copy URL
               </button>
@@ -180,11 +180,11 @@ export function ExamDetail() {
           </div>
 
           {/* SEB Config Key Input */}
-          <div className="bg-[#1a4478] border border-[#00f2fe]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(0,242,254,0.05)]">
-            <div className="absolute right-0 top-0 w-64 h-64 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
+          <div className="bg-[var(--color-primary)] border border-[var(--color-primary)]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.05)]">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
             <div className="flex items-start justify-between gap-4 relative z-10">
               <div className="flex-1">
-                <h3 className="text-[#00f2fe] font-bold tracking-widest text-sm uppercase mb-2">Safe Exam Browser Config Key</h3>
+                <h3 className="text-[var(--color-primary)] font-bold tracking-widest text-sm uppercase mb-2">Safe Exam Browser Config Key</h3>
                 <p className="text-xs text-gray-400 mb-4 leading-relaxed">
                   1. Use the gate URL above with the SEB Configuration Tool to generate a config key. 2. Paste the generated key below to enforce strict SEB settings validation.
                 </p>
@@ -193,11 +193,11 @@ export function ExamDetail() {
             {!editingSebKey ? (
               <div className="flex items-center gap-3 relative z-10">
                 {exam.sebConfigKey ? (
-                  <div className="flex-1 flex items-center gap-3 bg-[#0f3261] px-4 py-3 rounded-lg border border-[#00ff87]/30">
-                    <span className="text-[#00ff87] text-sm font-mono truncate">{exam.sebConfigKey.substring(0, 16)}...</span>
+                  <div className="flex-1 flex items-center gap-3 bg-[var(--color-primary)] px-4 py-3 rounded-lg border border-[var(--color-highlight)]/30">
+                    <span className="text-[var(--color-highlight)] text-sm font-mono truncate">{exam.sebConfigKey.substring(0, 16)}...</span>
                     <button 
                       onClick={() => setEditingSebKey(true)}
-                      className="ml-auto px-3 py-2 bg-[#00f2fe] text-[#0f3261] rounded-lg text-xs font-bold hover:bg-[#00d0db] transition-all"
+                      className="ml-auto px-3 py-2 bg-[var(--color-primary)] text-[var(--color-primary)] rounded-lg text-xs font-bold hover:bg-[#00d0db] transition-all"
                     >
                       Update
                     </button>
@@ -205,7 +205,7 @@ export function ExamDetail() {
                 ) : (
                   <button 
                     onClick={() => setEditingSebKey(true)}
-                    className="flex-1 px-4 py-3 border border-[#00f2fe]/50 hover:bg-[#00f2fe]/10 text-[#00f2fe] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all"
+                    className="flex-1 px-4 py-3 border border-[var(--color-primary)]/50 hover:bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all"
                   >
                     Add Config Key
                   </button>
@@ -218,7 +218,7 @@ export function ExamDetail() {
                   value={sebKeyInput}
                   onChange={(e) => setSebKeyInput(e.target.value)}
                   placeholder="Paste the SEB config key here..."
-                  className="flex-1 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-all text-sm"
+                  className="flex-1 bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all text-sm"
                 />
                 <button
                   onClick={async () => {
@@ -231,7 +231,7 @@ export function ExamDetail() {
                       alert(err.error || 'Failed to save SEB Config Key');
                     }
                   }}
-                  className="px-4 py-3 bg-[#00ff87] hover:bg-[#00d671] text-[#0f3261] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)]"
+                  className="px-4 py-3 bg-[var(--color-highlight)] hover:bg-[var(--color-highlight)] text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-highlight-rgb),0.3)]"
                 >
                   Save
                 </button>
@@ -254,39 +254,39 @@ export function ExamDetail() {
         {/* Left Column: Details & Questions */}
         <div className="lg:col-span-2 space-y-8">
           
-          <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+          <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
             <h3 className="text-[12px] tracking-widest uppercase text-gray-500 font-bold mb-6">Exam Settings</h3>
             
             <div className="grid grid-cols-2 gap-8 text-sm">
               <div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#00f2fe] font-bold mb-2">START TIME</p>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-primary)] font-bold mb-2">START TIME</p>
                 <p className="text-white">{formatDate(exam.startTime)}</p>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#00f2fe] font-bold mb-2">DURATION</p>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-primary)] font-bold mb-2">DURATION</p>
                 <p className="text-white">{formatDuration(exam.durationMinutes)}</p>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#00f2fe] font-bold mb-2">QUESTION SOURCE</p>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-primary)] font-bold mb-2">QUESTION SOURCE</p>
                 <p className="text-white">{exam.questionSource === 'pdf' ? 'PDF Upload' : 'Custom Builder'}</p>
               </div>
               <div>
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#00f2fe] font-bold mb-2">WINDOW BUFFER</p>
+                <p className="text-[10px] tracking-[0.2em] uppercase text-[var(--color-primary)] font-bold mb-2">WINDOW BUFFER</p>
                 <p className="text-white">±{exam.windowBufferMinutes} minutes</p>
               </div>
             </div>
           </div>
 
-          <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+          <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-danger)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
             
             <div className="flex justify-between items-center mb-6 relative z-10">
               <h3 className="text-[12px] tracking-widest uppercase text-gray-500 font-bold">Exam Content</h3>
               {exam.status === 'draft' && (
                 <button 
                   onClick={() => navigate(`/dashboard/exams/${exam.id}/builder`)}
-                  className="px-4 py-2 border border-white/10 hover:border-[#fe0979]/50 hover:text-[#fe0979] text-gray-400 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase transition-all"
+                  className="px-4 py-2 border border-white/10 hover:border-[var(--color-danger)]/50 hover:text-[var(--color-danger)] text-gray-400 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase transition-all"
                 >
                   Manage Content
                 </button>
@@ -294,21 +294,21 @@ export function ExamDetail() {
             </div>
             
             {exam.questionSource === 'pdf' ? (
-              <div className="bg-[#0f3261] border border-white/5 p-6 rounded-lg text-center relative z-10">
+              <div className="bg-[var(--color-primary)] border border-white/5 p-6 rounded-lg text-center relative z-10">
                 {exam.pdfPath ? (
-                  <p className="text-[#00ff87] text-sm tracking-wide flex items-center justify-center gap-2">
+                  <p className="text-[var(--color-highlight)] text-sm tracking-wide flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     PDF Question Paper Uploaded
                   </p>
                 ) : (
-                  <p className="text-[#fe0979] text-sm tracking-wide flex items-center justify-center gap-2">
+                  <p className="text-[var(--color-danger)] text-sm tracking-wide flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
                     No PDF Uploaded Yet
                   </p>
                 )}
               </div>
             ) : (
-              <div className="bg-[#0f3261] border border-white/5 p-6 rounded-lg text-center relative z-10">
+              <div className="bg-[var(--color-primary)] border border-white/5 p-6 rounded-lg text-center relative z-10">
                 <p className="text-gray-400 text-sm tracking-wide">Questions are managed directly in the builder.</p>
               </div>
             )}
@@ -319,16 +319,16 @@ export function ExamDetail() {
         <div className="space-y-8">
 
 
-          <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-            <h3 className="text-[12px] tracking-widest uppercase text-[#00ff87] font-bold mb-3 relative z-10">Submissions</h3>
+          <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-highlight)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+            <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-highlight)] font-bold mb-3 relative z-10">Submissions</h3>
             <p className="text-xs text-gray-500 mb-6 leading-relaxed relative z-10">
               Review answers, verify integrity, and grade completed assessments.
             </p>
             <button 
               disabled={exam.status === 'draft'}
               onClick={() => navigate(`/dashboard/exams/${exam.id}/submissions`)}
-              className="w-full px-4 py-3 bg-[#00ff87] hover:bg-[#00d671] text-[#0f3261] rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,255,135,0.4)] disabled:opacity-50 disabled:shadow-none relative z-10"
+              className="w-full px-4 py-3 bg-[var(--color-highlight)] hover:bg-[var(--color-highlight)] text-[var(--color-primary)] rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-highlight-rgb),0.4)] disabled:opacity-50 disabled:shadow-none relative z-10"
             >
               View Submissions
             </button>
@@ -338,3 +338,5 @@ export function ExamDetail() {
     </div>
   );
 }
+
+

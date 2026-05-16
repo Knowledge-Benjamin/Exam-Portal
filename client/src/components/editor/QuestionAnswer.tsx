@@ -41,20 +41,20 @@ function MCQAnswer({
             onClick={() => !readOnly && onChange(opt)}
             className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 group ${
               selected
-                ? 'bg-[#2d6fba]/20 border-[#00f2fe] text-white shadow-[0_0_10px_rgba(0,242,254,0.2)]'
-                : 'bg-[#0f3261]/50 border-white/10 text-gray-300 hover:border-white/30 hover:bg-[#0f3261]'
+                ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)] text-white shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.2)]'
+                : 'bg-[var(--color-primary)]/50 border-white/10 text-gray-300 hover:border-white/30 hover:bg-[var(--color-primary)]'
             } ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
           >
             <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 border transition-all ${
               selected
-                ? 'bg-[#00f2fe] border-[#00f2fe] text-[#0f3261]'
+                ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-primary)]'
                 : 'border-white/20 text-gray-400 group-hover:border-white/40'
             }`}>
               {label}
             </span>
             <span className="text-sm leading-snug">{opt}</span>
             {selected && (
-              <svg className="w-4 h-4 text-[#00f2fe] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-4 h-4 text-[var(--color-primary)] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -83,7 +83,7 @@ function ShortAnswer({
       onChange={(e) => onChange(e.target.value)}
       readOnly={readOnly}
       placeholder="Type your answer here..."
-      className="w-full mt-4 bg-[#0f3261]/50 border border-white/10 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#00f2fe]/50 focus:ring-1 focus:ring-[#00f2fe]/30 transition-all"
+      className="w-full mt-4 bg-[var(--color-primary)]/50 border border-white/10 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]/50 focus:ring-1 focus:ring-[var(--color-primary)]/30 transition-all"
     />
   );
 }
@@ -122,7 +122,7 @@ function LongAnswer({
   }, [value]);
 
   return (
-    <div className="mt-4 border border-white/10 rounded-xl overflow-hidden bg-[#0f3261]/50 focus-within:border-[#00f2fe]/40 focus-within:ring-1 focus-within:ring-[#00f2fe]/20 transition-all">
+    <div className="mt-4 border border-white/10 rounded-xl overflow-hidden bg-[var(--color-primary)]/50 focus-within:border-[var(--color-primary)]/40 focus-within:ring-1 focus-within:ring-[var(--color-primary)]/20 transition-all">
       {!readOnly && <EditorToolbar editor={editor} compact />}
       <EditorContent editor={editor} />
       <style>{`
@@ -160,18 +160,18 @@ export function QuestionAnswer({ question, index, value, onChange, readOnly = fa
   return (
     <div
       id={`question-${question.id}`}
-      className="bg-[#1a4478] border border-white/5 rounded-2xl overflow-hidden shadow-lg scroll-mt-4"
+      className="bg-[var(--color-primary)] border border-white/5 rounded-2xl overflow-hidden shadow-lg scroll-mt-4"
     >
       {/* Question header */}
-      <div className="bg-[#0f3261]/70 border-b border-white/5 px-6 py-4 flex justify-between items-start gap-4">
+      <div className="bg-[var(--color-primary)]/70 border-b border-white/5 px-6 py-4 flex justify-between items-start gap-4">
         <div className="flex items-start gap-3">
-          <span className="w-8 h-8 rounded-full bg-[#2d6fba] text-white text-sm font-black flex items-center justify-center shrink-0 mt-0.5">
+          <span className="w-8 h-8 rounded-full bg-[var(--color-primary)] text-white text-sm font-black flex items-center justify-center shrink-0 mt-0.5">
             {index + 1}
           </span>
           <p className="text-white text-sm leading-relaxed font-medium">{question.prompt}</p>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#00f2fe] bg-[#00f2fe]/10 border border-[#00f2fe]/20 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-2 py-0.5 rounded">
             {TYPE_LABELS[question.type] ?? question.type}
           </span>
           <span className="text-[10px] text-gray-400 font-bold">
@@ -195,3 +195,5 @@ export function QuestionAnswer({ question, index, value, onChange, readOnly = fa
     </div>
   );
 }
+
+

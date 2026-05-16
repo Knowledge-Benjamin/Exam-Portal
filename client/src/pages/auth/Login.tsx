@@ -48,14 +48,14 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#2d6fba] font-sans">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[var(--color-primary)] font-sans">
       
       {/* Mesh Gradient Background Simulation */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
         {/* Top left lighter blue */}
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-[#6aaae6] rounded-full mix-blend-normal filter blur-[140px] opacity-90"></div>
+        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-[var(--color-primary)] rounded-full mix-blend-normal filter blur-[140px] opacity-90"></div>
         {/* Bottom right darker blue */}
-        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[80%] bg-[#0f3261] rounded-full mix-blend-normal filter blur-[150px] opacity-100"></div>
+        <div className="absolute bottom-[-20%] right-[-10%] w-[70%] h-[80%] bg-[var(--color-primary)] rounded-full mix-blend-normal filter blur-[150px] opacity-100"></div>
         {/* Center-left very dark base to create gradient depth */}
         <div className="absolute top-[30%] left-[20%] w-[50%] h-[50%] bg-[#1a4a85] rounded-full mix-blend-normal filter blur-[120px] opacity-60"></div>
       </div>
@@ -63,7 +63,7 @@ export function Login() {
       <div className="relative z-10 w-full max-w-[380px] flex flex-col items-center px-6 py-12">
         
         {/* Circular Profile Icon matching the image */}
-        <div className="w-[88px] h-[88px] bg-[#1a4478] rounded-full flex items-center justify-center mb-6 shadow-lg shadow-black/10">
+        <div className="w-[88px] h-[88px] bg-[var(--color-primary)] rounded-full flex items-center justify-center mb-6 shadow-lg shadow-black/10">
           <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
@@ -144,8 +144,8 @@ export function Login() {
             <button
               type="submit"
               disabled={isLoading}
-              style={{ backgroundColor: '#0c3975' }}
-              className="w-full py-3.5 rounded-md text-white text-[13px] font-semibold tracking-wider transition-all duration-300 hover:bg-[#092955] hover:shadow-lg hover:-translate-y-[1px] active:scale-[0.98] disabled:opacity-70 flex items-center justify-center"
+              style={{ backgroundColor: 'var(--color-primary)' }}
+              className="w-full py-3.5 rounded-md text-white text-[13px] font-semibold tracking-wider transition-all duration-300 hover:bg-[var(--color-primary)] hover:shadow-lg hover:-translate-y-[1px] active:scale-[0.98] disabled:opacity-70 flex items-center justify-center"
             >
               {isLoading ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -163,3 +163,5 @@ export function Login() {
     </div>
   );
 }
+
+

@@ -26,14 +26,14 @@ function ErrorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f3261] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[var(--color-primary)] flex items-center justify-center p-4">
       <div className="text-center max-w-md">
-        <div className="text-6xl font-black text-[#00f2fe] mb-4">{status || '!'}</div>
+        <div className="text-6xl font-black text-[var(--color-primary)] mb-4">{status || '!'}</div>
         <h1 className="text-2xl font-bold text-white mb-2">Something went wrong</h1>
         <p className="text-gray-400 mb-8">{message}</p>
         <Link
           to="/dashboard"
-          className="inline-block px-6 py-3 bg-[#2d6fba] hover:bg-[#1a4478] text-white rounded-xl font-bold transition-colors"
+          className="inline-block px-6 py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary)] text-white rounded-xl font-bold transition-colors"
         >
           Return to Dashboard
         </Link>
@@ -105,3 +105,5 @@ createRoot(document.getElementById('root')!).render(
     <RouterProvider router={router} />
   </StrictMode>
 );
+
+

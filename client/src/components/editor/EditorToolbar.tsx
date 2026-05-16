@@ -26,7 +26,7 @@ function ToolbarBtn({
       title={title}
       className={`h-8 min-w-[32px] px-2 rounded text-sm font-medium transition-all select-none flex items-center justify-center ${
         active
-          ? 'bg-[#2d6fba] text-white shadow-[0_0_8px_rgba(0,242,254,0.3)]'
+          ? 'bg-[var(--color-primary)] text-white shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.3)]'
           : 'text-gray-300 hover:bg-white/10 hover:text-white'
       } disabled:opacity-30 disabled:cursor-not-allowed`}
     >
@@ -43,7 +43,7 @@ export function EditorToolbar({ editor, compact = false }: ToolbarProps) {
   if (!editor) return null;
 
   return (
-    <div className={`flex flex-wrap items-center gap-0.5 bg-[#0f3261] border-b border-white/10 px-3 py-1.5 ${compact ? 'text-xs' : ''}`}>
+    <div className={`flex flex-wrap items-center gap-0.5 bg-[var(--color-primary)] border-b border-white/10 px-3 py-1.5 ${compact ? 'text-xs' : ''}`}>
       {/* History */}
       <ToolbarBtn title="Undo (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 010 16H3m0-16l4-4m-4 4l4 4"/></svg>
@@ -124,3 +124,5 @@ export function EditorToolbar({ editor, compact = false }: ToolbarProps) {
     </div>
   );
 }
+
+

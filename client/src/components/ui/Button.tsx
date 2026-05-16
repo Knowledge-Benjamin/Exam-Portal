@@ -10,10 +10,10 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 border border-transparent shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] active:scale-[0.98]',
+  primary: 'bg-[var(--color-primary)] text-white hover:bg-[#0f3f8a] border border-transparent shadow-[0_4px_14px_0_rgba(var(--color-primary-rgb),0.39)] active:scale-[0.98]',
   secondary: 'bg-white text-zinc-800 border border-zinc-200 hover:bg-zinc-50 shadow-sm active:scale-[0.98]',
-  danger: 'bg-red-600 text-white hover:bg-red-700 border border-transparent shadow-sm active:scale-[0.98]',
-  ghost: 'bg-transparent text-zinc-600 hover:text-blue-600 hover:bg-blue-50',
+  danger: 'bg-[var(--color-danger)] text-white hover:bg-[#a00505] border border-transparent shadow-sm active:scale-[0.98]',
+  ghost: 'bg-transparent text-zinc-600 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10',
 };
 
 const sizeStyles = {
@@ -45,7 +45,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           inline-flex items-center justify-center gap-2 
           rounded-xl font-semibold
           transition-all duration-200
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-600
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]
           disabled:opacity-50 disabled:pointer-events-none
           ${variantStyles[variant]} 
           ${sizeStyles[size]} 
@@ -68,3 +68,5 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
+
+

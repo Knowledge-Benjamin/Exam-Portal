@@ -146,8 +146,8 @@ export function Settings() {
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
       
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[#1a4478] border border-white/5 p-6 sm:p-8 rounded-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-[var(--color-primary)] border border-white/5 p-6 sm:p-8 rounded-xl relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[100px] opacity-20"></div>
         <div className="relative z-10">
           <h2 className="text-2xl md:text-3xl font-bold text-white tracking-wide">Account Settings</h2>
           <p className="text-gray-400 text-sm mt-2">Manage your profile and security credentials.</p>
@@ -157,9 +157,9 @@ export function Settings() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Profile Form */}
-        <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-          <h3 className="text-[12px] tracking-widest uppercase text-[#00f2fe] font-bold mb-6 relative z-10">Profile Information</h3>
+        <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+          <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-primary)] font-bold mb-6 relative z-10">Profile Information</h3>
           
           <form onSubmit={handleUpdateProfile} className="space-y-5 relative z-10">
             <div>
@@ -169,7 +169,7 @@ export function Settings() {
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all text-sm"
               />
             </div>
             <div>
@@ -179,17 +179,17 @@ export function Settings() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all text-sm"
               />
             </div>
 
             {profileError && <p className="text-red-400 text-xs">{profileError}</p>}
-            {profileSuccess && <p className="text-[#00ff87] text-xs">{profileSuccess}</p>}
+            {profileSuccess && <p className="text-[var(--color-highlight)] text-xs">{profileSuccess}</p>}
 
             <button
               type="submit"
               disabled={isUpdatingProfile}
-              className="w-full mt-4 px-6 py-3 bg-[#00f2fe]/10 hover:bg-[#00f2fe]/20 text-[#00f2fe] border border-[#00f2fe]/50 rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,242,254,0.1)] disabled:opacity-50"
+              className="w-full mt-4 px-6 py-3 bg-[var(--color-primary)]/10 hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] border border-[var(--color-primary)]/50 rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.1)] disabled:opacity-50"
             >
               {isUpdatingProfile ? 'Saving...' : 'Save Profile'}
             </button>
@@ -197,9 +197,9 @@ export function Settings() {
         </div>
 
         {/* Password Form */}
-        <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[#fe0979] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-          <h3 className="text-[12px] tracking-widest uppercase text-[#fe0979] font-bold mb-6 relative z-10">Change Password</h3>
+        <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-danger)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+          <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-danger)] font-bold mb-6 relative z-10">Change Password</h3>
           
           <form onSubmit={handleUpdatePassword} className="space-y-5 relative z-10">
             <div>
@@ -209,7 +209,7 @@ export function Settings() {
                 required
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#fe0979] focus:ring-1 focus:ring-[#fe0979] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-danger)] focus:ring-1 focus:ring-[var(--color-danger)] transition-all text-sm"
               />
             </div>
             <div>
@@ -219,7 +219,7 @@ export function Settings() {
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#fe0979] focus:ring-1 focus:ring-[#fe0979] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-danger)] focus:ring-1 focus:ring-[var(--color-danger)] transition-all text-sm"
               />
               <p className="text-[10px] text-gray-500 mt-2">Min 8 chars, 1 uppercase, 1 number.</p>
             </div>
@@ -230,17 +230,17 @@ export function Settings() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#fe0979] focus:ring-1 focus:ring-[#fe0979] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-danger)] focus:ring-1 focus:ring-[var(--color-danger)] transition-all text-sm"
               />
             </div>
 
             {passwordError && <p className="text-red-400 text-xs">{passwordError}</p>}
-            {passwordSuccess && <p className="text-[#00ff87] text-xs">{passwordSuccess}</p>}
+            {passwordSuccess && <p className="text-[var(--color-highlight)] text-xs">{passwordSuccess}</p>}
 
             <button
               type="submit"
               disabled={isUpdatingPassword}
-              className="w-full mt-4 px-6 py-3 bg-[#fe0979] hover:bg-[#d60665] text-white rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(254,9,121,0.4)] disabled:opacity-50"
+              className="w-full mt-4 px-6 py-3 bg-[var(--color-danger)] hover:bg-[#d60665] text-white rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-danger-rgb),0.4)] disabled:opacity-50"
             >
               {isUpdatingPassword ? 'Updating...' : 'Update Password'}
             </button>
@@ -250,20 +250,20 @@ export function Settings() {
       </div>
 
       {/* System Configuration Form */}
-      <div className="bg-[#1a4478] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-        <h3 className="text-[12px] tracking-widest uppercase text-[#00ff87] font-bold mb-6 relative z-10">System Configuration</h3>
+      <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--color-highlight)] rounded-full mix-blend-screen filter blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+        <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-highlight)] font-bold mb-6 relative z-10">System Configuration</h3>
         <p className="text-sm text-gray-400 mb-6 relative z-10">Configure your Google Drive integration for secure PDF storage and your Safe Exam Browser Config Key for exam enforcement.</p>
 
-          <div className="bg-[#0f3261] border border-white/10 rounded-xl p-6 mb-6">
+          <div className="bg-[var(--color-primary)] border border-white/10 rounded-xl p-6 mb-6">
             <div className="flex flex-col md:flex-row justify-between gap-4">
               <div>
-                <h4 className="text-sm uppercase tracking-[0.25em] text-[#00ff87] font-bold mb-2">OAuth Drive Connection</h4>
+                <h4 className="text-sm uppercase tracking-[0.25em] text-[var(--color-highlight)] font-bold mb-2">OAuth Drive Connection</h4>
                 <p className="text-xs text-gray-400">Connect your Google account once to enable uploads directly to your Google Drive without needing a service account PEM key.</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-300">Status:</span>
-                <span className={`text-xs font-bold ${user?.googleDriveOAuthConnected ? 'text-[#00ff87]' : 'text-[#fe0979]'}`}>
+                <span className={`text-xs font-bold ${user?.googleDriveOAuthConnected ? 'text-[var(--color-highlight)]' : 'text-[var(--color-danger)]'}`}>
                   {user?.googleDriveOAuthConnected ? 'Connected' : 'Not connected'}
                 </span>
               </div>
@@ -281,7 +281,7 @@ export function Settings() {
                     : window.location.origin;
                   window.location.href = `${backendOrigin}/api/auth/google-drive/start`;
                 }}
-                className="inline-flex items-center justify-center rounded-lg bg-[#00ff87] px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[#0f3261] transition-colors hover:bg-[#7cf0a9]"
+                className="inline-flex items-center justify-center rounded-lg bg-[var(--color-highlight)] px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[var(--color-primary)] transition-colors hover:bg-[#7cf0a9]"
               >
                 Connect Google Drive
               </button>
@@ -297,7 +297,7 @@ export function Settings() {
                 value={googleEmail}
                 onChange={(e) => setGoogleEmail(e.target.value)}
                 placeholder="e.g. exam-bot@project.iam.gserviceaccount.com"
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-highlight)] focus:ring-1 focus:ring-[var(--color-highlight)] transition-all text-sm"
               />
             </div>
             <div>
@@ -307,7 +307,7 @@ export function Settings() {
                 value={googleFolderId}
                 onChange={(e) => setGoogleFolderId(e.target.value)}
                 placeholder="e.g. 1aBcD2eF... (personal or shared drive folder ID)"
-                className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
+                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--color-highlight)] focus:ring-1 focus:ring-[var(--color-highlight)] transition-all text-sm"
               />
             </div>
           </div>
@@ -320,7 +320,7 @@ export function Settings() {
               placeholder="-----BEGIN PRIVATE KEY-----
 ...
 -----END PRIVATE KEY-----"
-              className="w-full h-32 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-xs resize-y custom-scrollbar"
+              className="w-full h-32 bg-[var(--color-primary)] border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:outline-none focus:border-[var(--color-highlight)] focus:ring-1 focus:ring-[var(--color-highlight)] transition-all text-xs resize-y custom-scrollbar"
             />
             <p className="text-[10px] text-gray-500 mt-2">Optional: Provide a service account private key (PEM format) for advanced shared drive setups. If you've connected OAuth above, you can leave this blank for most use cases. Do not submit literal backslash-n sequences (\n). Use a shared drive folder ID with service account keys.</p>
           </div>
@@ -328,12 +328,12 @@ export function Settings() {
           {/* SEB Config Key moved to per-exam settings in the Exam Builder */}
 
           {configError && <p className="text-red-400 text-xs">{configError}</p>}
-          {configSuccess && <p className="text-[#00ff87] text-xs">{configSuccess}</p>}
+          {configSuccess && <p className="text-[var(--color-highlight)] text-xs">{configSuccess}</p>}
 
           <button
             type="submit"
             disabled={isUpdatingConfig}
-            className="w-full mt-4 px-6 py-3 bg-[#00ff87]/10 hover:bg-[#00ff87]/20 text-[#00ff87] border border-[#00ff87]/50 rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,255,135,0.1)] disabled:opacity-50"
+            className="w-full mt-4 px-6 py-3 bg-[var(--color-highlight)]/10 hover:bg-[var(--color-highlight)]/20 text-[var(--color-highlight)] border border-[var(--color-highlight)]/50 rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-highlight-rgb),0.1)] disabled:opacity-50"
           >
             {isUpdatingConfig ? 'Saving...' : 'Save System Configuration'}
           </button>
@@ -343,3 +343,5 @@ export function Settings() {
     </div>
   );
 }
+
+

@@ -27,7 +27,7 @@ export function DashboardHome() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-[#00f2fe] border-t-transparent rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
@@ -46,7 +46,7 @@ export function DashboardHome() {
         <span className="text-cyan-300">HOME</span>
       </div>
 
-      <div className="rounded-[28px] bg-[#0c345e] border border-white/10 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
+      <div className="rounded-[28px] bg-[var(--color-primary)] border border-white/10 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.18)]">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-white">Welcome back, administrator</h1>
@@ -64,7 +64,7 @@ export function DashboardHome() {
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1.2fr]">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-          <div className="rounded-[28px] bg-[#0d3c6a] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+          <div className="rounded-[28px] bg-[var(--color-primary)] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Total exams</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">All time</span>
@@ -73,7 +73,7 @@ export function DashboardHome() {
             <p className="mt-4 text-sm text-slate-400">Current number of exams stored in your portal.</p>
           </div>
 
-          <div className="rounded-[28px] bg-[#0d3c6a] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+          <div className="rounded-[28px] bg-[var(--color-primary)] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Published</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">Live</span>
@@ -82,7 +82,7 @@ export function DashboardHome() {
             <p className="mt-4 text-sm text-slate-400">Exams currently available for students.</p>
           </div>
 
-          <div className="rounded-[28px] bg-[#0d3c6a] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+          <div className="rounded-[28px] bg-[var(--color-primary)] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Drafts</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">Pending</span>
@@ -107,7 +107,7 @@ export function DashboardHome() {
           </div>
           <Link
             to="/dashboard/exams/create"
-            className="mt-8 inline-flex items-center justify-center w-full rounded-2xl border border-cyan-400/15 bg-[#0a2a53] px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100 transition hover:bg-[#113e74]"
+            className="mt-8 inline-flex items-center justify-center w-full rounded-2xl border border-cyan-400/15 bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100 transition hover:bg-[#113e74]"
           >
             Create exam
           </Link>
@@ -121,7 +121,7 @@ export function DashboardHome() {
       )}
 
       {/* Main Exams List Container */}
-      <div className="rounded-[28px] bg-[#0d345f] border border-white/10 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.16)]">
+      <div className="rounded-[28px] bg-[var(--color-primary)] border border-white/10 p-8 shadow-[0_24px_70px_rgba(0,0,0,0.16)]">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <h2 className="text-[14px] uppercase tracking-[0.3em] font-semibold text-white">Exams overview</h2>
@@ -142,7 +142,7 @@ export function DashboardHome() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {exams.map((exam) => (
-              <div key={exam.id} className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0b2d53] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.15)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
+              <div key={exam.id} className="group relative overflow-hidden rounded-[28px] border border-white/10 bg-[var(--color-primary)] p-6 shadow-[0_18px_40px_rgba(0,0,0,0.15)] transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
                 <div className="flex items-start justify-between mb-6 gap-4">
                   <h3 className="text-base font-semibold text-white tracking-wide truncate">{exam.title}</h3>
                   <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${
@@ -185,3 +185,5 @@ export function DashboardHome() {
     </div>
   );
 }
+
+
