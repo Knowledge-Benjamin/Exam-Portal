@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { google, drive_v3 } from 'googleapis';
 import { Readable } from 'stream';
 import { AppError } from '../middleware/errorHandler';
 
@@ -59,6 +59,38 @@ function getDriveClient(creds: DriveCredentials) {
   return google.drive({ version: 'v3', auth });
 }
 
+async function validateSharedDriveFolder(drive: drive_v3.Drive, folderId: string): Promise<void> {
+  try {
+    const response = await drive.files.get({
+      fileId: folderId,
+      fields: 'id,mimeType,driveId',
+      supportsAllDrives: true,
+    });
+
+    const file = response.data;
+    if (!file.driveId) {
+      throw new AppError(
+        400,
+        'Google Drive Folder ID must reference a shared drive folder. Service accounts cannot upload files to My Drive.',
+      );
+    }
+
+    if (file.mimeType !== 'application/vnd.google-apps.folder') {
+      throw new AppError(400, 'The provided Google Drive Folder ID must refer to a folder, not a file.');
+    }
+  } catch (err: any) {
+    if (err instanceof AppError) {
+      throw err;
+    }
+
+    console.error('Google Drive Folder Validation Error:', err);
+    throw new AppError(
+      400,
+      'Unable to validate the Google Drive Folder ID. Ensure the service account has access to the shared drive folder and that the folder ID is correct.',
+    );
+  }
+}
+
 export async function uploadPdfToDrive(
   buffer: Buffer,
   originalName: string,
@@ -78,12 +110,13 @@ export async function uploadPdfToDrive(
       body: Readable.from(buffer),
     };
 
+    await validateSharedDriveFolder(drive, creds.folderId);
+
     const response = await drive.files.create({
       requestBody: fileMetadata,
       media: media,
       fields: 'id',
       supportsAllDrives: true,
-      supportsTeamDrives: true,
     });
 
     if (!response.data.id) {

@@ -258,12 +258,12 @@ export function Settings() {
               />
             </div>
             <div>
-              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Drive Folder ID</label>
+              <label className="block text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">Google Shared Drive Folder ID</label>
               <input
                 type="text"
                 value={googleFolderId}
                 onChange={(e) => setGoogleFolderId(e.target.value)}
-                placeholder="e.g. 1aBcD2eF..."
+                placeholder="e.g. 1aBcD2eF... (shared drive folder ID)"
                 className="w-full bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-sm"
               />
             </div>
@@ -279,7 +279,7 @@ export function Settings() {
 -----END PRIVATE KEY-----"
               className="w-full h-32 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white font-mono focus:outline-none focus:border-[#00ff87] focus:ring-1 focus:ring-[#00ff87] transition-all text-xs resize-y custom-scrollbar"
             />
-            <p className="text-[10px] text-gray-500 mt-2">Paste the key as a multiline PEM block. Do not submit literal backslash-n sequences (\n). The folder ID should be a shared drive folder and the service account must have access.</p>
+            <p className="text-[10px] text-gray-500 mt-2">Paste the key as a multiline PEM block. Do not submit literal backslash-n sequences (\n). Use a shared drive folder ID, and make sure the service account is a member of that shared drive.</p>
           </div>
 
           {/* SEB Config Key moved to per-exam settings in the Exam Builder */}
