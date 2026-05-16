@@ -23,5 +23,8 @@ export const env = {
   UPLOAD_DIR: optional('UPLOAD_DIR', 'uploads'),
   MAX_FILE_SIZE_MB: parseInt(optional('MAX_FILE_SIZE_MB', '10'), 10),
   COOKIE_DOMAIN: optional('COOKIE_DOMAIN', 'localhost'),
+  GOOGLE_OAUTH_CLIENT_ID: optional('GOOGLE_OAUTH_CLIENT_ID', ''),
+  GOOGLE_OAUTH_CLIENT_SECRET: optional('GOOGLE_OAUTH_CLIENT_SECRET', ''),
+  GOOGLE_OAUTH_REDIRECT_URI: optional('GOOGLE_OAUTH_REDIRECT_URI', ''),
   isProd: optional('NODE_ENV', 'development') === 'production',
 } as const;

@@ -18,7 +18,7 @@ import {
   getExamById,
 } from '../services/examService';
 import { getUserProfile } from '../services/authService';
-import { uploadPdfToDrive, getPdfStreamFromDrive, DriveCredentials } from '../services/driveService';
+import { uploadPdfToDrive, getPdfStreamFromDrive, DriveCredentials, getDriveCredentialsFromUser } from '../services/driveService';
 import { env } from '../config/env';
 
 const router = Router();
@@ -180,16 +180,11 @@ router.post(
       const exam = await assertExamOwner(req.params.id, req.user!.sub);
       
       const teacher = await getUserProfile(req.user!.sub);
-      if (!teacher || !teacher.googleServiceAccountEmail || !teacher.googlePrivateKey || !teacher.googleDriveFolderId) {
+      const creds = getDriveCredentialsFromUser(teacher);
+      if (!teacher || !creds) {
         res.status(400).json({ error: 'Google Drive is not configured in your settings. Please configure it to upload PDFs.' });
         return;
       }
-
-      const creds: DriveCredentials = {
-        email: teacher.googleServiceAccountEmail,
-        privateKey: teacher.googlePrivateKey,
-        folderId: teacher.googleDriveFolderId,
-      };
 
       const fileId = await uploadPdfToDrive(req.file.buffer, req.file.originalname, req.file.mimetype, creds);
       await setPdfPath(req.params.id, req.user!.sub, fileId);
@@ -256,16 +251,11 @@ router.get(
       }
 
       const teacher = await getUserProfile(exam.teacherId);
-      if (!teacher || !teacher.googleServiceAccountEmail || !teacher.googlePrivateKey || !teacher.googleDriveFolderId) {
+      const creds = getDriveCredentialsFromUser(teacher);
+      if (!teacher || !creds) {
         res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
         return;
       }
-
-      const creds: DriveCredentials = {
-        email: teacher.googleServiceAccountEmail,
-        privateKey: teacher.googlePrivateKey,
-        folderId: teacher.googleDriveFolderId,
-      };
 
       const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
       res.setHeader('Content-Type', 'application/pdf');

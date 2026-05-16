@@ -191,7 +191,7 @@ export async function autoCloseExpiredExams() {
   console.log(`[scheduler] Auto-closed ${expired.length} expired exam(s): ${expired.map((e) => e.id).join(', ')}`);
 }
 
-import { uploadPdfToDrive, deletePdfFromDrive, DriveCredentials } from './driveService';
+import { uploadPdfToDrive, deletePdfFromDrive, DriveCredentials, getDriveCredentialsFromUser } from './driveService';
 import { getUserProfile } from './authService';
 
 export async function deleteExam(examId: string, teacherId: string) {
@@ -202,12 +202,8 @@ export async function deleteExam(examId: string, teacherId: string) {
 
   if (exam.pdfPath) {
     const teacher = await getUserProfile(teacherId);
-    if (teacher && teacher.googleServiceAccountEmail && teacher.googlePrivateKey && teacher.googleDriveFolderId) {
-      const creds: DriveCredentials = {
-        email: teacher.googleServiceAccountEmail,
-        privateKey: teacher.googlePrivateKey,
-        folderId: teacher.googleDriveFolderId,
-      };
+    const creds = getDriveCredentialsFromUser(teacher);
+    if (teacher && creds) {
       await deletePdfFromDrive(exam.pdfPath, creds);
     }
   }
@@ -220,12 +216,8 @@ export async function setPdfPath(examId: string, teacherId: string, pdfPath: str
 
   if (exam.pdfPath && exam.pdfPath !== pdfPath) {
     const teacher = await getUserProfile(teacherId);
-    if (teacher && teacher.googleServiceAccountEmail && teacher.googlePrivateKey && teacher.googleDriveFolderId) {
-      const creds: DriveCredentials = {
-        email: teacher.googleServiceAccountEmail,
-        privateKey: teacher.googlePrivateKey,
-        folderId: teacher.googleDriveFolderId,
-      };
+    const creds = getDriveCredentialsFromUser(teacher);
+    if (teacher && creds) {
       await deletePdfFromDrive(exam.pdfPath, creds);
     }
   }

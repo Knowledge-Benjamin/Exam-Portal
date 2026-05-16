@@ -13,6 +13,7 @@ export interface User {
   googleServiceAccountEmail?: string | null;
   googlePrivateKey?: string | null;
   googleDriveFolderId?: string | null;
+  googleDriveOAuthConnected?: boolean;
   createdAt?: string;
 }
 

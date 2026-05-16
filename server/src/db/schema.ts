@@ -32,6 +32,7 @@ export const users = pgTable('users', {
   googleServiceAccountEmail: text('google_service_account_email'),
   googlePrivateKey: text('google_private_key'),
   googleDriveFolderId: text('google_drive_folder_id'),
+  googleOAuthRefreshToken: text('google_oauth_refresh_token'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 

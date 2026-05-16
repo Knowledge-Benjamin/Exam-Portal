@@ -1,4 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { google } from 'googleapis';
+import crypto from 'crypto';
 import { loginSchema, registerSchema, updateProfileSchema, updatePasswordSchema, updateSystemConfigSchema } from '../utils/validators';
 import {
   registerUser,
@@ -9,7 +11,9 @@ import {
   updateProfile,
   updatePassword,
   updateSystemConfig,
+  updateGoogleOAuthRefreshToken,
   getUserProfile,
+  sanitizeUserForClient,
 } from '../services/authService';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { env } from '../config/env';
@@ -106,7 +110,81 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
 router.get('/me', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const user = await getUserProfile(req.user!.sub);
-    res.json({ user });
+    res.json({ user: sanitizeUserForClient(user) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/auth/google-drive/start
+router.get('/google-drive/start', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!env.GOOGLE_OAUTH_CLIENT_ID || !env.GOOGLE_OAUTH_CLIENT_SECRET || !env.GOOGLE_OAUTH_REDIRECT_URI) {
+      res.status(500).json({ error: 'Google OAuth is not configured on the server.' });
+      return;
+    }
+
+    const oauth2Client = new google.auth.OAuth2(
+      env.GOOGLE_OAUTH_CLIENT_ID,
+      env.GOOGLE_OAUTH_CLIENT_SECRET,
+      env.GOOGLE_OAUTH_REDIRECT_URI,
+    );
+
+    const state = crypto.randomBytes(16).toString('hex');
+    res.cookie('google_drive_oauth_state', state, {
+      httpOnly: true,
+      secure: env.isProd,
+      sameSite: env.isProd ? 'none' : 'lax',
+      maxAge: 5 * 60 * 1000,
+    });
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      prompt: 'consent',
+      scope: ['https://www.googleapis.com/auth/drive.file'],
+      state,
+    });
+
+    res.redirect(authUrl);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/auth/google-drive/callback
+router.get('/google-drive/callback', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { code, state } = req.query;
+    const storedState = req.cookies?.google_drive_oauth_state as string | undefined;
+
+    if (!code || typeof code !== 'string' || !state || typeof state !== 'string') {
+      res.status(400).json({ error: 'Missing OAuth authorization code or state.' });
+      return;
+    }
+
+    if (!storedState || storedState !== state) {
+      res.status(400).json({ error: 'Invalid OAuth state. Please try connecting again.' });
+      return;
+    }
+
+    res.clearCookie('google_drive_oauth_state');
+
+    const oauth2Client = new google.auth.OAuth2(
+      env.GOOGLE_OAUTH_CLIENT_ID,
+      env.GOOGLE_OAUTH_CLIENT_SECRET,
+      env.GOOGLE_OAUTH_REDIRECT_URI,
+    );
+
+    const { tokens } = await oauth2Client.getToken(code);
+    if (!tokens.refresh_token) {
+      res.status(400).json({ error: 'Google did not return a refresh token. Please connect again with consent.' });
+      return;
+    }
+
+    await updateGoogleOAuthRefreshToken(req.user!.sub, tokens.refresh_token);
+
+    const frontendRedirect = `${req.protocol}://${req.get('host')}/dashboard/settings?drive=connected`;
+    res.redirect(frontendRedirect);
   } catch (err) {
     next(err);
   }
@@ -155,7 +233,7 @@ router.patch('/config', requireAuth, async (req: Request, res: Response, next: N
   try {
     const data = updateSystemConfigSchema.parse(req.body);
     const updatedUser = await updateSystemConfig(req.user!.sub, data);
-    res.json({ user: updatedUser });
+    res.json({ user: sanitizeUserForClient(updatedUser) });
   } catch (err) {
     next(err);
   }

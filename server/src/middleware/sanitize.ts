@@ -4,7 +4,7 @@ import validator from 'validator';
 /**
  * Recursively escapes all string values in an object.
  */
-const RAW_STRING_KEYS = new Set(['googlePrivateKey', 'sebConfigKey']);
+const RAW_STRING_KEYS = new Set(['googlePrivateKey', 'googleOAuthRefreshToken', 'sebConfigKey']);
 
 function escapeStrings(value: unknown, key?: string): unknown {
   if (typeof value === 'string') {

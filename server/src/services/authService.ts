@@ -217,6 +217,28 @@ export async function updateSystemConfig(userId: string, data: any) {
       googleServiceAccountEmail: users.googleServiceAccountEmail,
       googlePrivateKey: users.googlePrivateKey,
       googleDriveFolderId: users.googleDriveFolderId,
+      googleOAuthRefreshToken: users.googleOAuthRefreshToken,
+      createdAt: users.createdAt,
+    });
+
+  return updated;
+}
+
+export async function updateGoogleOAuthRefreshToken(userId: string, refreshToken: string) {
+  const [updated] = await db
+    .update(users)
+    .set({ googleOAuthRefreshToken: refreshToken })
+    .where(eq(users.id, userId))
+    .returning({
+      id: users.id,
+      fullName: users.fullName,
+      email: users.email,
+      role: users.role,
+      googleServiceAccountEmail: users.googleServiceAccountEmail,
+      googlePrivateKey: users.googlePrivateKey,
+      googleDriveFolderId: users.googleDriveFolderId,
+      googleOAuthRefreshToken: users.googleOAuthRefreshToken,
+      createdAt: users.createdAt,
     });
 
   return updated;
@@ -232,9 +254,19 @@ export async function getUserProfile(userId: string) {
       googleServiceAccountEmail: users.googleServiceAccountEmail,
       googlePrivateKey: users.googlePrivateKey,
       googleDriveFolderId: users.googleDriveFolderId,
+      googleOAuthRefreshToken: users.googleOAuthRefreshToken,
     })
     .from(users)
     .where(eq(users.id, userId));
 
   return user;
+}
+
+export function sanitizeUserForClient(user: any) {
+  if (!user) return null;
+  const { googleOAuthRefreshToken, ...rest } = user;
+  return {
+    ...rest,
+    googleDriveOAuthConnected: Boolean(googleOAuthRefreshToken),
+  };
 }

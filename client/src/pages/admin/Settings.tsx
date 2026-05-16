@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 
@@ -21,6 +22,7 @@ export function Settings() {
   const [passwordError, setPasswordError] = useState('');
 
   // Config state
+  const location = useLocation();
   const [googleEmail, setGoogleEmail] = useState('');
   const [googleFolderId, setGoogleFolderId] = useState('');
   const [googleKey, setGoogleKey] = useState('');
@@ -37,6 +39,14 @@ export function Settings() {
       setGoogleKey(user.googlePrivateKey || '');
     }
   }, [user]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('drive') === 'connected') {
+      setConfigSuccess('Google Drive connection successful.');
+      api.get('/auth/me').then(({ data }) => setUser(data.user)).catch(() => {});
+    }
+  }, [location.search, setUser]);
 
   const handleUpdateConfig = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,7 +254,36 @@ export function Settings() {
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
         <h3 className="text-[12px] tracking-widest uppercase text-[#00ff87] font-bold mb-6 relative z-10">System Configuration</h3>
         <p className="text-sm text-gray-400 mb-6 relative z-10">Configure your Google Drive integration for secure PDF storage and your Safe Exam Browser Config Key for exam enforcement.</p>
-        
+
+          <div className="bg-[#0f3261] border border-white/10 rounded-xl p-6 mb-6">
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              <div>
+                <h4 className="text-sm uppercase tracking-[0.25em] text-[#00ff87] font-bold mb-2">OAuth Drive Connection</h4>
+                <p className="text-xs text-gray-400">Connect your Google account once, then uploads will use your Drive without needing a service account PEM key.</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-300">Status:</span>
+                <span className={`text-xs font-bold ${user?.googleDriveOAuthConnected ? 'text-[#00ff87]' : 'text-[#fe0979]'}`}>
+                  {user?.googleDriveOAuthConnected ? 'Connected' : 'Not connected'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto]">
+              <p className="text-xs text-gray-400 md:max-w-2xl">
+                Use OAuth2 if you do not have a shared drive service account. This avoids the Shared Drive requirement and uploads directly to your Google Drive.
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = '/api/auth/google-drive/start';
+                }}
+                className="inline-flex items-center justify-center rounded-lg bg-[#00ff87] px-6 py-3 text-xs font-bold uppercase tracking-[0.2em] text-[#0f3261] transition-colors hover:bg-[#7cf0a9]"
+              >
+                Connect Google Drive
+              </button>
+            </div>
+          </div>
+
         <form onSubmit={handleUpdateConfig} className="space-y-5 relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
