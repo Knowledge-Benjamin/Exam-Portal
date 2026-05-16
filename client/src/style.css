@@ -173,22 +173,22 @@ aside {
   flex-shrink: 0;
 }
 
-code,
-.counter {
+.app-root code,
+.app-root .counter {
   font-family: var(--mono);
   display: inline-flex;
   border-radius: 4px;
   color: var(--text-h);
 }
 
-code {
+.app-root code {
   font-size: 15px;
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
 }
 
-.counter {
+.app-root .counter {
   font-size: 16px;
   padding: 5px 10px;
   border-radius: 5px;
@@ -198,13 +198,13 @@ code {
   transition: border-color 0.3s;
   margin-bottom: 24px;
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+}
+.app-root .counter:hover {
+  border-color: var(--accent-border);
+}
+.app-root .counter:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .hero {
@@ -246,7 +246,7 @@ code {
   }
 }
 
-#app {
+.app-root #app {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
