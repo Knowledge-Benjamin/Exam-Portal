@@ -62,12 +62,12 @@ export function DashboardLayout() {
             </p>
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-4 pb-6 space-y-4">
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)]">
+          <nav className="flex-1 flex flex-col justify-evenly items-center overflow-y-auto px-4 pb-6">
+            <div className="rounded-[32px] bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)] w-full max-w-[260px] mx-auto">
               <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
               <Link
                 to="/dashboard"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                className={`flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
                   location.pathname === '/dashboard'
                     ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -80,7 +80,7 @@ export function DashboardLayout() {
               </Link>
               <Link
                 to="/dashboard/exams/create"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                className={`flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
                   location.pathname === '/dashboard/exams/create'
                     ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -93,7 +93,7 @@ export function DashboardLayout() {
               </Link>
               <Link
                 to="/dashboard/submissions"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                className={`flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
                   location.pathname === '/dashboard/submissions'
                     ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
@@ -106,11 +106,11 @@ export function DashboardLayout() {
               </Link>
             </div>
 
-            <div className="rounded-[32px] border border-white/10 bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)]">
+            <div className="rounded-[32px] bg-white/5 p-4 shadow-[0_20px_45px_rgba(0,0,0,0.12)] w-full max-w-[260px] mx-auto">
               <div className="mb-4 text-[10px] uppercase tracking-[0.35em] text-slate-400">Account</div>
               <Link
                 to="/dashboard/settings"
-                className={`flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all ${
+                className={`flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
                   location.pathname === '/dashboard/settings'
                     ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
                     : 'text-slate-300 hover:text-white hover:bg-white/10'
