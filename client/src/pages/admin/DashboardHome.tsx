@@ -41,8 +41,8 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="dashboard-card bg-[#170C79] p-8 mb-40 w-full md:w-1/2 mt-8 ml-8">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="dashboard-card bg-[#170C79] p-8 mb-40 w-full md:w-1/2 min-w-[30rem] aspect-[2/1] mt-8 ml-8">
+        <div className="flex h-full flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="font-semibold text-white" style={{ fontSize: '50%' }}>Welcome back, {firstName}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
