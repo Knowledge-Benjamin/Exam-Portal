@@ -6,11 +6,11 @@
   --code-bg: #f4f3ec;
   --color-primary: #134E8E;
   --color-danger: #C00707;
-  --color-action: #FF4400;
+  --color-action: #CC3700;
   --color-highlight: #FFB33F;
   --color-primary-rgb: 19, 78, 142;
   --color-danger-rgb: 192, 7, 7;
-  --color-action-rgb: 255, 68, 0;
+  --color-action-rgb: 204, 55, 0;
   --color-highlight-rgb: 255, 179, 63;
   --accent: var(--color-action);
   --accent-bg: rgba(var(--color-action-rgb), 0.1);
