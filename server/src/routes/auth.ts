@@ -21,12 +21,16 @@ import { env } from '../config/env';
 
 const router = Router();
 
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: env.isProd,
-  sameSite: env.isProd ? 'none' as const : 'lax' as const,
-  ...(env.isProd && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
-};
+// Helper function to get cookie options based on request protocol
+function getCookieOptions(req: Request) {
+  const isSecure = req.secure || req.get('x-forwarded-proto') === 'https';
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: isSecure ? ('none' as const) : ('lax' as const),
+    ...(isSecure && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
+  };
+}
 
 // POST /api/auth/register  (admin only)
 router.post(
@@ -49,13 +53,14 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
   try {
     const { email, password } = loginSchema.parse(req.body);
     const result = await loginUser(email, password);
+    const cookieOpts = getCookieOptions(req);
 
     res.cookie('access_token', result.accessToken, {
-      ...COOKIE_OPTIONS,
+      ...cookieOpts,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie('refresh_token', result.refreshToken, {
-      ...COOKIE_OPTIONS,
+      ...cookieOpts,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -75,13 +80,14 @@ router.post('/refresh', async (req: Request, res: Response, next: NextFunction) 
     }
 
     const tokens = await refreshSession(raw);
+    const cookieOpts = getCookieOptions(req);
 
     res.cookie('access_token', tokens.accessToken, {
-      ...COOKIE_OPTIONS,
+      ...cookieOpts,
       maxAge: 15 * 60 * 1000,
     });
     res.cookie('refresh_token', tokens.refreshToken, {
-      ...COOKIE_OPTIONS,
+      ...cookieOpts,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -96,10 +102,11 @@ router.post('/logout', async (req: Request, res: Response, next: NextFunction) =
   try {
     const raw = req.cookies?.refresh_token as string | undefined;
     if (raw) await revokeRefreshToken(raw);
+    const cookieOpts = getCookieOptions(req);
 
-    res.clearCookie('access_token', COOKIE_OPTIONS);
-    res.clearCookie('refresh_token', COOKIE_OPTIONS);
-    res.clearCookie('exam_token', COOKIE_OPTIONS);
+    res.clearCookie('access_token', cookieOpts);
+    res.clearCookie('refresh_token', cookieOpts);
+    res.clearCookie('exam_token', cookieOpts);
 
     res.json({ ok: true });
   } catch (err) {
@@ -132,10 +139,9 @@ router.get('/google-drive/start', requireAuth, async (req: Request, res: Respons
     );
 
     const state = crypto.randomBytes(16).toString('hex');
+    const cookieOpts = getCookieOptions(req);
     res.cookie('google_drive_oauth_state', state, {
-      httpOnly: true,
-      secure: env.isProd,
-      sameSite: env.isProd ? 'none' : 'lax',
+      ...cookieOpts,
       maxAge: 5 * 60 * 1000,
     });
 
@@ -186,7 +192,8 @@ router.get('/google-drive/callback', async (req: Request, res: Response, next: N
       return;
     }
 
-    res.clearCookie('google_drive_oauth_state');
+    const cookieOpts = getCookieOptions(req);
+    res.clearCookie('google_drive_oauth_state', cookieOpts);
 
     const oauth2Client = new google.auth.OAuth2(
       env.GOOGLE_OAUTH_CLIENT_ID,
