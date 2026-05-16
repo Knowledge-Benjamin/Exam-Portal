@@ -88,25 +88,35 @@ h2 {
   border-radius: 28px;
 }
 
-h1 {
+/* Scoped typography to avoid global overrides of utility classes.
+   Use the `.site-typography` wrapper on pages/components that need
+   large, display-style headings. This prevents generic `h1`/`h2`/`p`
+   rules from overriding Tailwind utilities elsewhere. */
+.site-typography h1 {
   font-size: 56px;
   letter-spacing: -1.68px;
   margin: 32px 0;
-  @media (max-width: 1024px) {
+}
+@media (max-width: 1024px) {
+  .site-typography h1 {
     font-size: 36px;
     margin: 20px 0;
   }
 }
-h2 {
+
+.site-typography h2 {
   font-size: 24px;
   line-height: 118%;
   letter-spacing: -0.24px;
   margin: 0 0 8px;
-  @media (max-width: 1024px) {
+}
+@media (max-width: 1024px) {
+  .site-typography h2 {
     font-size: 20px;
   }
 }
-p {
+
+.site-typography p {
   margin: 0;
 }
 
