@@ -121,7 +121,7 @@ export function DashboardHome() {
       )}
 
       {/* Main Exams List Container */}
-      <div className="dashboard-card bg-[#FFB33F] p-8">
+      <div className="dashboard-card bg-[#FFB33F] p-8" style={{ backgroundColor: '#FFB33F' }}>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <h2 className="text-[14px] uppercase tracking-[0.3em] font-semibold text-white">Exams overview</h2>
