@@ -69,7 +69,7 @@ export function Login() {
           </svg>
         </div>
         
-        <h1 className="text-white text-[22px] font-light tracking-[0.15em] uppercase mb-10 text-center">
+        <h1 className="text-white text-[18px] font-light tracking-[0.15em] uppercase mb-10 text-center">
           Exam Portal
         </h1>
 
