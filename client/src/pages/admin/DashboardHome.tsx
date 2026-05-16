@@ -10,6 +10,8 @@ export function DashboardHome() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const { user } = useAuthStore();
+
   useEffect(() => {
     fetchExams();
   }, []);
@@ -32,8 +34,6 @@ export function DashboardHome() {
       </div>
     );
   }
-
-  const { user } = useAuthStore();
   const safeExams = exams || [];
   const activeExams = safeExams.filter(e => e.status === 'active').length;
   const draftExams = safeExams.filter(e => e.status === 'draft').length;
