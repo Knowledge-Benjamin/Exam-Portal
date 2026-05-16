@@ -16,6 +16,7 @@ import {
   sanitizeUserForClient,
 } from '../services/authService';
 import { requireAuth, requireRole } from '../middleware/auth';
+import { verifyAccessToken } from '../utils/token';
 import { env } from '../config/env';
 
 const router = Router();
@@ -152,11 +153,14 @@ router.get('/google-drive/start', requireAuth, async (req: Request, res: Respons
 });
 
 // GET /api/auth/google-drive/callback
-router.get('/google-drive/callback', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+// Callback from Google OAuth - access_token cookie should still be present from browser
+router.get('/google-drive/callback', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { code, state } = req.query;
     const storedState = req.cookies?.google_drive_oauth_state as string | undefined;
+    const token = req.cookies?.access_token as string | undefined;
 
+    // Validate OAuth parameters
     if (!code || typeof code !== 'string' || !state || typeof state !== 'string') {
       res.status(400).json({ error: 'Missing OAuth authorization code or state.' });
       return;
@@ -164,6 +168,21 @@ router.get('/google-drive/callback', requireAuth, async (req: Request, res: Resp
 
     if (!storedState || storedState !== state) {
       res.status(400).json({ error: 'Invalid OAuth state. Please try connecting again.' });
+      return;
+    }
+
+    // Verify user is still authenticated (should have access_token from browser)
+    if (!token) {
+      res.status(401).json({ error: 'Session expired. Please login and try connecting again.' });
+      return;
+    }
+
+    let userId: string;
+    try {
+      const payload = verifyAccessToken(token);
+      userId = payload.sub;
+    } catch {
+      res.status(401).json({ error: 'Invalid session. Please login again.' });
       return;
     }
 
@@ -181,7 +200,7 @@ router.get('/google-drive/callback', requireAuth, async (req: Request, res: Resp
       return;
     }
 
-    await updateGoogleOAuthRefreshToken(req.user!.sub, tokens.refresh_token);
+    await updateGoogleOAuthRefreshToken(userId, tokens.refresh_token);
 
     const frontendRedirect = `${req.protocol}://${req.get('host')}/dashboard/settings?drive=connected`;
     res.redirect(frontendRedirect);
