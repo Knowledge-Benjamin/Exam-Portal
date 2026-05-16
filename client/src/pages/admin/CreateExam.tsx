@@ -16,7 +16,6 @@ export function CreateExam() {
     startTime: toDatetimeLocal(new Date(Date.now() + 86400000).toISOString()), // Default: tomorrow
     durationMinutes: 60,
     windowBufferMinutes: 5,
-    sebConfigKey: undefined,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -175,17 +174,7 @@ export function CreateExam() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] tracking-widest uppercase text-gray-400 font-bold">SEB Config Key (Optional)</label>
-            <input
-              type="text"
-              value={formData.sebConfigKey || ''}
-              onChange={(e) => setFormData({ ...formData, sebConfigKey: e.target.value })}
-              placeholder="Paste the SEB Config Key generated for this exam URL"
-              className="w-full bg-[#0f3261] border border-white/10 rounded-lg p-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-all"
-            />
-            <p className="text-[10px] text-gray-500 mt-2">Enter the SEB Config Key specific to this exam's start URL to enable strict SEB enforcement.</p>
-          </div>
+          {/* SEB Config Key must be generated after the exam link (gate URL) is created. Use the Exam Builder to add the key after publishing. */}
 
           <div className="flex items-center justify-end gap-4 pt-8 border-t border-white/10">
             <button

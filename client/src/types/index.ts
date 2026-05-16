@@ -75,7 +75,6 @@ export interface CreateExamForm {
   startTime: string;
   durationMinutes: number;
   windowBufferMinutes: number;
-  sebConfigKey?: string;
 }
 
 // Question builder form state

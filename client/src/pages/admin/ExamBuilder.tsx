@@ -134,7 +134,8 @@ export function ExamBuilder() {
           <h2 className="text-3xl font-bold text-white tracking-wide">Content Builder</h2>
           <p className="text-[#00f2fe] text-sm tracking-widest uppercase mt-1">{exam.title}</p>
         </div>
-        {exam.status === 'draft' && (
+        {/* Allow editing SEB key even after publish so teachers can paste the key after generating it from the SEB tool. */}
+        {(
           <div className="ml-4">
             {!editingSebKey ? (
               <div className="flex items-center gap-3">

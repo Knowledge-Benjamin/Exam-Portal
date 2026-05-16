@@ -73,8 +73,14 @@ export async function updateExam(
   }>,
 ) {
   const exam = await assertExamOwner(examId, teacherId);
+  // Allow updating general fields only while draft.
+  // However, allow `sebConfigKey` to be set/updated at any time (post-publish) to support
+  // the workflow where the exam must be published to generate the SEB gate URL first.
   if (exam.status !== 'draft') {
-    throw new AppError(400, 'Only draft exams can be edited');
+    const nonSebKeys = Object.keys(data).filter((k) => k !== 'sebConfigKey');
+    if (nonSebKeys.length > 0) {
+      throw new AppError(400, 'Only draft exams can be edited');
+    }
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
