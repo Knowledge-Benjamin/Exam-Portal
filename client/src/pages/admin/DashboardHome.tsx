@@ -41,15 +41,15 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="dashboard-card bg-[#170C79] p-6 mb-40">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="dashboard-card bg-[#170C79] p-4 mb-40 w-full md:w-1/2 mx-auto">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Welcome back, {firstName}</h1>
+            <h1 className="text-2xl md:text-3xl font-semibold text-white">Welcome back, {firstName}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
               Review your exams, monitor activity, and launch secure assessments from one premium command center.
             </p>
           </div>
-          <div className="inline-flex items-center gap-3 rounded-3xl border border-cyan-400/15 bg-white/5 px-4 py-3 text-sm text-cyan-100">
+          <div className="inline-flex items-center gap-2 rounded-3xl border border-cyan-400/15 bg-white/5 px-3 py-2 text-xs text-cyan-100">
             <span className="inline-flex h-2.5 w-2.5 rounded-full bg-cyan-300"></span>
             Real-time exam management
           </div>
