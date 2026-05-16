@@ -133,6 +133,16 @@ p {
 .nav-link-animated:nth-of-type(even)::after {
   transform-origin: left center;
 }
+/* Sidebar collapsed adjustments */
+aside {
+  transition: width 300ms ease;
+}
+.nav-link-animated span {
+  transition: opacity 180ms ease, width 180ms ease;
+}
+.nav-link-animated svg {
+  flex-shrink: 0;
+}
 
 code,
 .counter {
