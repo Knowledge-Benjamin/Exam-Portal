@@ -64,7 +64,7 @@ export function DashboardHome() {
       <div className="grid gap-6 xl:grid-cols-[1.8fr_1.2fr]">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
-          <div className="rounded-[28px] bg-[#FFB33F] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+          <div className="rounded-[28px] bg-[#FFB33F] border border-white/10 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Total exams</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">All time</span>
@@ -73,7 +73,7 @@ export function DashboardHome() {
             <p className="mt-4 text-sm text-slate-400">Current number of exams stored in your portal.</p>
           </div>
 
-          <div className="rounded-[28px] bg-[#FFB33F] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+          <div className="rounded-[28px] bg-[#FFB33F] border border-white/10 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Published</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">Live</span>
@@ -82,7 +82,7 @@ export function DashboardHome() {
             <p className="mt-4 text-sm text-slate-400">Exams currently available for students.</p>
           </div>
 
-          <div className="rounded-[28px] bg-[#FFB33F] border border-white/10 p-6 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
+          <div className="rounded-[28px] bg-[#FFB33F] border border-white/10 p-8 shadow-[0_18px_40px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between mb-6">
               <span className="text-[11px] uppercase tracking-[0.3em] text-cyan-200 font-semibold">Drafts</span>
               <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-slate-300">Pending</span>
