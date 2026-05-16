@@ -41,7 +41,7 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="dashboard-card bg-[#170C79] p-6 mb-8">
+      <div className="dashboard-card bg-[#170C79] p-6 mb-40">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold text-white">Welcome back, {firstName}</h1>
