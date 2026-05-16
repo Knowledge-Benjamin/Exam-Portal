@@ -32,7 +32,11 @@ function getDriveClient(creds: DriveCredentials) {
     .replace(/\r/g, '\n')
     .trim();
 
-  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----') || !formattedKey.includes('-----END PRIVATE KEY-----')) {
+  // Ensure BEGIN/END PEM markers are on separate lines.
+  formattedKey = formattedKey.replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n');
+  formattedKey = formattedKey.replace(/\s*-----END PRIVATE KEY-----$/g, '\n-----END PRIVATE KEY-----');
+
+  if (!formattedKey.includes('-----BEGIN PRIVATE KEY-----\n') || !formattedKey.includes('\n-----END PRIVATE KEY-----')) {
     throw new AppError(500, 'Google Drive private key is invalid. It must be the service account private key PEM block with BEGIN/END PRIVATE KEY headers.');
   }
 

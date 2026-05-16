@@ -53,6 +53,16 @@ export function Settings() {
       return;
     }
 
+    if (googleKey && !/-----BEGIN PRIVATE KEY-----\n/.test(googleKey)) {
+      setConfigError('Google Private Key must include a newline immediately after the BEGIN PRIVATE KEY header. Paste it as a multiline PEM block.');
+      return;
+    }
+
+    if (googleKey && !/\n-----END PRIVATE KEY-----/.test(googleKey)) {
+      setConfigError('Google Private Key must include a newline immediately before the END PRIVATE KEY footer. Paste it as a multiline PEM block.');
+      return;
+    }
+
     setIsUpdatingConfig(true);
 
     const normalizedPrivateKey = googleKey
