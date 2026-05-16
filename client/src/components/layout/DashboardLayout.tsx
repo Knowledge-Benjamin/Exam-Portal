@@ -54,18 +54,19 @@ export function DashboardLayout() {
             </div>
 
           <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-6 py-6 w-full">
-            <div className={`flex-1 flex flex-col ${isPrimaryCollapsed ? 'h-0 overflow-hidden' : 'justify-evenly'} items-center w-full transition-all duration-300`}>
-              <div className="flex items-center justify-between w-full mb-4">
-                <div className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
-                <button
-                  onClick={() => setIsPrimaryCollapsed(!isPrimaryCollapsed)}
-                  className="text-slate-400 hover:text-white transition-colors"
-                >
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${isPrimaryCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7-7m0 0L5 14m7-7v12" />
-                  </svg>
-                </button>
-              </div>
+            <div className="flex items-center justify-between w-full mb-4">
+              <div className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
+              <button
+                onClick={() => setIsPrimaryCollapsed(!isPrimaryCollapsed)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className={`w-4 h-4 transition-transform duration-300 ${isPrimaryCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7-7m0 0L5 14m7-7v12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className={`flex flex-col ${isPrimaryCollapsed ? 'h-0 overflow-hidden' : 'flex-1 justify-evenly'} items-center w-full transition-all duration-300`}>
               <Link
                 to="/dashboard"
                 className={`nav-link-animated flex items-center justify-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
