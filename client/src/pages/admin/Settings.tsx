@@ -43,33 +43,37 @@ export function Settings() {
     setConfigError('');
     setConfigSuccess('');
 
-    if (googleKey && /(\\n|&#x5C;n|&#92;n|&amp;#x5C;n|&amp;#92;n)/.test(googleKey)) {
-      setConfigError('Google Private Key must be pasted as a real multiline PEM block, not as escaped \n sequences or HTML entities.');
-      return;
+    let normalizedPrivateKey = googleKey
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
+      .replace(/\r/g, '\n')
+      .replace(/&#x5C;n/g, '\n')
+      .replace(/&#92;n/g, '\n')
+      .replace(/&amp;#x5C;n/g, '\n')
+      .replace(/&amp;#92;n/g, '\n')
+      .trim();
+
+    if (normalizedPrivateKey.startsWith('"') && normalizedPrivateKey.endsWith('"')) {
+      normalizedPrivateKey = normalizedPrivateKey.slice(1, -1).trim();
     }
 
-    if (googleKey && !googleKey.includes('-----BEGIN PRIVATE KEY-----')) {
+    if (googleKey && !normalizedPrivateKey.includes('-----BEGIN PRIVATE KEY-----')) {
       setConfigError('Google Private Key must include a valid PEM block: -----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----.');
       return;
     }
 
-    if (googleKey && !/-----BEGIN PRIVATE KEY-----\n/.test(googleKey)) {
+    if (googleKey && !/-----BEGIN PRIVATE KEY-----\n/.test(normalizedPrivateKey)) {
       setConfigError('Google Private Key must include a newline immediately after the BEGIN PRIVATE KEY header. Paste it as a multiline PEM block.');
       return;
     }
 
-    if (googleKey && !/\n-----END PRIVATE KEY-----/.test(googleKey)) {
+    if (googleKey && !/\n-----END PRIVATE KEY-----/.test(normalizedPrivateKey)) {
       setConfigError('Google Private Key must include a newline immediately before the END PRIVATE KEY footer. Paste it as a multiline PEM block.');
       return;
     }
 
     setIsUpdatingConfig(true);
-
-    const normalizedPrivateKey = googleKey
-      .replace(/\\r\\n/g, '\n')
-      .replace(/\\n/g, '\n')
-      .replace(/\r\n/g, '\n')
-      .replace(/\r/g, '\n');
 
     try {
       const { data } = await api.patch('/auth/config', {

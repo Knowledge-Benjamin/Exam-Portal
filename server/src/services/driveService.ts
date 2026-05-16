@@ -13,15 +13,25 @@ function getDriveClient(creds: DriveCredentials) {
     throw new AppError(500, 'Google Drive credentials are not fully configured for this teacher.');
   }
 
-  if (/(\\n|&#x5C;n|&#92;n|&amp;#x5C;n|&amp;#92;n)/.test(creds.privateKey)) {
-    throw new AppError(
-      500,
-      'Google Drive private key contains escaped newline sequences. Paste the service account key as a real multiline PEM block, not as literal \\n or HTML-escaped entities.',
-    );
-  }
-
   // Normalize private key formatting so PEM headers and newlines are valid.
   let formattedKey = creds.privateKey.trim();
+  if ((formattedKey.startsWith('"') && formattedKey.endsWith('"')) || (formattedKey.startsWith("'") && formattedKey.endsWith("'"))) {
+    formattedKey = formattedKey.slice(1, -1).trim();
+  }
+  formattedKey = formattedKey
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/&#x5C;n/g, '\n')
+    .replace(/&#92;n/g, '\n')
+    .replace(/&amp;#x5C;n/g, '\n')
+    .replace(/&amp;#92;n/g, '\n')
+    .trim();
+
+  // Ensure BEGIN/END PEM markers are on separate lines.
+  formattedKey = formattedKey.replace(/-----BEGIN PRIVATE KEY-----\s*/g, '-----BEGIN PRIVATE KEY-----\n');
+  formattedKey = formattedKey.replace(/\s*-----END PRIVATE KEY-----$/g, '\n-----END PRIVATE KEY-----');
   if ((formattedKey.startsWith('"') && formattedKey.endsWith('"')) || (formattedKey.startsWith("'") && formattedKey.endsWith("'"))) {
     formattedKey = formattedKey.slice(1, -1).trim();
   }
