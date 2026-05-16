@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../api';
+import { useAuthStore } from '../../store/authStore';
 import type { ExamWithGateUrl } from '../../types';
 import { formatDate, formatDuration } from '../../utils/formatters';
 
@@ -32,9 +33,11 @@ export function DashboardHome() {
     );
   }
 
+  const { user } = useAuthStore();
   const safeExams = exams || [];
   const activeExams = safeExams.filter(e => e.status === 'active').length;
   const draftExams = safeExams.filter(e => e.status === 'draft').length;
+  const firstName = user?.fullName?.split(' ')[0] || 'Administrator';
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -46,10 +49,10 @@ export function DashboardHome() {
         <span className="text-cyan-300">HOME</span>
       </div>
 
-      <div className="dashboard-card bg-[#170C79] p-6">
+      <div className="dashboard-card bg-[#170C79] p-6 mb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-white">Welcome back, administrator</h1>
+            <h1 className="text-3xl font-semibold text-white">Welcome back, {firstName}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
               Review your exams, monitor activity, and launch secure assessments from one premium command center.
             </p>
