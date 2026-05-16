@@ -52,6 +52,7 @@ export function DashboardLayout() {
           <div className="px-4 pt-6 pb-4 text-center flex items-center justify-between">
             {!isSidebarCollapsed && (
               <div className="flex-1 text-center">
+                <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200 mb-2">Navigation</p>
                 <h1 className="text-lg font-semibold text-white exam-admin-title">Exam Admin</h1>
                 <p className="mt-1 text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
               </div>

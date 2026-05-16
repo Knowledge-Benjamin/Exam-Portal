@@ -41,14 +41,6 @@ export function DashboardHome() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      
-      {/* Breadcrumb */}
-      <div className="flex items-center text-[10px] uppercase tracking-[0.3em] font-semibold text-slate-400 mb-2">
-        <span className="text-slate-200">DASHBOARD</span>
-        <span className="mx-2">/</span>
-        <span className="text-cyan-300">HOME</span>
-      </div>
-
       <div className="dashboard-card bg-[#170C79] p-6 mb-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
