@@ -273,6 +273,42 @@ code {
   }
 }
 
+/* Navigation link hover effect with underline and overline */
+.nav-link-animated {
+  position: relative;
+}
+
+.nav-link-animated::before,
+.nav-link-animated::after {
+  content: '';
+  position: absolute;
+  height: 2px;
+  background: currentColor;
+  left: 0;
+  right: 0;
+  transition: transform 0.3s ease;
+}
+
+.nav-link-animated::before {
+  bottom: -8px;
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.nav-link-animated::after {
+  top: -8px;
+  transform: scaleX(0);
+  transform-origin: right;
+}
+
+.nav-link-animated:hover::before {
+  transform: scaleX(1);
+}
+
+.nav-link-animated:hover::after {
+  transform: scaleX(1);
+}
+
 #spacer {
   height: 88px;
   border-top: 1px solid var(--border);
