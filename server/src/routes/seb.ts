@@ -82,7 +82,9 @@ router.get(
         res.status(404).json({ error: 'Exam not found' });
         return;
       }
-      res.json({ exam });
+      // Sanitize exam object for student: remove sebConfigKey (sensitive)
+      const { sebConfigKey, ...sanitizedExam } = exam;
+      res.json({ exam: sanitizedExam });
     } catch (err) {
       next(err);
     }

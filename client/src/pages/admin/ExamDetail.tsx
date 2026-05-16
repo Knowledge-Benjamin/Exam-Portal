@@ -12,6 +12,8 @@ export function ExamDetail() {
   const [error, setError] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [isRepublishing, setIsRepublishing] = useState(false);
+  const [editingSebKey, setEditingSebKey] = useState(false);
+  const [sebKeyInput, setSebKeyInput] = useState('');
 
   useEffect(() => {
     fetchExam();
@@ -21,6 +23,7 @@ export function ExamDetail() {
     try {
       const examRes = await api.get(`/exams/${id}`);
       setExam(examRes.data.exam);
+      setSebKeyInput(examRes.data.exam.sebConfigKey ?? '');
     } catch (err: any) {
       setError(err.error || 'Failed to load exam details');
     } finally {
@@ -147,31 +150,102 @@ export function ExamDetail() {
         </div>
       )}
 
-      {/* SEB Gate URL Display */}
+      {/* SEB Gate URL & Config Key Section */}
       {exam.sebGateUrl && (
-        <div className="bg-[#1a4478] border border-[#00ff87]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(0,255,135,0.05)]">
-          <div className="absolute right-0 top-0 w-64 h-64 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
-          <h3 className="text-[#00ff87] font-bold tracking-widest text-sm uppercase mb-3 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#00ff87] animate-pulse"></span>
-            Exam is Published
-          </h3>
-          <p className="mb-4 text-sm text-gray-400">
-            Embed this URL in your Safe Exam Browser <code className="text-[#00ff87]">.seb</code> configuration file.
-            Students must use this exact SEB profile to take the exam.
-          </p>
-          <div className="flex items-center gap-3">
-            <code className="bg-[#0f3261] px-4 py-3 rounded-lg flex-1 select-all overflow-x-auto text-[#00ff87] border border-white/10 font-mono text-sm tracking-tight shadow-inner">
-              {exam.sebGateUrl}
-            </code>
-            <button 
-              onClick={() => {
-                navigator.clipboard.writeText(exam.sebGateUrl!);
-                alert('Copied to clipboard');
-              }}
-              className="px-6 py-3 border border-[#00ff87]/50 hover:bg-[#00ff87]/10 text-[#00ff87] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all whitespace-nowrap"
-            >
-              Copy URL
-            </button>
+        <div className="space-y-6">
+          <div className="bg-[#1a4478] border border-[#00ff87]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(0,255,135,0.05)]">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-[#00ff87] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
+            <h3 className="text-[#00ff87] font-bold tracking-widest text-sm uppercase mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#00ff87] animate-pulse"></span>
+              Exam is Published
+            </h3>
+            <p className="mb-4 text-sm text-gray-400">
+              Embed this URL in your Safe Exam Browser <code className="text-[#00ff87]">.seb</code> configuration file.
+              Students must use this exact SEB profile to take the exam.
+            </p>
+            <div className="flex items-center gap-3">
+              <code className="bg-[#0f3261] px-4 py-3 rounded-lg flex-1 select-all overflow-x-auto text-[#00ff87] border border-white/10 font-mono text-sm tracking-tight shadow-inner">
+                {exam.sebGateUrl}
+              </code>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(exam.sebGateUrl!);
+                  alert('Copied to clipboard');
+                }}
+                className="px-6 py-3 border border-[#00ff87]/50 hover:bg-[#00ff87]/10 text-[#00ff87] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all whitespace-nowrap"
+              >
+                Copy URL
+              </button>
+            </div>
+          </div>
+
+          {/* SEB Config Key Input */}
+          <div className="bg-[#1a4478] border border-[#00f2fe]/30 p-6 rounded-xl relative overflow-hidden group shadow-[0_0_20px_rgba(0,242,254,0.05)]">
+            <div className="absolute right-0 top-0 w-64 h-64 bg-[#00f2fe] rounded-full mix-blend-screen filter blur-[100px] opacity-10"></div>
+            <div className="flex items-start justify-between gap-4 relative z-10">
+              <div className="flex-1">
+                <h3 className="text-[#00f2fe] font-bold tracking-widest text-sm uppercase mb-2">Safe Exam Browser Config Key</h3>
+                <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                  1. Use the gate URL above with the SEB Configuration Tool to generate a config key. 2. Paste the generated key below to enforce strict SEB settings validation.
+                </p>
+              </div>
+            </div>
+            {!editingSebKey ? (
+              <div className="flex items-center gap-3 relative z-10">
+                {exam.sebConfigKey ? (
+                  <div className="flex-1 flex items-center gap-3 bg-[#0f3261] px-4 py-3 rounded-lg border border-[#00ff87]/30">
+                    <span className="text-[#00ff87] text-sm font-mono truncate">{exam.sebConfigKey.substring(0, 16)}...</span>
+                    <button 
+                      onClick={() => setEditingSebKey(true)}
+                      className="ml-auto px-3 py-2 bg-[#00f2fe] text-[#0f3261] rounded-lg text-xs font-bold hover:bg-[#00d0db] transition-all"
+                    >
+                      Update
+                    </button>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => setEditingSebKey(true)}
+                    className="flex-1 px-4 py-3 border border-[#00f2fe]/50 hover:bg-[#00f2fe]/10 text-[#00f2fe] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all"
+                  >
+                    Add Config Key
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 relative z-10">
+                <input
+                  type="text"
+                  value={sebKeyInput}
+                  onChange={(e) => setSebKeyInput(e.target.value)}
+                  placeholder="Paste the SEB config key here..."
+                  className="flex-1 bg-[#0f3261] border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-[#00f2fe] focus:ring-1 focus:ring-[#00f2fe] transition-all text-sm"
+                />
+                <button
+                  onClick={async () => {
+                    try {
+                      await api.patch(`/exams/${id}`, { sebConfigKey: sebKeyInput });
+                      setExam((prev) => prev ? { ...prev, sebConfigKey: sebKeyInput } : prev);
+                      setEditingSebKey(false);
+                      alert('SEB Config Key saved successfully');
+                    } catch (err: any) {
+                      alert(err.error || 'Failed to save SEB Config Key');
+                    }
+                  }}
+                  className="px-4 py-3 bg-[#00ff87] hover:bg-[#00d671] text-[#0f3261] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(0,255,135,0.3)]"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setEditingSebKey(false);
+                    setSebKeyInput(exam.sebConfigKey ?? '');
+                  }}
+                  className="px-4 py-3 text-gray-400 hover:text-white text-xs font-bold uppercase transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
