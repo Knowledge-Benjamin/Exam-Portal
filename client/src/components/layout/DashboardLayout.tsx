@@ -48,15 +48,10 @@ export function DashboardLayout() {
       {/* Sidebar */}
       <aside className="w-[280px] flex-shrink-0 bg-[var(--color-primary)] border-r border-white/10 flex flex-col z-20">
         <div className="flex h-full flex-col">
-          <div className="px-6 pt-6 pb-4">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
+          <div className="px-6 pt-6 pb-4 text-center">
               <h1 className="text-2xl font-semibold text-white">Exam Admin</h1>
+              <p className="mt-1 text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-300">
-              Centralized controls for exams, submissions, and system settings.
-            </p>
-          </div>
 
           <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-6 py-6 w-full">
             <div className={`flex-1 flex flex-col ${isPrimaryCollapsed ? 'h-0 overflow-hidden' : 'justify-evenly'} items-center w-full transition-all duration-300`}>

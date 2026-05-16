@@ -91,6 +91,49 @@ p {
   margin: 0;
 }
 
+/* Sidebar nav animated underline/overline */
+.nav-link-animated {
+  position: relative;
+  overflow: visible;
+}
+.nav-link-animated::before,
+.nav-link-animated::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 2px;
+  background: var(--color-primary);
+  transform: scaleX(0);
+  transition: transform 280ms cubic-bezier(.2,.9,.3,1);
+  pointer-events: none;
+}
+.nav-link-animated::before {
+  bottom: 10px;
+  transform-origin: left center;
+}
+.nav-link-animated::after {
+  top: 10px;
+  transform-origin: right center;
+}
+.nav-link-animated:hover::before,
+.nav-link-animated:focus::before,
+.nav-link-animated[aria-current="page"]::before {
+  transform: scaleX(1);
+}
+.nav-link-animated:hover::after,
+.nav-link-animated:focus::after,
+.nav-link-animated[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+/* Alternate direction for even links */
+.nav-link-animated:nth-of-type(even)::before {
+  transform-origin: right center;
+}
+.nav-link-animated:nth-of-type(even)::after {
+  transform-origin: left center;
+}
+
 code,
 .counter {
   font-family: var(--mono);
