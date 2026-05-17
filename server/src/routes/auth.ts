@@ -18,19 +18,9 @@ import {
 import { requireAuth, requireRole } from '../middleware/auth';
 import { verifyAccessToken } from '../utils/token';
 import { env } from '../config/env';
+import { getCookieOptions } from '../utils/cookieOptions';
 
 const router = Router();
-
-// Helper function to get cookie options based on request protocol and production mode
-function getCookieOptions(req: Request) {
-  const isSecure = env.isProd || req.secure || req.get('x-forwarded-proto') === 'https';
-  return {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: env.isProd ? ('none' as const) : (isSecure ? ('none' as const) : ('lax' as const)),
-    ...(isSecure && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
-  };
-}
 
 // POST /api/auth/register  (admin only)
 router.post(

@@ -7,19 +7,9 @@ import { examJoinSchema, saveAnswersSchema } from '../utils/validators';
 import { getExamById, getQuestions } from '../services/examService';
 import { getSubmissionById, saveAnswers, finalSubmit } from '../services/submissionService';
 import { env } from '../config/env';
+import { getCookieOptions } from '../utils/cookieOptions';
 
 const router = Router();
-
-// Helper to compute cookie options based on request protocol and production mode
-function getCookieOptions(req: Request) {
-  const isSecure = env.isProd || req.secure || req.get('x-forwarded-proto') === 'https';
-  return {
-    httpOnly: true,
-    secure: isSecure,
-    sameSite: env.isProd ? ('none' as const) : (isSecure ? ('none' as const) : ('lax' as const)),
-    ...(isSecure && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
-  };
-}
 
 /**
  * GET /seb/gate/:token
