@@ -8,8 +8,18 @@ import { useSubmissionStatus } from '../../hooks/useSubmissionStatus';
 const stripHtml = (html?: string) => {
   if (!html) return '';
   try {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    return doc.body.textContent || '';
+    const normalized = String(html)
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n')
+      .replace(/<\/div>/gi, '\n')
+      .replace(/<\/li>/gi, '\n')
+      .replace(/<\/h[1-6]>/gi, '\n')
+      .replace(/<li>/gi, '• ')
+      .replace(/&nbsp;/gi, ' ');
+
+    const doc = new DOMParser().parseFromString(normalized, 'text/html');
+    const text = doc.body.textContent || '';
+    return text.replace(/\n{3,}/g, '\n\n').trim();
   } catch {
     return String(html);
   }
@@ -311,7 +321,7 @@ export function SubmissionsList() {
                         {selectedSubmission.answers?.[q.id] ? (
                           q.type === 'long_answer'
                             ? <pre className="whitespace-pre-wrap text-gray-200 text-sm leading-relaxed font-sans">{stripHtml(selectedSubmission.answers[q.id])}</pre>
-                            : <p className="text-gray-200 text-sm">{selectedSubmission.answers[q.id]}</p>
+                            : <p className="text-gray-200 text-sm">{stripHtml(selectedSubmission.answers[q.id])}</p>
                         ) : (
                           <p className="text-gray-500 italic text-sm">No answer provided.</p>
                         )}
