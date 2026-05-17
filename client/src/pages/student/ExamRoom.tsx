@@ -252,7 +252,9 @@ export function ExamRoom() {
                 <Document
                   file={{
                     url: `/api/exams/${exam.id}/pdf/download`,
-                    withCredentials: true,
+                    httpHeaders: {
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    },
                   }}
                   onLoadSuccess={({ numPages }) => setNumPages(numPages)}
                   onLoadError={(error) => {
