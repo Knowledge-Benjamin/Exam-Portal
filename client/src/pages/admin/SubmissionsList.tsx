@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import type { Exam, Submission, Question } from '../../types';
 import { formatDate } from '../../utils/formatters';
+import { useSubmissionStatus } from '../../hooks/useSubmissionStatus';
 
 const stripHtml = (html?: string) => {
   if (!html) return '';
@@ -36,6 +37,9 @@ export function SubmissionsList() {
   const [marks, setMarks] = useState<number>(0);
   const [teacherNote, setTeacherNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Track real-time submission status (active, left, submitted)
+  const submissionStatusMap = useSubmissionStatus(id);
 
   useEffect(() => {
     fetchData();
@@ -137,9 +141,25 @@ export function SubmissionsList() {
   if (!exam) return <div className="text-center py-12 text-gray-500">Exam not found</div>;
 
   const getStatusBadge = (sub: Submission) => {
-    if (!sub.isFinal) return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-gray-500/10 border border-gray-500/30 text-gray-400">Working</span>;
-    if (sub.marksAwarded !== undefined && sub.marksAwarded !== null) return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[var(--color-highlight)]/10 border border-[var(--color-highlight)]/30 text-[var(--color-highlight)]">Marked</span>;
-    return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[var(--color-highlight)]/10 border border-[var(--color-highlight)]/30 text-[var(--color-highlight)]">Needs Marking</span>;
+    const realtimeStatus = submissionStatusMap[sub.id];
+    
+    // If submission is finalized, show marking status
+    if (sub.isFinal) {
+      if (sub.marksAwarded !== undefined && sub.marksAwarded !== null) {
+        return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[var(--color-highlight)]/10 border border-[var(--color-highlight)]/30 text-[var(--color-highlight)]">Marked</span>;
+      }
+      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[var(--color-highlight)]/10 border border-[var(--color-highlight)]/30 text-[var(--color-highlight)]">Needs Marking</span>;
+    }
+
+    // If not finalized, show real-time status
+    if (realtimeStatus === 'active') {
+      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">Working</span>;
+    } else if (realtimeStatus === 'left') {
+      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-orange-500/10 border border-orange-500/30 text-orange-300">Left Exam</span>;
+    } else {
+      // No real-time status yet (hasn't joined room yet, or old exam)
+      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-gray-500/10 border border-gray-500/30 text-gray-400">Idle</span>;
+    }
   };
 
   return (
