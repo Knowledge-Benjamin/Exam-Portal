@@ -28,10 +28,8 @@ export function getCookieOptions(req: Request, overrides?: {
     secure: overrides?.secure ?? isSecure,
     sameSite: overrides?.sameSite ?? (crossSite ? 'none' : 'lax'),
     path: overrides?.path ?? '/',
-    ...(overrides?.domain
-      ? { domain: overrides.domain }
-      : isSecure && env.COOKIE_DOMAIN !== 'localhost'
-      ? { domain: env.COOKIE_DOMAIN }
-      : {}),
+    // Never set domain attribute—let cookies be host-only so they persist
+    // regardless of frontend origin. This ensures cookies work when frontend
+    // makes requests via relative paths to the backend's actual host.
   };
 }
