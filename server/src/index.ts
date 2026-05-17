@@ -90,12 +90,20 @@ httpServer.listen(env.PORT, () => {
   console.log(`[server] SEB validation: ${env.SEB_CONFIG_KEY === 'NONE' ? 'header-presence only' : 'HMAC enabled'}`);
 
   // Auto-close exams whose window has expired — runs every 60 seconds
-  const runAutoClose = () =>
-    autoCloseExpiredExams().catch((err: Error) => {
-      // Silently skip on DB connectivity issues (e.g. network interruptions)
-      if (err.message?.includes('fetch failed') || err.message?.includes('ETIMEDOUT')) return;
-      console.warn('[scheduler] autoClose error:', err.message);
-    });
+  const runAutoClose = async () => {
+    try {
+      const expiredIds = await autoCloseExpiredExams();
+      if (expiredIds.length > 0) {
+        const { cleanupExamRoomData } = await import('./socket/handlers');
+        expiredIds.forEach((id) => cleanupExamRoomData(id));
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        if (err.message?.includes('fetch failed') || err.message?.includes('ETIMEDOUT')) return;
+        console.warn('[scheduler] autoClose error:', err.message);
+      }
+    }
+  };
 
   runAutoClose();
   setInterval(runAutoClose, 60 * 1000);

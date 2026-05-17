@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import type { ExamWithGateUrl } from '../../types';
-import { formatDate, formatDuration } from '../../utils/formatters';
+import { formatDate, formatDuration, formatDateTimeCompact } from '../../utils/formatters';
 import { useExamRoomMonitor } from '../../hooks/useExamRoomMonitor';
 
 export function ExamDetail() {
@@ -388,11 +388,11 @@ export function ExamDetail() {
                           <div className="mt-3 text-[11px] text-gray-400 grid grid-cols-2 gap-2">
                             <div>
                               <p className="text-[9px] uppercase tracking-[0.2em] text-gray-500">Joined</p>
-                              <p>{formatDate(participant.firstJoinedAt)}</p>
+                              <p>{formatDateTimeCompact(participant.firstJoinedAt)}</p>
                             </div>
                             <div>
-                              <p className="text-[9px] uppercase tracking-[0.2em] text-gray-500">Last seen</p>
-                              <p>{formatDate(participant.lastSeenAt)}</p>
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-gray-500">Last {participant.isConnected ? 'active' : 'seen'}</p>
+                              <p>{formatDateTimeCompact(participant.lastSeenAt)}</p>
                             </div>
                           </div>
                         </div>
@@ -415,7 +415,7 @@ export function ExamDetail() {
                           <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">{event.type}</span>
                         </div>
                         <p className="text-[12px] text-gray-400">{event.message}</p>
-                        <p className="text-[10px] text-gray-500 font-mono">{formatDate(event.timestamp)}</p>
+                        <p className="text-[10px] text-gray-500 font-mono">{formatDateTimeCompact(event.timestamp)}</p>
                       </div>
                     ))}
                   </div>

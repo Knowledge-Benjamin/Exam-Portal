@@ -40,6 +40,18 @@ const MAX_ROOM_LOGS = 100;
 
 const teacherRoomName = (examId: string) => `exam:${examId}:teachers`;
 
+export function cleanupExamRoomData(examId: string): void {
+  const timer = activeTimers.get(examId);
+  if (timer) {
+    clearInterval(timer.interval);
+    clearTimeout(timer.forceSubmitTimeout);
+    activeTimers.delete(examId);
+  }
+  examRoomPresence.delete(examId);
+  examRoomLogs.delete(examId);
+  console.info('[socket] cleaned up exam room data:', { examId });
+}
+
 function getPresenceMap(examId: string) {
   if (!examRoomPresence.has(examId)) {
     examRoomPresence.set(examId, new Map());
@@ -128,15 +140,12 @@ export function registerSocketHandlers(io: Server): void {
       }
     }
 
-    const requestedExamId =
-      (socket.handshake.auth?.watchExamId as string | undefined) ||
-      (socket.handshake.query?.examId as string | undefined);
+    const requestedExamId = socket.handshake.auth?.watchExamId as string | undefined;
 
     if (!accessToken || !requestedExamId) {
-      const err = new Error('Exam session required');
-      console.warn('[socket] authentication failed: no valid exam or access token', {
+      const err = new Error('Teacher access token and exam ID required');
+      console.warn('[socket] teacher authentication failed: missing credentials', {
         cookieHeaderPresent,
-        examTokenPresent: !!token,
         accessTokenPresent: !!accessToken,
         requestedExamId,
       });
@@ -204,9 +213,13 @@ export function registerSocketHandlers(io: Server): void {
     // Track live student presence
     getSubmissionById(s.submissionId)
       .then((submission) => {
+        if (!submission) {
+          console.warn('[socket] submission not found for presence tracking:', { submissionId: s.submissionId });
+          return;
+        }
         const now = new Date();
-        const name = submission?.studentName ?? 'Unknown Student';
-        const reg = submission?.studentRegNumber ?? 'Unknown ID';
+        const name = submission.studentName ?? 'Unknown Student';
+        const reg = submission.studentRegNumber ?? 'Unknown ID';
         const presenceMap = getPresenceMap(s.examId);
         const existing = presenceMap.get(s.submissionId!);
 
@@ -230,21 +243,24 @@ export function registerSocketHandlers(io: Server): void {
         } else {
           const wasConnected = existing.sockets.size > 0;
           existing.sockets.add(socket.id);
-          existing.lastSeenAt = now;
-          const eventType = wasConnected ? 'reconnected' : 'joined';
-          pushRoomEvent(io, s.examId, {
-            type: eventType,
-            submissionId: s.submissionId!,
-            studentName: name,
-            studentRegNumber: reg,
-            timestamp: now.toISOString(),
-            message: wasConnected
-              ? `${name} reconnected to the exam room`
-              : `${name} joined the exam room`,
-          });
+          if (wasConnected) {
+            pushRoomEvent(io, s.examId, {
+              type: 'reconnected',
+              submissionId: s.submissionId!,
+              studentName: name,
+              studentRegNumber: reg,
+              timestamp: now.toISOString(),
+              message: `${name} reconnected to the exam room`,
+            });
+          }
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error('[socket] failed to fetch submission for presence tracking:', {
+          submissionId: s.submissionId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
 
     // Auto-save event from client
     socket.on(
@@ -270,15 +286,16 @@ export function registerSocketHandlers(io: Server): void {
       if (!presence) return;
 
       presence.sockets.delete(socket.id);
-      presence.lastSeenAt = new Date();
 
       if (presence.sockets.size === 0) {
+        const now = new Date();
+        presence.lastSeenAt = now;
         pushRoomEvent(io, s.examId, {
           type: 'left',
           submissionId: s.submissionId!,
           studentName: presence.studentName,
           studentRegNumber: presence.studentRegNumber,
-          timestamp: presence.lastSeenAt.toISOString(),
+          timestamp: now.toISOString(),
           message: `${presence.studentName} left the exam room`,
         });
       }

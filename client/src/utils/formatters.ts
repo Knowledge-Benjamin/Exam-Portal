@@ -8,9 +8,23 @@ export function formatCountdown(seconds: number): string {
 }
 
 /**
- * Format an ISO date string to a human-readable local date/time.
+ * Format an ISO date string to a human-readable local date/time with seconds.
  */
 export function formatDateTime(iso: string): string {
+  return new Date(iso).toLocaleString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+}
+
+/**
+ * Format an ISO date string to a compact date/time (no seconds).
+ */
+export function formatDateTimeCompact(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
     day: '2-digit',
     month: 'short',

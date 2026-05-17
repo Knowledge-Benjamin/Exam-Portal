@@ -143,6 +143,8 @@ router.post(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const exam = await closeExam(req.params.id, req.user!.sub);
+      const { cleanupExamRoomData } = await import('../socket/handlers');
+      cleanupExamRoomData(req.params.id);
       res.json({ exam });
     } catch (err) {
       next(err);

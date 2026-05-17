@@ -163,8 +163,9 @@ export async function republishExam(examId: string, teacherId: string) {
 /**
  * Auto-close all active exams whose window has expired.
  * Called on a schedule from the server entry point.
+ * Returns array of closed exam IDs for cleanup.
  */
-export async function autoCloseExpiredExams() {
+export async function autoCloseExpiredExams(): Promise<string[]> {
   const now = new Date();
   const allActive = await db
     .select()
@@ -177,7 +178,7 @@ export async function autoCloseExpiredExams() {
     return now > deadline;
   });
 
-  if (expired.length === 0) return;
+  if (expired.length === 0) return [];
 
   await Promise.all(
     expired.map((e) =>
@@ -188,7 +189,9 @@ export async function autoCloseExpiredExams() {
     ),
   );
 
-  console.log(`[scheduler] Auto-closed ${expired.length} expired exam(s): ${expired.map((e) => e.id).join(', ')}`);
+  const expiredIds = expired.map((e) => e.id);
+  console.log(`[scheduler] Auto-closed ${expired.length} expired exam(s): ${expiredIds.join(', ')}`);
+  return expiredIds;
 }
 
 import { uploadPdfToDrive, deletePdfFromDrive, DriveCredentials, getDriveCredentialsFromUser } from './driveService';
