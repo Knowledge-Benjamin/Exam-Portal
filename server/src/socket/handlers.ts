@@ -196,6 +196,13 @@ export function registerSocketHandlers(io: Server): void {
       return;
     }
 
+    if (!s.submissionId) {
+      console.error('[socket] student missing submissionId:', { userId: s.userId, examId: s.examId });
+      socket.emit('exam:error', { message: 'Invalid exam session' });
+      socket.disconnect();
+      return;
+    }
+
     socket.join(room);
 
     // Start or resume timer for this exam room
