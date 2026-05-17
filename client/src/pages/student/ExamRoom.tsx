@@ -28,8 +28,6 @@ export function ExamRoom() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [violationMsg, setViolationMsg] = useState('');
-  const [numPages, setNumPages] = useState<number>(1);
-  const [pageNumber, setPageNumber] = useState<number>(1);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
@@ -336,13 +334,6 @@ export function ExamRoom() {
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
                     <p>No PDF loaded yet. Please refresh or contact your instructor.</p>
-                  </div>
-                )}
-                {false && numPages > 1 && pdfBlob && !pdfError && (
-                  <div className="sticky bottom-4 flex items-center gap-3 bg-[var(--color-primary)] border border-white/10 rounded-xl px-4 py-2 shadow-xl text-white">
-                    <button disabled={pageNumber <= 1} onClick={() => setPageNumber(p => p - 1)} className="disabled:opacity-30 hover:text-[var(--color-primary)] w-6 h-6 flex items-center justify-center transition-colors font-bold">‹</button>
-                    <span className="text-xs font-medium text-gray-300">Page {pageNumber} of {numPages}</span>
-                    <button disabled={pageNumber >= numPages} onClick={() => setPageNumber(p => p + 1)} className="disabled:opacity-30 hover:text-[var(--color-primary)] w-6 h-6 flex items-center justify-center transition-colors font-bold">›</button>
                   </div>
                 )}
               </div>
