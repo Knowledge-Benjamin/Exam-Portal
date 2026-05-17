@@ -47,6 +47,8 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') 
       : window.location.origin;
 
+    console.info('[socket-client] connecting to:', socketUrl, { path: '/api/socket.io' });
+
     const s = io(socketUrl, {
       path: '/api/socket.io',
       withCredentials: true,
@@ -54,10 +56,12 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     });
 
     s.on('connect', () => {
+      console.info('[socket-client] connected successfully');
       setIsConnected(true);
     });
 
     s.on('disconnect', () => {
+      console.info('[socket-client] disconnected');
       setIsConnected(false);
     });
 
@@ -74,7 +78,11 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     });
 
     s.on('connect_error', (err) => {
-      console.error('Socket connection error:', err);
+      console.error('[socket-client] connection error:', err);
+    });
+
+    s.on('error', (err) => {
+      console.error('[socket-client] socket error:', err);
     });
 
     setSocket(s);

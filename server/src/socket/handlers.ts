@@ -20,22 +20,50 @@ export function registerSocketHandlers(io: Server): void {
     // auth.examToken is set if client passes it explicitly;
     // fall back to parsing the httpOnly cookie sent in the handshake HTTP request
     let token = socket.handshake.auth?.examToken as string | undefined;
+    let tokenSource = 'auth.examToken';
 
     if (!token) {
       const cookieHeader = socket.handshake.headers.cookie ?? '';
       const match = cookieHeader.match(/(?:^|;\s*)exam_token=([^;]+)/);
-      if (match) token = decodeURIComponent(match[1]);
+      if (match) {
+        token = decodeURIComponent(match[1]);
+        tokenSource = 'cookie';
+      }
     }
 
+    const rawCookieHeader = String(socket.handshake.headers.cookie ?? '');
+    console.info('[socket] auth middleware:', {
+      cookieHeaderPresent: rawCookieHeader.length > 0,
+      cookieHeader: rawCookieHeader.slice(0, 100),
+      tokenFound: !!token,
+      tokenSource,
+      handshakeHeaders: {
+        origin: socket.handshake.headers.origin,
+        referer: socket.handshake.headers.referer,
+        host: socket.handshake.headers.host,
+      },
+    });
+
     if (!token) {
-      return next(new Error('Exam session required'));
+      const err = new Error('Exam session required');
+      console.warn('[socket] authentication failed: no token available', {
+        cookieHeaderPresent: rawCookieHeader.length > 0,
+      });
+      return next(err);
     }
     try {
       const payload = verifyExamToken(token);
       (socket as AuthenticatedSocket).submissionId = payload.submissionId;
       (socket as AuthenticatedSocket).examId = payload.examId;
+      console.info('[socket] authentication successful:', {
+        tokenSource,
+        examId: payload.examId,
+        submissionId: payload.submissionId,
+      });
       next();
-    } catch {
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : 'Unknown error';
+      console.warn('[socket] token verification failed:', errMsg);
       next(new Error('Invalid or expired exam session'));
     }
   });
