@@ -250,8 +250,15 @@ export function ExamRoom() {
             exam.pdfPath ? (
               <div className="flex-1 overflow-auto flex flex-col items-center py-8 px-4 gap-4">
                 <Document
-                  file={`/api/exams/${exam.id}/pdf/download`}
+                  file={{
+                    url: `/api/exams/${exam.id}/pdf/download`,
+                    withCredentials: true,
+                  }}
                   onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                  onLoadError={(error) => {
+                    console.error('[pdf] load error:', error);
+                    setError('Failed to load PDF. Please refresh and try again.');
+                  }}
                   className="flex flex-col items-center gap-4 w-full"
                 >
                   <Page

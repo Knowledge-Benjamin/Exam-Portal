@@ -222,6 +222,7 @@ router.get(
       // 2. Check student exam session
       if (!isAuthorized) {
         const examToken = req.cookies?.exam_token as string | undefined;
+        const rawCookies = String(req.headers.cookie ?? '');
         if (examToken) {
           const { verifyExamToken } = await import('../utils/token');
           try {
@@ -229,11 +230,24 @@ router.get(
             if (session.examId === examId) {
               isAuthorized = true;
             }
-          } catch { /* ignore */ }
+          } catch (err) {
+            console.warn('[pdf] exam token verification failed:', err instanceof Error ? err.message : 'unknown');
+          }
+        } else {
+          console.warn('[pdf] no exam_token found in cookies', {
+            cookieHeaderPresent: rawCookies.length > 0,
+            examId,
+            hasAccessToken: !!accessToken,
+          });
         }
       }
 
       if (!isAuthorized) {
+        console.warn('[pdf] unauthorized pdf access attempt:', {
+          examId,
+          hasAccessToken: !!accessToken,
+          hasExamToken: !!req.cookies?.exam_token,
+        });
         res.status(401).json({ error: 'Not authorized to view this PDF' });
         return;
       }
