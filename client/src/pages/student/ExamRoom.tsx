@@ -84,7 +84,11 @@ export function ExamRoom() {
       });
       setPdfBlob(response.data);
     } catch (err: any) {
-      console.error('[pdf] fetch error:', err);
+      console.error('[pdf] fetch error:', {
+        message: err.message,
+        status: err.response?.status,
+        body: err.response?.data,
+      });
       setError('Failed to load PDF. Please refresh and try again.');
     } finally {
       setIsPdfLoading(false);

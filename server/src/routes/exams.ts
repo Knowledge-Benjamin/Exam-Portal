@@ -173,6 +173,13 @@ router.post(
   upload.single('pdf'),
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
+      console.info('[pdf upload] request', {
+        examId: req.params.id,
+        teacherId: req.user?.sub,
+        fileName: req.file?.originalname,
+        fileSize: req.file?.size,
+      });
+
       if (!req.file) {
         res.status(400).json({ error: 'No PDF file provided' });
         return;
@@ -182,15 +189,18 @@ router.post(
       const teacher = await getUserProfile(req.user!.sub);
       const creds = getDriveCredentialsFromUser(teacher);
       if (!teacher || !creds) {
+        console.warn('[pdf upload] missing google drive configuration', { teacherId: req.user!.sub });
         res.status(400).json({ error: 'Google Drive is not configured in your settings. Please configure it to upload PDFs.' });
         return;
       }
 
       const fileId = await uploadPdfToDrive(req.file.buffer, req.file.originalname, req.file.mimetype, creds);
       await setPdfPath(req.params.id, req.user!.sub, fileId);
-      
+
+      console.info('[pdf upload] success', { examId: req.params.id, teacherId: req.user!.sub, fileId });
       res.json({ filename: fileId });
     } catch (err) {
+      console.error('[pdf upload] error', err);
       next(err);
     }
   },
@@ -201,13 +211,24 @@ router.get(
   '/:id/pdf/download',
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
-      // Allow if user is teacher OR if student is in an active exam session for this exam
       const examId = req.params.id;
+      const rawCookies = String(req.headers.cookie ?? '');
+      const accessToken = req.cookies?.access_token as string | undefined;
+
+      console.info('[pdf download] request', {
+        examId,
+        origin: req.get('origin'),
+        host: req.get('host'),
+        cookieHeaderPresent: rawCookies.length > 0,
+        hasAccessToken: !!accessToken,
+        hasExamToken: !!req.cookies?.exam_token,
+        path: req.originalUrl,
+      });
+
       let isAuthorized = false;
+      let teacherIdFromToken: string | null = null;
 
       // 1. Check teacher auth
-      const accessToken = req.cookies?.access_token as string | undefined;
-      let teacherIdFromToken: string | null = null;
       if (accessToken) {
         const { verifyAccessToken } = await import('../utils/token');
         try {
@@ -215,26 +236,31 @@ router.get(
           if (user.role === 'admin' || user.role === 'teacher') {
             isAuthorized = true;
             teacherIdFromToken = user.sub;
+            console.info('[pdf download] authorized via teacher access token', { examId, teacherIdFromToken });
           }
-        } catch { /* ignore */ }
+        } catch (err) {
+          console.warn('[pdf download] access token invalid or expired', { examId, message: err instanceof Error ? err.message : String(err) });
+        }
       }
 
       // 2. Check student exam session
       if (!isAuthorized) {
         const examToken = req.cookies?.exam_token as string | undefined;
-        const rawCookies = String(req.headers.cookie ?? '');
         if (examToken) {
           const { verifyExamToken } = await import('../utils/token');
           try {
             const session = verifyExamToken(examToken);
             if (session.examId === examId) {
               isAuthorized = true;
+              console.info('[pdf download] authorized via exam token', { examId });
+            } else {
+              console.warn('[pdf download] exam token mismatch', { examId, tokenExamId: session.examId });
             }
           } catch (err) {
-            console.warn('[pdf] exam token verification failed:', err instanceof Error ? err.message : 'unknown');
+            console.warn('[pdf download] exam token verification failed', { examId, message: err instanceof Error ? err.message : String(err) });
           }
         } else {
-          console.warn('[pdf] no exam_token found in cookies', {
+          console.warn('[pdf download] no exam_token found in cookies', {
             cookieHeaderPresent: rawCookies.length > 0,
             examId,
             hasAccessToken: !!accessToken,
@@ -243,7 +269,7 @@ router.get(
       }
 
       if (!isAuthorized) {
-        console.warn('[pdf] unauthorized pdf access attempt:', {
+        console.warn('[pdf download] unauthorized pdf access attempt', {
           examId,
           hasAccessToken: !!accessToken,
           hasExamToken: !!req.cookies?.exam_token,
@@ -254,12 +280,13 @@ router.get(
 
       const exam = await getExamById(examId);
       if (!exam || !exam.pdfPath) {
+        console.warn('[pdf download] exam or pdf not found', { examId, hasExam: !!exam, pdfPath: exam?.pdfPath });
         res.status(404).json({ error: 'Exam or PDF not found' });
         return;
       }
 
-      // Ensure teacher is the owner if accessed via access token
       if (teacherIdFromToken && exam.teacherId !== teacherIdFromToken) {
+        console.warn('[pdf download] teacher token mismatch', { examId, ownerId: exam.teacherId, tokenOwnerId: teacherIdFromToken });
         res.status(403).json({ error: 'You do not own this exam' });
         return;
       }
@@ -267,15 +294,18 @@ router.get(
       const teacher = await getUserProfile(exam.teacherId);
       const creds = getDriveCredentialsFromUser(teacher);
       if (!teacher || !creds) {
+        console.error('[pdf download] missing drive credentials for exam owner', { examId, teacherId: exam.teacherId });
         res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
         return;
       }
 
+      console.info('[pdf download] streaming pdf from drive', { examId, fileId: exam.pdfPath, teacherId: exam.teacherId });
       const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline; filename="exam.pdf"');
       stream.pipe(res);
     } catch (err) {
+      console.error('[pdf download] error', err);
       next(err);
     }
   },

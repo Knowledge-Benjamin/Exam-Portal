@@ -217,7 +217,13 @@ export async function getPdfStreamFromDrive(fileId: string, creds: DriveCredenti
 
     return response.data as Readable;
   } catch (err: any) {
-    console.error('Google Drive Stream Error:', err);
+    console.error('Google Drive Stream Error:', {
+      fileId,
+      message: err?.message,
+      statusCode: err?.response?.status,
+      responseData: err?.response?.data,
+    });
     throw new AppError(404, 'Failed to fetch PDF from Google Drive.');
   }
 }
+
