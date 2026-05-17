@@ -50,17 +50,6 @@ export function useExamRoomMonitor(examId: string | undefined): ExamRoomMonitorR
       return;
     }
 
-    const accessToken = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith('access_token='))
-      ?.split('=')[1];
-
-    if (!accessToken) {
-      setConnectionStatus('failed');
-      setError('Authentication required. Please log in to monitor the exam.');
-      return;
-    }
-
     setConnectionStatus('connecting');
     setError(undefined);
 
@@ -72,7 +61,7 @@ export function useExamRoomMonitor(examId: string | undefined): ExamRoomMonitorR
       path: '/api/socket.io',
       withCredentials: true,
       transports: ['websocket', 'polling'],
-      auth: { watchExamId: examId, accessToken },
+      auth: { watchExamId: examId },
     });
 
     socket.on('connect', () => {

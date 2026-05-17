@@ -128,27 +128,31 @@ export function registerSocketHandlers(io: Server): void {
       }
     }
 
-    const accessTokenFromAuth = socket.handshake.auth?.accessToken as string | undefined;
-    let accessToken = accessTokenFromAuth;
-    let accessTokenSource = accessTokenFromAuth ? 'auth.accessToken' : undefined;
+    // Teacher/admin auth via access_token cookie
+    let accessToken: string | undefined;
+    let accessTokenSource: string | undefined;
 
-    if (!accessToken) {
-      const match = rawCookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
-      if (match) {
-        accessToken = decodeURIComponent(match[1]);
-        accessTokenSource = 'cookie';
-      }
+    const match = rawCookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
+    if (match) {
+      accessToken = decodeURIComponent(match[1]);
+      accessTokenSource = 'cookie';
     }
 
     const requestedExamId = socket.handshake.auth?.watchExamId as string | undefined;
 
-    if (!accessToken || !requestedExamId) {
-      const err = new Error('Teacher access token and exam ID required');
-      console.warn('[socket] teacher authentication failed: missing credentials', {
+    if (!accessToken) {
+      const err = new Error('No access token found. Please log in.');
+      console.warn('[socket] teacher auth failed: missing access_token cookie', {
         cookieHeaderPresent,
-        accessTokenPresent: !!accessToken,
+        cookieHeader: cookieHeaderPresent ? '[present]' : '[missing]',
         requestedExamId,
       });
+      return next(err);
+    }
+
+    if (!requestedExamId) {
+      const err = new Error('Exam ID required for monitoring');
+      console.warn('[socket] teacher auth failed: missing exam ID');
       return next(err);
     }
 
