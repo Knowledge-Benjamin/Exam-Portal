@@ -60,7 +60,11 @@ router.post(
         maxAge: 90 * 60 * 1000,
       });
 
-      res.json({ ok: true, examId: result.examId });
+      res.json({ 
+        ok: true, 
+        examId: result.examId,
+        examToken: result.examToken, // Also return token for socket.io handshake auth
+      });
     } catch (err) {
       next(err);
     }

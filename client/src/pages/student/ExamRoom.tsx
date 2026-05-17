@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import type { Exam, Question, Submission } from '../../types';
 import { useSocket } from '../../hooks/useSocket';
@@ -20,6 +20,8 @@ type Answers = Record<string, string>;
 export function ExamRoom() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const examToken = (location.state as any)?.examToken || '';
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -51,7 +53,7 @@ export function ExamRoom() {
     },
   });
 
-  const { isConnected, remainingSeconds, lastSaved, forceSubmitMsg } = useSocket(id!, answers);
+  const { isConnected, remainingSeconds, lastSaved, forceSubmitMsg } = useSocket(id!, answers, examToken);
 
   // ─── Load ──────────────────────────────────────────────────────────────────
 

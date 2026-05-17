@@ -29,7 +29,10 @@ export function ExamJoin() {
       }, { withCredentials: true });
 
       if (res.data.ok) {
-        navigate(`/exam/${res.data.examId}`);
+        // Pass exam token via navigation state for socket.io auth
+        navigate(`/exam/${res.data.examId}`, { 
+          state: { examToken: res.data.examToken }
+        });
       }
     } catch (err: any) {
       setError(err.response?.data?.error || err.error || 'Failed to join the exam. Please check your token or try again.');

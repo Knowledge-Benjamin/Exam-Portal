@@ -11,7 +11,7 @@ interface UseSocketResult {
   triggerSave: (answers: Record<string, string>) => void;
 }
 
-export function useSocket(examId: string, initialAnswers: Record<string, string>): UseSocketResult {
+export function useSocket(examId: string, initialAnswers: Record<string, string>, examToken?: string): UseSocketResult {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
@@ -47,12 +47,13 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') 
       : window.location.origin;
 
-    console.info('[socket-client] connecting to:', socketUrl, { path: '/api/socket.io' });
+    console.info('[socket-client] connecting to:', socketUrl, { path: '/api/socket.io', hasToken: !!examToken });
 
     const s = io(socketUrl, {
       path: '/api/socket.io',
       withCredentials: true,
       transports: ['websocket', 'polling'],
+      auth: examToken ? { examToken } : undefined,
     });
 
     s.on('connect', () => {
@@ -104,7 +105,7 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       clearInterval(interval);
       s.disconnect();
     };
-  }, [examId]);
+  }, [examId, examToken]);
 
   return { socket, isConnected, remainingSeconds, lastSaved, forceSubmitMsg, triggerSave };
 }
