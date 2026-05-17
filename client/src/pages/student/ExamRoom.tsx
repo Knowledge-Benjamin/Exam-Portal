@@ -9,7 +9,17 @@ import { QuestionAnswer } from '../../components/editor/QuestionAnswer';
 import { formatCountdown } from '../../utils/formatters';
 
 import { Document, Page, pdfjs } from 'react-pdf';
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+
+// Set PDF worker source with fallback
+try {
+  pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+  console.info('[pdf] worker initialized:', {
+    version: pdfjs.version,
+    workerSrc: pdfjs.GlobalWorkerOptions.workerSrc,
+  });
+} catch (err) {
+  console.error('[pdf] worker setup failed:', err);
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +47,7 @@ export function ExamRoom() {
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<{ message: string; details?: string } | null>(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
 
@@ -69,6 +80,14 @@ export function ExamRoom() {
   }, [exam?.id, exam?.pdfPath]);
 
   useEffect(() => {
+    if (pdfBlob) {
+      const url = URL.createObjectURL(pdfBlob);
+      setPdfBlobUrl(url);
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [pdfBlob]);
+
+  useEffect(() => {
     if (forceSubmitMsg) {
       alert(forceSubmitMsg);
       navigate('/', { replace: true });
@@ -89,6 +108,10 @@ export function ExamRoom() {
         status: response.status,
         size: response.data?.size,
         type: response.data?.type,
+        headers: {
+          contentType: response.headers['content-type'],
+          contentLength: response.headers['content-length'],
+        },
       });
       setPdfBlob(response.data);
     } catch (err: any) {
@@ -307,12 +330,16 @@ export function ExamRoom() {
                   </div>
                 ) : pdfBlob ? (
                   <Document
-                    file={pdfBlob}
-                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                    file={pdfBlobUrl || pdfBlob}
+                    onLoadSuccess={({ numPages }) => {
+                      console.info('[pdf] document loaded successfully', { numPages, usedUrl: !!pdfBlobUrl });
+                      setNumPages(numPages);
+                    }}
                     onLoadError={(error: any) => {
                       const errorMsg = error?.message || String(error) || 'Unknown error';
-                      const details = `Blob size: ${pdfBlob?.size} bytes, Type: ${pdfBlob?.type}`;
-                      console.error('[pdf] load error:', { error: errorMsg, examId: exam.id, ...error });
+                      const method = pdfBlobUrl ? 'blob URL' : 'direct blob';
+                      const details = `Method: ${method} | Blob: ${pdfBlob?.size} bytes (${pdfBlob?.type})`;
+                      console.error('[pdf] load error:', { error: errorMsg, examId: exam.id, method, ...error });
                       setPdfError({ message: 'Failed to parse PDF document', details });
                     }}
                     className="flex flex-col items-center gap-4 w-full"
