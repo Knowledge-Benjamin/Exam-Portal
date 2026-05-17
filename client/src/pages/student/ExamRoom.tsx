@@ -8,19 +8,6 @@ import { ExamEditor } from '../../components/editor/ExamEditor';
 import { QuestionAnswer } from '../../components/editor/QuestionAnswer';
 import { formatCountdown } from '../../utils/formatters';
 
-import { Document, Page, pdfjs } from 'react-pdf';
-
-// Set PDF worker source with fallback
-try {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
-  console.info('[pdf] worker initialized:', {
-    version: pdfjs.version,
-    workerSrc: pdfjs.GlobalWorkerOptions.workerSrc,
-  });
-} catch (err) {
-  console.error('[pdf] worker setup failed:', err);
-}
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type Answers = Record<string, string>;
@@ -329,35 +316,29 @@ export function ExamRoom() {
                     <p>Loading PDF…</p>
                   </div>
                 ) : pdfBlob ? (
-                  <Document
-                    file={pdfBlobUrl || pdfBlob}
-                    onLoadSuccess={({ numPages }) => {
-                      console.info('[pdf] document loaded successfully', { numPages, usedUrl: !!pdfBlobUrl });
-                      setNumPages(numPages);
-                    }}
-                    onLoadError={(error: any) => {
-                      const errorMsg = error?.message || String(error) || 'Unknown error';
-                      const method = pdfBlobUrl ? 'blob URL' : 'direct blob';
-                      const details = `Method: ${method} | Blob: ${pdfBlob?.size} bytes (${pdfBlob?.type})`;
-                      console.error('[pdf] load error:', { error: errorMsg, examId: exam.id, method, ...error });
-                      setPdfError({ message: 'Failed to parse PDF document', details });
-                    }}
-                    className="flex flex-col items-center gap-4 w-full"
-                  >
-                    <Page
-                      pageNumber={pageNumber}
-                      width={Math.min(540, window.innerWidth * 0.44)}
-                      renderTextLayer={false}
-                      renderAnnotationLayer={false}
-                      className="shadow-2xl rounded overflow-hidden"
-                    />
-                  </Document>
+                  pdfBlobUrl ? (
+                    <div className="flex-1 w-full h-full">
+                      <object data={pdfBlobUrl} type="application/pdf" width="100%" height="100%">
+                        <div className="p-4 text-sm text-gray-400">
+                          Unable to display the PDF in this browser.{' '}
+                          <a href={pdfBlobUrl} target="_blank" rel="noreferrer" className="underline">
+                            Open PDF directly
+                          </a>.
+                        </div>
+                      </object>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+                      <div className="w-12 h-12 border-2 border-white/10 border-t-transparent rounded-full animate-spin mb-4" />
+                      <p>Preparing PDF viewer…</p>
+                    </div>
+                  )
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
                     <p>No PDF loaded yet. Please refresh or contact your instructor.</p>
                   </div>
                 )}
-                {numPages > 1 && pdfBlob && !pdfError && (
+                {false && numPages > 1 && pdfBlob && !pdfError && (
                   <div className="sticky bottom-4 flex items-center gap-3 bg-[var(--color-primary)] border border-white/10 rounded-xl px-4 py-2 shadow-xl text-white">
                     <button disabled={pageNumber <= 1} onClick={() => setPageNumber(p => p - 1)} className="disabled:opacity-30 hover:text-[var(--color-primary)] w-6 h-6 flex items-center justify-center transition-colors font-bold">‹</button>
                     <span className="text-xs font-medium text-gray-300">Page {pageNumber} of {numPages}</span>
