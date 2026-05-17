@@ -82,6 +82,12 @@ export function ExamRoom() {
         withCredentials: true,
         responseType: 'blob',
       });
+      console.info('[pdf] fetch completed', {
+        examId: exam.id,
+        status: response.status,
+        size: response.data?.size,
+        type: response.data?.type,
+      });
       setPdfBlob(response.data);
     } catch (err: any) {
       console.error('[pdf] fetch error:', {
@@ -288,7 +294,12 @@ export function ExamRoom() {
                     file={pdfBlob}
                     onLoadSuccess={({ numPages }) => setNumPages(numPages)}
                     onLoadError={(error) => {
-                      console.error('[pdf] load error:', error);
+                      console.error('[pdf] load error:', {
+                        error,
+                        examId: exam.id,
+                        pdfBlobSize: pdfBlob?.size,
+                        pdfBlobType: pdfBlob?.type,
+                      });
                       setError('Failed to load PDF. Please refresh and try again.');
                     }}
                     className="flex flex-col items-center gap-4 w-full"
