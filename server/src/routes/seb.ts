@@ -10,13 +10,13 @@ import { env } from '../config/env';
 
 const router = Router();
 
-// Helper to compute cookie options based on request protocol (mirrors auth route behavior)
+// Helper to compute cookie options based on request protocol and production mode
 function getCookieOptions(req: Request) {
-  const isSecure = req.secure || req.get('x-forwarded-proto') === 'https';
+  const isSecure = env.isProd || req.secure || req.get('x-forwarded-proto') === 'https';
   return {
     httpOnly: true,
     secure: isSecure,
-    sameSite: isSecure ? ('none' as const) : ('lax' as const),
+    sameSite: env.isProd ? ('none' as const) : (isSecure ? ('none' as const) : ('lax' as const)),
     ...(isSecure && env.COOKIE_DOMAIN !== 'localhost' ? { domain: env.COOKIE_DOMAIN } : {}),
   };
 }
