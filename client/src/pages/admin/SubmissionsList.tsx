@@ -69,7 +69,7 @@ export function SubmissionsList() {
 
     const isFreeform = !!sub.answers?.freeform;
     const content = isFreeform
-      ? sub.answers.freeform
+      ? (sub.answers.freeformPlain ?? sub.answers.freeform)
       : questions.map((q, i) => {
           const ans = sub.answers?.[q.id] || '<em>No answer provided</em>';
           return `
@@ -232,11 +232,17 @@ export function SubmissionsList() {
 
               <div className="p-8 overflow-y-auto flex-1 space-y-8 custom-scrollbar bg-[var(--color-primary)] relative z-10">
                 {selectedSubmission.answers?.freeform ? (
-                  /* PDF exam — render free-form HTML */
-                  <div
-                    className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: selectedSubmission.answers.freeform }}
-                  />
+                  /* PDF exam — render free-form HTML or plain text if available */
+                  selectedSubmission.answers.freeformPlain ? (
+                    <div className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">{selectedSubmission.answers.freeformPlain}</pre>
+                    </div>
+                  ) : (
+                    <div
+                      className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: selectedSubmission.answers.freeform }}
+                    />
+                  )
                 ) : (
                   /* Builder exam — structured Q&A */
                   questions.map((q, idx) => (

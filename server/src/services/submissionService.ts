@@ -2,6 +2,7 @@ import { eq, and } from 'drizzle-orm';
 import { db } from '../db/db';
 import { submissions } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
+import { htmlToPlain } from '../utils/html';
 
 export async function createSubmission(
   examId: string,
@@ -41,9 +42,15 @@ export async function saveAnswers(
   if (!existing) throw new AppError(404, 'Submission record not found');
   if (existing.isFinal) throw new AppError(400, 'Exam already submitted');
 
+  // ensure we store a plain-text copy of any freeform HTML for teacher views
+  const answersToStore = { ...answers } as Record<string, any>;
+  if (typeof answersToStore.freeform === 'string') {
+    answersToStore.freeformPlain = htmlToPlain(answersToStore.freeform);
+  }
+
   const [updated] = await db
     .update(submissions)
-    .set({ answers, sebRequestHash: sebHash, updatedAt: new Date() })
+    .set({ answers: answersToStore, sebRequestHash: sebHash, updatedAt: new Date() })
     .where(eq(submissions.id, existing.id))
     .returning();
 
@@ -60,10 +67,16 @@ export async function finalSubmit(
   if (!existing) throw new AppError(404, 'Submission record not found');
   if (existing.isFinal) throw new AppError(400, 'Exam already submitted');
 
+  // store plain-text copy for freeform HTML
+  const answersToStore = { ...answers } as Record<string, any>;
+  if (typeof answersToStore.freeform === 'string') {
+    answersToStore.freeformPlain = htmlToPlain(answersToStore.freeform);
+  }
+
   const [updated] = await db
     .update(submissions)
     .set({
-      answers,
+      answers: answersToStore,
       isFinal: true,
       submittedAt: new Date(),
       sebRequestHash: sebHash,
