@@ -47,6 +47,14 @@ router.post(
       );
 
       const cookieOpts = getCookieOptions(req);
+      console.info('[seb] issuing exam_token', {
+        origin: req.get('origin'),
+        host: req.get('host'),
+        protocol: req.protocol,
+        forwardedProto: req.get('x-forwarded-proto'),
+        cookieOpts,
+      });
+
       res.cookie('exam_token', result.examToken, {
         ...cookieOpts,
         maxAge: 90 * 60 * 1000,
