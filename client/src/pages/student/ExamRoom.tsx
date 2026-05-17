@@ -34,6 +34,7 @@ export function ExamRoom() {
   const [numPages, setNumPages] = useState<number>(1);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
 
@@ -60,11 +61,30 @@ export function ExamRoom() {
   useEffect(() => { fetchExamData(); }, [id]);
 
   useEffect(() => {
+    if (exam?.pdfPath) {
+      fetchPdfBlob();
+    }
+  }, [exam?.id, exam?.pdfPath]);
+
+  useEffect(() => {
     if (forceSubmitMsg) {
       alert(forceSubmitMsg);
       navigate('/', { replace: true });
     }
   }, [forceSubmitMsg, navigate]);
+
+  const fetchPdfBlob = async () => {
+    try {
+      const response = await axios.get(`/api/exams/${exam?.id}/pdf/download`, {
+        withCredentials: true,
+        responseType: 'blob',
+      });
+      setPdfBlob(response.data);
+    } catch (err: any) {
+      console.error('[pdf] fetch error:', err);
+      setError('Failed to load PDF. Please refresh and try again.');
+    }
+  };
 
   const fetchExamData = async () => {
     try {
@@ -250,12 +270,7 @@ export function ExamRoom() {
             exam.pdfPath ? (
               <div className="flex-1 overflow-auto flex flex-col items-center py-8 px-4 gap-4">
                 <Document
-                  file={{
-                    url: `/api/exams/${exam.id}/pdf/download`,
-                    httpHeaders: {
-                      'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    },
-                  }}
+                  file={pdfBlob}
                   onLoadSuccess={({ numPages }) => setNumPages(numPages)}
                   onLoadError={(error) => {
                     console.error('[pdf] load error:', error);
