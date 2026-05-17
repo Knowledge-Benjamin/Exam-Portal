@@ -180,7 +180,17 @@ export function SubmissionsList() {
                       <p className={`font-bold truncate pr-2 ${selectedSubmission?.id === sub.id ? 'text-white' : 'text-gray-300'}`}>
                         {sub.studentName} ({sub.studentRegNumber})
                       </p>
-                      {getStatusBadge(sub)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(sub)}
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleDownloadPdf(sub); }}
+                          title="Download PDF"
+                          className="flex items-center gap-2 px-3 py-1 border border-white/10 rounded-lg text-xs text-[var(--color-primary)] hover:bg-[var(--color-primary)]/8"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l4-4m-4 4l-4-4M21 21H3" /></svg>
+                          <span className="hidden sm:inline">Download</span>
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center text-xs mt-3 relative z-10">
                       <p className="text-gray-500 font-mono">{sub.submittedAt ? formatDate(sub.submittedAt) : 'In Progress'}</p>
