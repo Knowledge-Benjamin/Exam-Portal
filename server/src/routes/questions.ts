@@ -54,9 +54,8 @@ router.put(
   requireRole('teacher', 'admin'),
   async (req: Request<{ examId: string }>, res: Response, next: NextFunction) => {
     try {
-      await assertExamOwner(req.params.examId, req.user!.sub);
       const { order } = reorderQuestionsSchema.parse(req.body);
-      await reorderQuestions(req.params.examId, order);
+      await reorderQuestions(req.params.examId, req.user!.sub, order);
       res.json({ ok: true });
     } catch (err) {
       next(err);

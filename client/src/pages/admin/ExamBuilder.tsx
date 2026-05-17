@@ -172,10 +172,10 @@ export function ExamBuilder() {
         )}
       </div>
 
-      {exam.status !== 'draft' && (
+      {exam.status === 'closed' && (
         <div className="bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 text-[var(--color-danger)] p-4 rounded-xl text-sm flex items-center gap-3">
           <span className="w-2 h-2 rounded-full bg-[var(--color-danger)] animate-pulse"></span>
-          This exam is {exam.status}. You cannot modify its content.
+          This exam is closed. You cannot modify its content.
         </div>
       )}
 
@@ -196,11 +196,11 @@ export function ExamBuilder() {
               className="hidden" 
               ref={fileInputRef}
               onChange={handleFileUpload}
-              disabled={exam.status !== 'draft'}
+              disabled={exam.status === 'closed'}
             />
             <button 
               onClick={() => fileInputRef.current?.click()}
-              disabled={isUploading || exam.status !== 'draft'}
+              disabled={isUploading || exam.status === 'closed'}
               className="px-6 py-3 bg-[#1a4a85] border border-[var(--color-danger)]/50 hover:bg-[var(--color-danger)]/10 text-[var(--color-danger)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50"
             >
               {isUploading ? 'Uploading...' : 'Select PDF File'}
@@ -228,7 +228,7 @@ export function ExamBuilder() {
                 : 'Build the full exam questions here.'}
             </p>
           </div>
-          {exam.status === 'draft' && !showForm && (
+          {exam.status !== 'closed' && !showForm && (
             <button 
               onClick={() => setShowForm(true)} 
               className="px-6 py-3 bg-[var(--color-primary)] hover:bg-[#00d0db] text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)]"
@@ -239,7 +239,7 @@ export function ExamBuilder() {
         </div>
 
         {/* Question Form */}
-        {showForm && exam.status === 'draft' && (
+        {showForm && exam.status !== 'closed' && (
           <form onSubmit={handleAddQuestion} className="bg-[var(--color-primary)] p-6 rounded-xl border border-[var(--color-primary)]/30 mb-8 space-y-6 relative z-10 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.05)]">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -371,7 +371,7 @@ export function ExamBuilder() {
                   )}
                 </div>
                 
-                {exam.status === 'draft' && (
+                {exam.status !== 'closed' && (
                   <button 
                     onClick={() => handleDeleteQuestion(q.id)}
                     className="p-2 text-gray-500 hover:bg-red-500/10 hover:text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"

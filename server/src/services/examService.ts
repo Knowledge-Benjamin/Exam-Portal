@@ -73,14 +73,8 @@ export async function updateExam(
   }>,
 ) {
   const exam = await assertExamOwner(examId, teacherId);
-  // Allow updating general fields only while draft.
-  // However, allow `sebConfigKey` to be set/updated at any time (post-publish) to support
-  // the workflow where the exam must be published to generate the SEB gate URL first.
-  if (exam.status !== 'draft') {
-    const nonSebKeys = Object.keys(data).filter((k) => k !== 'sebConfigKey');
-    if (nonSebKeys.length > 0) {
-      throw new AppError(400, 'Only draft exams can be edited');
-    }
+  if (exam.status === 'closed') {
+    throw new AppError(400, 'Cannot edit a closed exam');
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
@@ -199,8 +193,8 @@ import { getUserProfile } from './authService';
 
 export async function deleteExam(examId: string, teacherId: string) {
   const exam = await assertExamOwner(examId, teacherId);
-  if (exam.status !== 'draft') {
-    throw new AppError(400, 'Only draft exams can be deleted');
+  if (exam.status === 'closed') {
+    throw new AppError(400, 'Cannot delete a closed exam');
   }
 
   if (exam.pdfPath) {
@@ -248,6 +242,12 @@ export async function addQuestion(
     orderIndex?: number;
   },
 ) {
+  const exam = await getExamById(examId);
+  if (!exam) throw new AppError(404, 'Exam not found');
+  if (exam.status === 'closed') {
+    throw new AppError(400, 'Cannot add questions to a closed exam');
+  }
+
   const existing = await getQuestions(examId);
   const nextIndex = data.orderIndex ?? existing.length;
 
@@ -280,7 +280,7 @@ export async function updateQuestion(
   if (!q) throw new AppError(404, 'Question not found');
 
   const exam = await assertExamOwner(q.examId, teacherId);
-  if (exam.status !== 'draft') throw new AppError(400, 'Cannot edit questions of a published exam');
+  if (exam.status === 'closed') throw new AppError(400, 'Cannot edit questions of a closed exam');
 
   const [updated] = await db
     .update(questions)
@@ -296,12 +296,15 @@ export async function deleteQuestion(questionId: string, teacherId: string) {
   if (!q) throw new AppError(404, 'Question not found');
 
   const exam = await assertExamOwner(q.examId, teacherId);
-  if (exam.status !== 'draft') throw new AppError(400, 'Cannot delete questions of a published exam');
+  if (exam.status === 'closed') throw new AppError(400, 'Cannot delete questions of a closed exam');
 
   await db.delete(questions).where(eq(questions.id, questionId));
 }
 
-export async function reorderQuestions(examId: string, orderedIds: string[]) {
+export async function reorderQuestions(examId: string, teacherId: string, orderedIds: string[]) {
+  const exam = await assertExamOwner(examId, teacherId);
+  if (exam.status === 'closed') throw new AppError(400, 'Cannot reorder questions of a closed exam');
+
   await Promise.all(
     orderedIds.map((id, index) =>
       db.update(questions).set({ orderIndex: index }).where(eq(questions.id, id)),

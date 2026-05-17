@@ -286,7 +286,7 @@ export function ExamDetail() {
             
             <div className="flex justify-between items-center mb-6 relative z-10">
               <h3 className="text-[12px] tracking-widest uppercase text-gray-500 font-bold">Exam Content</h3>
-              {exam.status === 'draft' && (
+              {exam.status !== 'closed' && (
                 <button 
                   onClick={() => navigate(`/dashboard/exams/${exam.id}/builder`)}
                   className="px-4 py-2 border border-white/10 hover:border-[var(--color-danger)]/50 hover:text-[var(--color-danger)] text-gray-400 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase transition-all"
