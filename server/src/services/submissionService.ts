@@ -89,7 +89,7 @@ export async function finalSubmit(
 }
 
 export async function getAllSubmissions(examId: string) {
-  return db
+  const rows = await db
     .select({
       id: submissions.id,
       studentName: submissions.studentName,
@@ -104,6 +104,19 @@ export async function getAllSubmissions(examId: string) {
     })
     .from(submissions)
     .where(eq(submissions.examId, examId));
+
+  // Ensure freeformPlain is present in results for teacher views
+  return rows.map(r => {
+    try {
+      const ans = (r as any).answers ?? {};
+      if (typeof ans.freeform === 'string' && !ans.freeformPlain) {
+        (r as any).answers = { ...ans, freeformPlain: htmlToPlain(ans.freeform) };
+      }
+    } catch (e) {
+      // ignore and return row as-is
+    }
+    return r;
+  });
 }
 
 export async function markSubmission(
