@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import type { ExamWithGateUrl } from '../../types';
 import { formatDate, formatDuration } from '../../utils/formatters';
+import { useExamRoomMonitor } from '../../hooks/useExamRoomMonitor';
 
 export function ExamDetail() {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,8 @@ export function ExamDetail() {
   const [isRepublishing, setIsRepublishing] = useState(false);
   const [editingSebKey, setEditingSebKey] = useState(false);
   const [sebKeyInput, setSebKeyInput] = useState('');
+
+  const { connectionStatus, roomState, logs, remainingSeconds, error: monitorError } = useExamRoomMonitor(id);
 
   useEffect(() => {
     fetchExam();
@@ -332,6 +335,93 @@ export function ExamDetail() {
             >
               View Submissions
             </button>
+          </div>
+
+          <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+            <div className="relative z-10">
+              <div className="flex items-center justify-between gap-4 mb-4">
+                <div>
+                  <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-highlight)] font-bold">Live Exam Room</h3>
+                  <p className="text-xs text-gray-500">Real-time student presence, joins, exits, and room history.</p>
+                </div>
+                <span className={`text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1 rounded ${connectionStatus === 'connected' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : connectionStatus === 'connecting' ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/20' : 'bg-red-500/10 text-red-300 border border-red-500/20'}`}>
+                  {connectionStatus.replace('ed', '')}
+                </span>
+              </div>
+
+              {monitorError && (
+                <div className="mb-4 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm">
+                  {monitorError}
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="rounded-xl bg-[var(--color-primary)]/80 p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Students in room</p>
+                  <p className="text-3xl font-black text-white">{roomState.currentCount}</p>
+                </div>
+                <div className="rounded-xl bg-[var(--color-primary)]/80 p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Timer sync</p>
+                  <p className="text-3xl font-black text-white">{remainingSeconds !== null ? `${remainingSeconds}s` : '—'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Connected participants</p>
+                  {roomState.participants.length === 0 ? (
+                    <p className="text-gray-400 text-sm">No students have joined the exam room yet.</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {roomState.participants.map((participant) => (
+                        <div key={participant.submissionId} className="rounded-xl border border-white/10 p-3 bg-[var(--color-primary)]/60">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-white">{participant.studentName}</p>
+                              <p className="text-[11px] text-gray-400 font-mono">{participant.studentRegNumber}</p>
+                            </div>
+                            <span className={`text-[10px] uppercase tracking-[0.15em] font-bold px-2 py-1 rounded ${participant.isConnected ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-gray-500/10 text-gray-300 border border-gray-500/20'}`}>
+                              {participant.isConnected ? 'Online' : 'Offline'}
+                            </span>
+                          </div>
+                          <div className="mt-3 text-[11px] text-gray-400 grid grid-cols-2 gap-2">
+                            <div>
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-gray-500">Joined</p>
+                              <p>{formatDate(participant.firstJoinedAt)}</p>
+                            </div>
+                            <div>
+                              <p className="text-[9px] uppercase tracking-[0.2em] text-gray-500">Last seen</p>
+                              <p>{formatDate(participant.lastSeenAt)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Join / Exit log</p>
+                {logs.length === 0 ? (
+                  <p className="text-gray-400 text-sm">No activity yet. Changes appear here as students join or leave.</p>
+                ) : (
+                  <div className="max-h-72 overflow-y-auto rounded-xl border border-white/10 bg-[var(--color-primary)]/70 p-4 custom-scrollbar text-sm text-gray-300">
+                    {logs.slice(0, 10).map((event) => (
+                      <div key={`${event.submissionId}-${event.timestamp}`} className="mb-3 last:mb-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="font-semibold text-white">{event.studentName}</p>
+                          <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em]">{event.type}</span>
+                        </div>
+                        <p className="text-[12px] text-gray-400">{event.message}</p>
+                        <p className="text-[10px] text-gray-500 font-mono">{formatDate(event.timestamp)}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

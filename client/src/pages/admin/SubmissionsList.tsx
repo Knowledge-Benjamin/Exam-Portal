@@ -4,6 +4,24 @@ import { api } from '../../api';
 import type { Exam, Submission, Question } from '../../types';
 import { formatDate } from '../../utils/formatters';
 
+const stripHtml = (html?: string) => {
+  if (!html) return '';
+  try {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent || '';
+  } catch {
+    return String(html);
+  }
+};
+
+const escapeHtml = (str: string) =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 export function SubmissionsList() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -71,34 +89,16 @@ export function SubmissionsList() {
 
     if (isFreeform) {
       // Prefer server-provided plain text; fall back to stripping HTML safely
-      const plain = sub.answers.freeformPlain ?? (sub.answers.freeform ? (() => {
-        try {
-          const doc = new DOMParser().parseFromString(sub.answers.freeform, 'text/html');
-          return doc.body.textContent || '';
-        } catch (e) {
-          return String(sub.answers.freeform || '');
-        }
-      })() : '');
-
-      const escapeHtml = (str: string) =>
-        str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
+      const plain = sub.answers.freeformPlain ?? stripHtml(sub.answers.freeform);
       contentHtml = `<pre style="white-space:pre-wrap; font-family: 'Georgia', serif; color: #111; font-size:0.95rem; line-height:1.4; background:#fff; padding:16px; border-radius:8px;">${escapeHtml(plain)}</pre>`;
     } else {
       contentHtml = questions.map((q, i) => {
         const ansRaw = sub.answers?.[q.id] || '<em>No answer provided</em>';
-        const ans = (() => {
-          try {
-            const doc = new DOMParser().parseFromString(String(ansRaw), 'text/html');
-            return doc.body.textContent || '';
-          } catch (e) {
-            return String(ansRaw);
-          }
-        })();
+        const ans = stripHtml(String(ansRaw));
         return `
             <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb">
-              <p style="font-weight:700; color:#1e3a5f; margin-bottom:8px">Q${i + 1}. ${q.prompt} <span style="font-weight:400; color:#6b7280; font-size:0.85em">(${q.marks} mark${q.marks !== 1 ? 's' : ''})</span></p>
-              <div style="padding-left:16px; color:#374151">${ans.replace(/\n/g, '<br>')}</div>
+              <p style="font-weight:700; color:#1e3a5f; margin-bottom:8px">Q${i + 1}. ${escapeHtml(q.prompt)} <span style="font-weight:400; color:#6b7280; font-size:0.85em">(${q.marks} mark${q.marks !== 1 ? 's' : ''})</span></p>
+              <div style="padding-left:16px; color:#374151">${escapeHtml(ans).replace(/\n/g, '<br>')}</div>
             </div>
           `;
       }).join('');
@@ -108,8 +108,8 @@ export function SubmissionsList() {
     wrapper.innerHTML = `
       <div style="font-family: 'Georgia', serif; color: #111; max-width: 720px; margin: 0 auto; padding: 0">
         <div style="background:var(--color-primary); color:white; padding:32px 40px; margin-bottom:32px">
-          <h1 style="margin:0 0 8px; font-size:1.4rem">${exam?.title ?? 'Exam'}</h1>
-          <p style="margin:4px 0; font-size:0.9rem; opacity:0.8">Student: ${sub.studentName} &nbsp;|&nbsp; Reg: ${sub.studentRegNumber}</p>
+          <h1 style="margin:0 0 8px; font-size:1.4rem">${escapeHtml(exam?.title ?? 'Exam')}</h1>
+          <p style="margin:4px 0; font-size:0.9rem; opacity:0.8">Student: ${escapeHtml(sub.studentName)} &nbsp;|&nbsp; Reg: ${escapeHtml(sub.studentRegNumber)}</p>
           <p style="margin:4px 0; font-size:0.85rem; opacity:0.6">Submitted: ${sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'Not submitted'}</p>
         </div>
         <div style="padding:0 40px 40px">${contentHtml}</div>
@@ -266,17 +266,12 @@ export function SubmissionsList() {
 
               <div className="p-8 overflow-y-auto flex-1 space-y-8 custom-scrollbar bg-[var(--color-primary)] relative z-10">
                 {selectedSubmission.answers?.freeform ? (
-                  /* PDF exam — render free-form HTML or plain text if available */
-                  selectedSubmission.answers.freeformPlain ? (
-                    <div className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed">
-                      <pre className="whitespace-pre-wrap font-sans text-sm">{selectedSubmission.answers.freeformPlain}</pre>
-                    </div>
-                  ) : (
-                    <div
-                      className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{ __html: selectedSubmission.answers.freeform }}
-                    />
-                  )
+                  /* PDF exam — render free-form HTML as plain text */
+                  <div className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed">
+                    <pre className="whitespace-pre-wrap font-sans text-sm">
+                      {selectedSubmission.answers.freeformPlain ?? stripHtml(selectedSubmission.answers.freeform)}
+                    </pre>
+                  </div>
                 ) : (
                   /* Builder exam — structured Q&A */
                   questions.map((q, idx) => (
@@ -295,7 +290,7 @@ export function SubmissionsList() {
                         <p className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-3">Student's Answer</p>
                         {selectedSubmission.answers?.[q.id] ? (
                           q.type === 'long_answer'
-                            ? <div className="text-gray-200 text-sm leading-relaxed prose-invert" dangerouslySetInnerHTML={{ __html: selectedSubmission.answers[q.id] }} />
+                            ? <pre className="whitespace-pre-wrap text-gray-200 text-sm leading-relaxed font-sans">{stripHtml(selectedSubmission.answers[q.id])}</pre>
                             : <p className="text-gray-200 text-sm">{selectedSubmission.answers[q.id]}</p>
                         ) : (
                           <p className="text-gray-500 italic text-sm">No answer provided.</p>

@@ -54,7 +54,7 @@ export interface Submission {
   examId: string;
   studentName: string;
   studentRegNumber: string;
-  answers: Record<string, string>;
+  answers: Record<string, string> & { freeformPlain?: string };
   isFinal: boolean;
   submittedAt?: string;
   marksAwarded?: number;

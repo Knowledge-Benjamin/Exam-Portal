@@ -1,11 +1,13 @@
 import { Server, Socket } from 'socket.io';
-import { verifyExamToken } from '../utils/token';
+import { verifyAccessToken, verifyExamToken } from '../utils/token';
 import { saveAnswers, forceSubmitAll, getSubmissionById } from '../services/submissionService';
-import { getExamById } from '../services/examService';
+import { assertExamOwner, getExamById } from '../services/examService';
 
 interface AuthenticatedSocket extends Socket {
-  submissionId: string;
+  submissionId?: string;
   examId: string;
+  userId?: string;
+  userRole?: 'admin' | 'teacher' | 'student';
 }
 
 interface TimerHandle {
@@ -13,65 +15,179 @@ interface TimerHandle {
   forceSubmitTimeout: ReturnType<typeof setTimeout>;
 }
 
+interface StudentPresence {
+  submissionId: string;
+  studentName: string;
+  studentRegNumber: string;
+  firstJoinedAt: Date;
+  lastSeenAt: Date;
+  sockets: Set<string>;
+}
+
+interface RoomEvent {
+  type: 'joined' | 'left' | 'reconnected';
+  submissionId: string;
+  studentName: string;
+  studentRegNumber: string;
+  timestamp: string;
+  message: string;
+}
+
 const activeTimers = new Map<string, TimerHandle>();
+const examRoomPresence = new Map<string, Map<string, StudentPresence>>();
+const examRoomLogs = new Map<string, RoomEvent[]>();
+const MAX_ROOM_LOGS = 100;
+
+const teacherRoomName = (examId: string) => `exam:${examId}:teachers`;
+
+function getPresenceMap(examId: string) {
+  if (!examRoomPresence.has(examId)) {
+    examRoomPresence.set(examId, new Map());
+  }
+  return examRoomPresence.get(examId)!;
+}
+
+function getRoomLogs(examId: string) {
+  if (!examRoomLogs.has(examId)) {
+    examRoomLogs.set(examId, []);
+  }
+  return examRoomLogs.get(examId)!;
+}
+
+function buildRoomState(examId: string) {
+  const map = getPresenceMap(examId);
+  const participants = Array.from(map.values()).map((presence) => ({
+    submissionId: presence.submissionId,
+    studentName: presence.studentName,
+    studentRegNumber: presence.studentRegNumber,
+    firstJoinedAt: presence.firstJoinedAt.toISOString(),
+    lastSeenAt: presence.lastSeenAt.toISOString(),
+    isConnected: presence.sockets.size > 0,
+    connections: presence.sockets.size,
+  }));
+  const currentCount = participants.filter((participant) => participant.isConnected).length;
+  return { currentCount, participants };
+}
+
+function emitRoomState(io: Server, examId: string) {
+  const state = buildRoomState(examId);
+  io.to(teacherRoomName(examId)).emit('exam:room:state', state);
+}
+
+function pushRoomEvent(io: Server, examId: string, event: RoomEvent) {
+  const logs = getRoomLogs(examId);
+  logs.unshift(event);
+  if (logs.length > MAX_ROOM_LOGS) logs.pop();
+  io.to(teacherRoomName(examId)).emit('exam:room:event', event);
+  io.to(teacherRoomName(examId)).emit('exam:room:logs', logs);
+  emitRoomState(io, examId);
+}
 
 export function registerSocketHandlers(io: Server): void {
-  io.use((socket, next) => {
-    // auth.examToken is set if client passes it explicitly;
-    // fall back to parsing the httpOnly cookie sent in the handshake HTTP request
+  io.use(async (socket, next) => {
+    const rawCookieHeader = String(socket.handshake.headers.cookie ?? '');
+    const cookieHeaderPresent = rawCookieHeader.length > 0;
     let token = socket.handshake.auth?.examToken as string | undefined;
     let tokenSource = 'auth.examToken';
 
     if (!token) {
-      const cookieHeader = socket.handshake.headers.cookie ?? '';
-      const match = cookieHeader.match(/(?:^|;\s*)exam_token=([^;]+)/);
+      const match = rawCookieHeader.match(/(?:^|;\s*)exam_token=([^;]+)/);
       if (match) {
         token = decodeURIComponent(match[1]);
         tokenSource = 'cookie';
       }
     }
 
-    const rawCookieHeader = String(socket.handshake.headers.cookie ?? '');
-    console.info('[socket] auth middleware:', {
-      cookieHeaderPresent: rawCookieHeader.length > 0,
-      cookieHeader: rawCookieHeader.slice(0, 100),
-      tokenFound: !!token,
-      tokenSource,
-      handshakeHeaders: {
-        origin: socket.handshake.headers.origin,
-        referer: socket.handshake.headers.referer,
-        host: socket.handshake.headers.host,
-      },
-    });
+    if (token) {
+      try {
+        const payload = verifyExamToken(token);
+        (socket as AuthenticatedSocket).submissionId = payload.submissionId;
+        (socket as AuthenticatedSocket).examId = payload.examId;
+        (socket as AuthenticatedSocket).userRole = 'student';
+        console.info('[socket] exam auth successful:', {
+          tokenSource,
+          examId: payload.examId,
+          submissionId: payload.submissionId,
+        });
+        return next();
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : 'Unknown error';
+        console.warn('[socket] exam token verification failed:', errMsg);
+      }
+    }
 
-    if (!token) {
+    const accessTokenFromAuth = socket.handshake.auth?.accessToken as string | undefined;
+    let accessToken = accessTokenFromAuth;
+    let accessTokenSource = accessTokenFromAuth ? 'auth.accessToken' : undefined;
+
+    if (!accessToken) {
+      const match = rawCookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
+      if (match) {
+        accessToken = decodeURIComponent(match[1]);
+        accessTokenSource = 'cookie';
+      }
+    }
+
+    const requestedExamId =
+      (socket.handshake.auth?.watchExamId as string | undefined) ||
+      (socket.handshake.query?.examId as string | undefined);
+
+    if (!accessToken || !requestedExamId) {
       const err = new Error('Exam session required');
-      console.warn('[socket] authentication failed: no token available', {
-        cookieHeaderPresent: rawCookieHeader.length > 0,
+      console.warn('[socket] authentication failed: no valid exam or access token', {
+        cookieHeaderPresent,
+        examTokenPresent: !!token,
+        accessTokenPresent: !!accessToken,
+        requestedExamId,
       });
       return next(err);
     }
+
     try {
-      const payload = verifyExamToken(token);
-      (socket as AuthenticatedSocket).submissionId = payload.submissionId;
-      (socket as AuthenticatedSocket).examId = payload.examId;
-      console.info('[socket] authentication successful:', {
-        tokenSource,
-        examId: payload.examId,
-        submissionId: payload.submissionId,
+      const payload = verifyAccessToken(accessToken);
+      if (payload.role !== 'teacher' && payload.role !== 'admin') {
+        return next(new Error('Teacher access required'));
+      }
+
+      if (payload.role === 'teacher') {
+        await assertExamOwner(requestedExamId, payload.sub);
+      } else {
+        const exam = await getExamById(requestedExamId);
+        if (!exam) throw new Error('Exam not found');
+      }
+
+      (socket as AuthenticatedSocket).examId = requestedExamId;
+      (socket as AuthenticatedSocket).userId = payload.sub;
+      (socket as AuthenticatedSocket).userRole = payload.role;
+      console.info('[socket] teacher auth successful:', {
+        accessTokenSource,
+        examId: requestedExamId,
+        userId: payload.sub,
+        role: payload.role,
       });
       next();
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : 'Unknown error';
-      console.warn('[socket] token verification failed:', errMsg);
-      next(new Error('Invalid or expired exam session'));
+      console.warn('[socket] access token verification failed:', errMsg);
+      next(new Error('Invalid or expired access token'));
     }
   });
 
   io.on('connection', (socket: Socket) => {
     const s = socket as AuthenticatedSocket;
     const room = `exam:${s.examId}`;
-    s.join(room);
+
+    // Teacher monitoring sockets are separate from student exam rooms
+    if (s.userRole === 'teacher' || s.userRole === 'admin') {
+      const teacherRoom = teacherRoomName(s.examId);
+      socket.join(teacherRoom);
+      startExamTimer(io, s.examId);
+      socket.emit('exam:room:logs', getRoomLogs(s.examId));
+      emitRoomState(io, s.examId);
+      return;
+    }
+
+    socket.join(room);
 
     // Start or resume timer for this exam room
     startExamTimer(io, s.examId);
@@ -85,13 +201,58 @@ export function registerSocketHandlers(io: Server): void {
       })
       .catch(() => {});
 
+    // Track live student presence
+    getSubmissionById(s.submissionId)
+      .then((submission) => {
+        const now = new Date();
+        const name = submission?.studentName ?? 'Unknown Student';
+        const reg = submission?.studentRegNumber ?? 'Unknown ID';
+        const presenceMap = getPresenceMap(s.examId);
+        const existing = presenceMap.get(s.submissionId!);
+
+        if (!existing) {
+          presenceMap.set(s.submissionId!, {
+            submissionId: s.submissionId!,
+            studentName: name,
+            studentRegNumber: reg,
+            firstJoinedAt: now,
+            lastSeenAt: now,
+            sockets: new Set([socket.id]),
+          });
+          pushRoomEvent(io, s.examId, {
+            type: 'joined',
+            submissionId: s.submissionId!,
+            studentName: name,
+            studentRegNumber: reg,
+            timestamp: now.toISOString(),
+            message: `${name} joined the exam room`,
+          });
+        } else {
+          const wasConnected = existing.sockets.size > 0;
+          existing.sockets.add(socket.id);
+          existing.lastSeenAt = now;
+          const eventType = wasConnected ? 'reconnected' : 'joined';
+          pushRoomEvent(io, s.examId, {
+            type: eventType,
+            submissionId: s.submissionId!,
+            studentName: name,
+            studentRegNumber: reg,
+            timestamp: now.toISOString(),
+            message: wasConnected
+              ? `${name} reconnected to the exam room`
+              : `${name} joined the exam room`,
+          });
+        }
+      })
+      .catch(() => {});
+
     // Auto-save event from client
     socket.on(
       'exam:autosave',
       async (payload: { answers: Record<string, string>; sebHash?: string }) => {
         try {
           const updated = await saveAnswers(
-            s.submissionId,
+            s.submissionId!,
             payload.answers,
             payload.sebHash ?? '',
           );
@@ -104,7 +265,23 @@ export function registerSocketHandlers(io: Server): void {
     );
 
     socket.on('disconnect', () => {
-      // Timer keeps running — student may reconnect
+      const presenceMap = getPresenceMap(s.examId);
+      const presence = presenceMap.get(s.submissionId!);
+      if (!presence) return;
+
+      presence.sockets.delete(socket.id);
+      presence.lastSeenAt = new Date();
+
+      if (presence.sockets.size === 0) {
+        pushRoomEvent(io, s.examId, {
+          type: 'left',
+          submissionId: s.submissionId!,
+          studentName: presence.studentName,
+          studentRegNumber: presence.studentRegNumber,
+          timestamp: presence.lastSeenAt.toISOString(),
+          message: `${presence.studentName} left the exam room`,
+        });
+      }
     });
   });
 }
@@ -122,6 +299,7 @@ function startExamTimer(io: Server, examId: string): void {
       const interval = setInterval(() => {
         const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
         io.to(room).emit('exam:timer:sync', { remaining });
+        io.to(teacherRoomName(examId)).emit('exam:timer:sync', { remaining });
 
         if (remaining === 0) {
           clearInterval(interval);
@@ -132,6 +310,9 @@ function startExamTimer(io: Server, examId: string): void {
       const msUntilEnd = Math.max(0, endTime - Date.now());
       const forceSubmitTimeout = setTimeout(async () => {
         io.to(room).emit('exam:force-submit', {
+          message: 'Time is up. Your answers have been submitted automatically.',
+        });
+        io.to(teacherRoomName(examId)).emit('exam:force-submit', {
           message: 'Time is up. Your answers have been submitted automatically.',
         });
         await forceSubmitAll(examId).catch(() => {});
