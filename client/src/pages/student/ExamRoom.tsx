@@ -36,6 +36,7 @@ export function ExamRoom() {
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
   const [isPdfLoading, setIsPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<{ message: string; details?: string } | null>(null);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
 
@@ -77,6 +78,7 @@ export function ExamRoom() {
   const fetchPdfBlob = async () => {
     if (!exam?.id) return;
     setIsPdfLoading(true);
+    setPdfError(null);
     try {
       const response = await axios.get(`/api/exams/${exam.id}/pdf/download`, {
         withCredentials: true,
@@ -90,12 +92,12 @@ export function ExamRoom() {
       });
       setPdfBlob(response.data);
     } catch (err: any) {
-      console.error('[pdf] fetch error:', {
-        message: err.message,
-        status: err.response?.status,
-        body: err.response?.data,
-      });
-      setError('Failed to load PDF. Please refresh and try again.');
+      const errorMsg = err.message || 'Unknown error';
+      const statusCode = err.response?.status || 'N/A';
+      const errorBody = err.response?.data?.error || JSON.stringify(err.response?.data);
+      const details = `HTTP ${statusCode}: ${errorBody}`;
+      console.error('[pdf] fetch error:', { message: errorMsg, status: statusCode, body: errorBody });
+      setPdfError({ message: 'Failed to load PDF from server', details });
     } finally {
       setIsPdfLoading(false);
     }
@@ -284,6 +286,20 @@ export function ExamRoom() {
             /* PDF Viewer */
             exam.pdfPath ? (
               <div className="flex-1 overflow-auto flex flex-col items-center py-8 px-4 gap-4">
+                {pdfError && (
+                  <div className="w-full max-w-lg bg-red-900/20 border border-red-500/40 rounded-lg p-4 text-red-200 text-sm">
+                    <p className="font-semibold mb-2">{pdfError.message}</p>
+                    {pdfError.details && (
+                      <p className="text-red-300/70 text-xs font-mono break-words">{pdfError.details}</p>
+                    )}
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="mt-3 px-3 py-1 bg-red-600/30 hover:bg-red-600/50 rounded text-xs font-medium transition-colors"
+                    >
+                      Reload Page
+                    </button>
+                  </div>
+                )}
                 {isPdfLoading && !pdfBlob ? (
                   <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
                     <div className="w-12 h-12 border-2 border-white/10 border-t-transparent rounded-full animate-spin mb-4" />
@@ -293,14 +309,11 @@ export function ExamRoom() {
                   <Document
                     file={pdfBlob}
                     onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-                    onLoadError={(error) => {
-                      console.error('[pdf] load error:', {
-                        error,
-                        examId: exam.id,
-                        pdfBlobSize: pdfBlob?.size,
-                        pdfBlobType: pdfBlob?.type,
-                      });
-                      setError('Failed to load PDF. Please refresh and try again.');
+                    onLoadError={(error: any) => {
+                      const errorMsg = error?.message || String(error) || 'Unknown error';
+                      const details = `Blob size: ${pdfBlob?.size} bytes, Type: ${pdfBlob?.type}`;
+                      console.error('[pdf] load error:', { error: errorMsg, examId: exam.id, ...error });
+                      setPdfError({ message: 'Failed to parse PDF document', details });
                     }}
                     className="flex flex-col items-center gap-4 w-full"
                   >
@@ -317,7 +330,7 @@ export function ExamRoom() {
                     <p>No PDF loaded yet. Please refresh or contact your instructor.</p>
                   </div>
                 )}
-                {numPages > 1 && pdfBlob && (
+                {numPages > 1 && pdfBlob && !pdfError && (
                   <div className="sticky bottom-4 flex items-center gap-3 bg-[var(--color-primary)] border border-white/10 rounded-xl px-4 py-2 shadow-xl text-white">
                     <button disabled={pageNumber <= 1} onClick={() => setPageNumber(p => p - 1)} className="disabled:opacity-30 hover:text-[var(--color-primary)] w-6 h-6 flex items-center justify-center transition-colors font-bold">‹</button>
                     <span className="text-xs font-medium text-gray-300">Page {pageNumber} of {numPages}</span>
