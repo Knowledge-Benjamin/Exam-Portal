@@ -35,6 +35,7 @@ export function ExamRoom() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(null);
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
 
@@ -74,8 +75,10 @@ export function ExamRoom() {
   }, [forceSubmitMsg, navigate]);
 
   const fetchPdfBlob = async () => {
+    if (!exam?.id) return;
+    setIsPdfLoading(true);
     try {
-      const response = await axios.get(`/api/exams/${exam?.id}/pdf/download`, {
+      const response = await axios.get(`/api/exams/${exam.id}/pdf/download`, {
         withCredentials: true,
         responseType: 'blob',
       });
@@ -83,6 +86,8 @@ export function ExamRoom() {
     } catch (err: any) {
       console.error('[pdf] fetch error:', err);
       setError('Failed to load PDF. Please refresh and try again.');
+    } finally {
+      setIsPdfLoading(false);
     }
   };
 
@@ -269,24 +274,35 @@ export function ExamRoom() {
             /* PDF Viewer */
             exam.pdfPath ? (
               <div className="flex-1 overflow-auto flex flex-col items-center py-8 px-4 gap-4">
-                <Document
-                  file={pdfBlob}
-                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-                  onLoadError={(error) => {
-                    console.error('[pdf] load error:', error);
-                    setError('Failed to load PDF. Please refresh and try again.');
-                  }}
-                  className="flex flex-col items-center gap-4 w-full"
-                >
-                  <Page
-                    pageNumber={pageNumber}
-                    width={Math.min(540, window.innerWidth * 0.44)}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                    className="shadow-2xl rounded overflow-hidden"
-                  />
-                </Document>
-                {numPages > 1 && (
+                {isPdfLoading && !pdfBlob ? (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+                    <div className="w-12 h-12 border-2 border-white/10 border-t-transparent rounded-full animate-spin mb-4" />
+                    <p>Loading PDF…</p>
+                  </div>
+                ) : pdfBlob ? (
+                  <Document
+                    file={pdfBlob}
+                    onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+                    onLoadError={(error) => {
+                      console.error('[pdf] load error:', error);
+                      setError('Failed to load PDF. Please refresh and try again.');
+                    }}
+                    className="flex flex-col items-center gap-4 w-full"
+                  >
+                    <Page
+                      pageNumber={pageNumber}
+                      width={Math.min(540, window.innerWidth * 0.44)}
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      className="shadow-2xl rounded overflow-hidden"
+                    />
+                  </Document>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
+                    <p>No PDF loaded yet. Please refresh or contact your instructor.</p>
+                  </div>
+                )}
+                {numPages > 1 && pdfBlob && (
                   <div className="sticky bottom-4 flex items-center gap-3 bg-[var(--color-primary)] border border-white/10 rounded-xl px-4 py-2 shadow-xl text-white">
                     <button disabled={pageNumber <= 1} onClick={() => setPageNumber(p => p - 1)} className="disabled:opacity-30 hover:text-[var(--color-primary)] w-6 h-6 flex items-center justify-center transition-colors font-bold">‹</button>
                     <span className="text-xs font-medium text-gray-300">Page {pageNumber} of {numPages}</span>
