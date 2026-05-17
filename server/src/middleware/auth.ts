@@ -25,16 +25,34 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
 }
 
 export function requireExamAuth(req: Request, res: Response, next: NextFunction): void {
+  const rawCookieHeader = String(req.headers.cookie ?? '');
+  const hasCookieHeader = rawCookieHeader.length > 0;
+  const hasExamToken = /(?:^|;\s*)exam_token=/.test(rawCookieHeader);
   const token = req.cookies?.exam_token as string | undefined;
+
   if (!token) {
-    res.status(401).json({ error: 'Exam session not found. Access via Safe Exam Browser.' });
+    console.warn(
+      `[seb] requireExamAuth blocked: missing exam_token. path=${req.method} ${req.originalUrl} cookieHeaderPresent=${hasCookieHeader} examTokenPresent=${hasExamToken}`,
+    );
+    res.status(401).json({
+      error: 'Exam session not found. Access via Safe Exam Browser.',
+      details: hasCookieHeader
+        ? 'Cookie header was received, but exam_token is missing. Check SameSite/secure cookie settings and SEB cookie forwarding.'
+        : 'No cookie header was received. Verify SEB is sending cookies to the backend.',
+    });
     return;
   }
   try {
     req.examSession = verifyExamToken(token);
     next();
   } catch {
-    res.status(401).json({ error: 'Exam session expired or invalid' });
+    console.warn(
+      `[seb] requireExamAuth blocked: invalid or expired exam_token. path=${req.method} ${req.originalUrl} cookieHeaderPresent=${hasCookieHeader} examTokenPresent=${hasExamToken}`,
+    );
+    res.status(401).json({
+      error: 'Exam session expired or invalid.',
+      details: 'Exam token validation failed. Ensure the browser preserves the exam_token cookie across the SEB flow.',
+    });
   }
 }
 

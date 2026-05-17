@@ -27,8 +27,12 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
   }
 
   if (!anyHeaderHash) {
+    console.warn(
+      `[seb] sebGuard blocked: missing SEB header. path=${req.method} ${req.originalUrl} headers=${Object.keys(req.headers).join(', ')}`,
+    );
     res.status(403).json({
       error: `Access denied. This resource is only available inside Safe Exam Browser. (Debug: Missing header. Headers received: ${Object.keys(req.headers).join(', ')})`,
+      details: 'No SEB request hash header was present. Verify SEB is forwarding the x-safeexambrowser-requesthash or x-safeexambrowser-configkeyhash header.',
     });
     return;
   }
@@ -81,8 +85,12 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
 
     if (!matchesBek && !matchesCk) {
       const keySnippet = sanitizedKey.substring(0, 6) + '...';
+      console.warn(
+        `[seb] sebGuard blocked: config key mismatch. path=${req.method} ${req.originalUrl} URL=${fullUrl} DB_Key=${keySnippet} ReceivedBEK=${bekHash || 'none'} ReceivedCK=${ckHash || 'none'}`,
+      );
       res.status(403).json({
-        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${fullUrl}, DB_Key=${keySnippet}, Expected=${expected}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
+        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${fullUrl}, DB_Key=${keySnippet}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
+        details: 'SEB request hash did not match the expected hash for this URL and config key. Verify the gate URL and SEB config key are correct.',
       });
       return;
     }
