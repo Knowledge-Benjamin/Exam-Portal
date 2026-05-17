@@ -66,19 +66,43 @@ export function SubmissionsList() {
   const handleDownloadPdf = async (sub: Submission) => {
     // Lazy-load html2pdf to avoid SSR issues
     const html2pdf = (await import('html2pdf.js')).default;
-
     const isFreeform = !!sub.answers?.freeform;
-    const content = isFreeform
-      ? (sub.answers.freeformPlain ?? sub.answers.freeform)
-      : questions.map((q, i) => {
-          const ans = sub.answers?.[q.id] || '<em>No answer provided</em>';
-          return `
+    let contentHtml = '';
+
+    if (isFreeform) {
+      // Prefer server-provided plain text; fall back to stripping HTML safely
+      const plain = sub.answers.freeformPlain ?? (sub.answers.freeform ? (() => {
+        try {
+          const doc = new DOMParser().parseFromString(sub.answers.freeform, 'text/html');
+          return doc.body.textContent || '';
+        } catch (e) {
+          return String(sub.answers.freeform || '');
+        }
+      })() : '');
+
+      const escapeHtml = (str: string) =>
+        str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      contentHtml = `<pre style="white-space:pre-wrap; font-family: 'Georgia', serif; color: #111; font-size:0.95rem; line-height:1.4; background:#fff; padding:16px; border-radius:8px;">${escapeHtml(plain)}</pre>`;
+    } else {
+      contentHtml = questions.map((q, i) => {
+        const ansRaw = sub.answers?.[q.id] || '<em>No answer provided</em>';
+        const ans = (() => {
+          try {
+            const doc = new DOMParser().parseFromString(String(ansRaw), 'text/html');
+            return doc.body.textContent || '';
+          } catch (e) {
+            return String(ansRaw);
+          }
+        })();
+        return `
             <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb">
               <p style="font-weight:700; color:#1e3a5f; margin-bottom:8px">Q${i + 1}. ${q.prompt} <span style="font-weight:400; color:#6b7280; font-size:0.85em">(${q.marks} mark${q.marks !== 1 ? 's' : ''})</span></p>
-              <div style="padding-left:16px; color:#374151">${ans}</div>
+              <div style="padding-left:16px; color:#374151">${ans.replace(/\n/g, '<br>')}</div>
             </div>
           `;
-        }).join('');
+      }).join('');
+    }
 
     const wrapper = document.createElement('div');
     wrapper.innerHTML = `
@@ -88,7 +112,7 @@ export function SubmissionsList() {
           <p style="margin:4px 0; font-size:0.9rem; opacity:0.8">Student: ${sub.studentName} &nbsp;|&nbsp; Reg: ${sub.studentRegNumber}</p>
           <p style="margin:4px 0; font-size:0.85rem; opacity:0.6">Submitted: ${sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'Not submitted'}</p>
         </div>
-        <div style="padding:0 40px 40px">${content}</div>
+        <div style="padding:0 40px 40px">${contentHtml}</div>
       </div>
     `;
 
