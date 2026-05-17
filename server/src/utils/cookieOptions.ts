@@ -8,12 +8,12 @@ export function getCookieOptions(req: Request, overrides?: {
   sameSite?: 'strict' | 'lax' | 'none';
   domain?: string;
 }) {
-  const isSecure = env.isProd || req.secure || req.get('x-forwarded-proto') === 'https';
+  const isSecure = req.secure || req.get('x-forwarded-proto') === 'https';
 
   return {
     httpOnly: overrides?.httpOnly ?? true,
     secure: overrides?.secure ?? isSecure,
-    sameSite: overrides?.sameSite ?? (env.isProd ? 'none' : isSecure ? 'none' : 'lax'),
+    sameSite: overrides?.sameSite ?? (isSecure ? 'none' : 'lax'),
     path: overrides?.path ?? '/',
     ...(overrides?.domain
       ? { domain: overrides.domain }
