@@ -22,3 +22,6 @@ client/.local
 *.njsproj
 *.sln
 *.sw?
+server/scratch_db.js
+server/scratch_db2.js
+server/scratch_hash.js
