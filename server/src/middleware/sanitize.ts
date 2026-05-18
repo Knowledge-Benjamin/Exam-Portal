@@ -11,7 +11,9 @@ function escapeStrings(value: unknown, key?: string): unknown {
     if (key && RAW_STRING_KEYS.has(key)) {
       return value;
     }
-    return validator.escape(value.trim());
+    const escaped = validator.escape(value.trim());
+    // preserve forward slashes in plain text fields like registration numbers
+    return escaped.replace(/&#x2F;|&#x2f;|&#47;/g, '/');
   }
   if (Array.isArray(value)) {
     return value.map((item) => escapeStrings(item));

@@ -1,8 +1,30 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { db } from '../db/db';
 import { submissions } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
 import { htmlToPlain } from '../utils/html';
+
+export async function findActiveSubmissionByRegNumber(
+  examId: string,
+  studentRegNumber: string,
+) {
+  const normalizedRegNumber = studentRegNumber.trim().toLowerCase();
+
+  const [submission] = await db
+    .select()
+    .from(submissions)
+    .where(
+      and(
+        eq(submissions.examId, examId),
+        sql`LOWER(${submissions.studentRegNumber}) = ${normalizedRegNumber}`,
+        eq(submissions.isFinal, false),
+      ),
+    )
+    .orderBy(desc(submissions.createdAt))
+    .limit(1);
+
+  return submission ?? null;
+}
 
 export async function createSubmission(
   examId: string,

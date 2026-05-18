@@ -3,7 +3,7 @@ import { db } from '../db/db';
 import { exams } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
 import { signExamToken } from '../utils/token';
-import { createSubmission } from './submissionService';
+import { createSubmission, findActiveSubmissionByRegNumber } from './submissionService';
 
 export async function getExamByToken(token: string) {
   const [exam] = await db
@@ -47,10 +47,13 @@ export async function processSEBJoin(
     throw new AppError(403, 'The exam window has closed');
   }
 
-  // Create submission record for the anonymous student
-  const submission = await createSubmission(exam.id, studentName, studentRegNumber, ipAddress);
+  const normalizedRegNumber = studentRegNumber.trim();
+  const existingSubmission = await findActiveSubmissionByRegNumber(exam.id, normalizedRegNumber);
 
-  // Issue the exam token mapped to this specific submission
+  const submission = existingSubmission
+    ? existingSubmission
+    : await createSubmission(exam.id, studentName, studentRegNumber, ipAddress);
+
   const examToken = signExamToken({ 
     submissionId: submission.id, 
     examId: exam.id 
