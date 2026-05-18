@@ -6,45 +6,8 @@ import type { Exam, Submission, Question } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { useSubmissionStatus } from '../../hooks/useSubmissionStatus';
 
-const stripHtml = (html?: string) => {
-  if (!html) return '';
-  try {
-    let text = String(html);
-    
-    // Normalize block tags to newlines
-    text = text
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n\n')
-      .replace(/<\/h[1-6]>/gi, '\n\n')
-      .replace(/<li>/gi, '\n- ')
-      .replace(/<\/li>/gi, '')
-      .replace(/<\/blockquote>/gi, '\n')
-      .replace(/<\/div>/gi, '\n');
-
-    // Remove all remaining HTML tags
-    text = text.replace(/<[^>]+>/g, '');
-
-    // Unescape common HTML entities
-    text = text
-      .replace(/&nbsp;/gi, ' ')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&amp;/g, '&')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'");
-
-    // Collapse multiple blank lines and excessive spaces
-    text = text.replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n');
-    text = text
-      .split('\n')
-      .map(line => line.replace(/\s+/g, ' ').trim())
-      .join('\n');
-    
-    return text.trim();
-  } catch {
-    return String(html);
-  }
-};
+// `stripHtml` was removed in favor of rendering sanitized HTML with DOMPurify
+// kept previous logic in git history if plain-text conversion is required later
 
 const escapeHtml = (str: string) =>
   String(str)
