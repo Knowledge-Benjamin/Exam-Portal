@@ -1,6 +1,6 @@
 import { db } from '../db/db';
 import { examRoomEvents } from '../db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, sql } from 'drizzle-orm';
 
 export async function getRoomEvents(examId: string, limit = 50, offset = 0) {
   const rows = await db
@@ -33,7 +33,10 @@ export async function getRoomEvents(examId: string, limit = 50, offset = 0) {
 }
 
 export async function countRoomEvents(examId: string) {
-  const [row] = await db.select({ count: db.raw("count(*)") }).from(examRoomEvents).where(eq(examRoomEvents.examId, examId));
+  const [row] = await db
+    .select({ count: sql`count(*)` })
+    .from(examRoomEvents)
+    .where(eq(examRoomEvents.examId, examId));
   // Drizzle raw count may return string/number depending on dialect
   // normalize to number
   const c = (row as any).count;

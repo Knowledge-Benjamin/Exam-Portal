@@ -142,7 +142,7 @@ export const questionsRelations = relations(questions, ({ one }) => ({
 
 
 
-export const submissionsRelations = relations(submissions, ({ one }) => ({
+export const submissionsRelations = relations(submissions, ({ one, many }) => ({
   exam: one(exams, { fields: [submissions.examId], references: [exams.id] }),
   roomEvents: many(examRoomEvents),
 }));
