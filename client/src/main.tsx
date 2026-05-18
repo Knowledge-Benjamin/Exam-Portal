@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider, Navigate, useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
 import { DashboardLayout } from './components/layout/DashboardLayout';
+import { Footer } from './components/layout/Footer';
 import { DashboardHome } from './pages/admin/DashboardHome';
 import { CreateExam } from './pages/admin/CreateExam';
 import { ExamDetail } from './pages/admin/ExamDetail';
@@ -102,7 +103,12 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <div className="min-h-screen flex flex-col">
+      <div className="flex-1">
+        <RouterProvider router={router} />
+      </div>
+      <Footer />
+    </div>
   </StrictMode>
 );
 
