@@ -80,7 +80,13 @@ router.get(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const exam = await assertExamOwner(req.params.id, req.user!.sub);
-      res.json({ exam });
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      res.json({
+        exam: {
+          ...exam,
+          sebGateUrl: exam.sebExamToken ? `${baseUrl}/seb/gate/${exam.sebExamToken}` : undefined,
+        },
+      });
     } catch (err) {
       next(err);
     }

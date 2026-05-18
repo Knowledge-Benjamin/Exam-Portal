@@ -136,6 +136,12 @@ export function ExamDetail() {
       ? 'Connecting'
       : 'Disconnected';
 
+  const backendOrigin = import.meta.env.VITE_API_URL
+    ? String(import.meta.env.VITE_API_URL).replace(/\/api\/?$/, '')
+    : window.location.origin;
+
+  const sebGateUrl = exam.sebGateUrl ?? (exam.sebExamToken ? `${backendOrigin}/seb/gate/${exam.sebExamToken}` : undefined);
+
   return (
     <div className="settings-page">
       <div className="card">
@@ -167,7 +173,7 @@ export function ExamDetail() {
 
       {error && <div className="form-error">{error}</div>}
 
-      {exam.sebGateUrl && (
+      {sebGateUrl && (
         <div className="card">
           <div className="card-header">
             <div>
@@ -176,12 +182,12 @@ export function ExamDetail() {
             </div>
           </div>
           <div className="card-body">
-            <code className="code-box">{exam.sebGateUrl}</code>
+            <code className="code-box">{sebGateUrl}</code>
             <button
               type="button"
               className="button button--outline"
               onClick={() => {
-                navigator.clipboard.writeText(exam.sebGateUrl!);
+                navigator.clipboard.writeText(sebGateUrl);
                 alert('Copied to clipboard');
               }}
             >
