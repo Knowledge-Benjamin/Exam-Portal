@@ -290,8 +290,8 @@ export function ExamRoom() {
                     </div>
                   ) : pdfBlob ? (
                     pdfBlobUrl ? (
-                      <div style={{ flex: 1, minHeight: 0 }}>
-                        <object data={pdfBlobUrl} type="application/pdf" width="100%" height="100%">
+                      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
+                        <object data={pdfBlobUrl} type="application/pdf" style={{ width: '100%', minHeight: '100%', border: 'none' }}>
                           <div style={{ padding: '1rem', color: '#94a3b8' }}>
                             Unable to display the PDF in this browser. <a href={pdfBlobUrl} target="_blank" rel="noreferrer" style={{ color: '#7dd3fc', textDecoration: 'underline' }}>Open PDF directly</a>.
                           </div>
