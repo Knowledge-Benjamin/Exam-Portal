@@ -1,6 +1,6 @@
 import { eq, and, asc } from 'drizzle-orm';
 import { db } from '../db/db';
-import { exams, questions } from '../db/schema';
+import { exams, questions, submissions, examRoomEvents } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
 import { randomHex } from '../utils/crypto';
 
@@ -201,6 +201,16 @@ export async function deleteExam(examId: string, teacherId: string) {
     if (teacher && creds) {
       await deletePdfFromDrive(exam.pdfPath, creds);
     }
+  }
+
+  // Remove related submissions first to avoid FK constraint issues
+  await db.delete(submissions).where(eq(submissions.examId, examId));
+
+  // Remove any persisted room events (if cascade not present)
+  try {
+    await db.delete(examRoomEvents).where(eq(examRoomEvents.examId, examId));
+  } catch (e) {
+    // ignore if table doesn't exist or deletion fails; the DB may cascade
   }
 
   await db.delete(exams).where(eq(exams.id, examId));
