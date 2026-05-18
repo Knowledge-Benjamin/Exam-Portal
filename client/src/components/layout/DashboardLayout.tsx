@@ -14,8 +14,8 @@ export function DashboardLayout() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary)]">
-        <div className="w-12 h-12 border-4 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin"></div>
+      <div className="dashboard-loading-page">
+        <div className="dashboard-loading-spinner"></div>
       </div>
     );
   }
@@ -26,16 +26,13 @@ export function DashboardLayout() {
 
   if (user?.role === 'student') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary)]">
-        <div className="bg-[var(--color-primary)] border border-white/5 p-8 max-w-md text-center rounded-xl shadow-2xl shadow-black/50">
-          <h2 className="text-xl font-bold mb-4 text-white">Student Portal</h2>
-          <p className="text-gray-400 mb-8">
+      <div className="dashboard-student-warning">
+        <div className="dashboard-student-card">
+          <h2 className="dashboard-student-heading">Student Portal</h2>
+          <p className="dashboard-student-text">
             Please open your Safe Exam Browser (.seb) file to access your scheduled exams securely.
           </p>
-          <button 
-            onClick={logout} 
-            className="w-full py-3 bg-[var(--color-danger)] hover:bg-[#d60665] text-white rounded-lg font-semibold tracking-wider transition-all"
-          >
+          <button onClick={logout} className="dashboard-student-logout-button">
             SIGN OUT
           </button>
         </div>
@@ -44,7 +41,7 @@ export function DashboardLayout() {
   }
 
   return (
-    <div className="dashboard-layout flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
+    <div className="dashboard-layout">
       
       {/* Sidebar */}
       <aside
