@@ -140,15 +140,15 @@ export function SubmissionsList() {
   };
 
   if (isLoading) return (
-    <div className="animate-pulse space-y-6 max-w-6xl mx-auto">
-      <div className="h-12 bg-white/5 rounded-lg w-1/3"></div>
-      <div className="flex gap-6 h-[600px]">
-        <div className="w-1/3 bg-white/5 rounded-xl"></div>
-        <div className="w-2/3 bg-white/5 rounded-xl"></div>
+    <div className="page-content submission-placeholder" style={{ minHeight: '24rem' }}>
+      <div className="submission-list-item-title" style={{ width: '18rem', height: '1.25rem', background: 'rgba(255,255,255,0.08)', marginBottom: '1.25rem' }} />
+      <div className="submission-layout" style={{ minHeight: '16rem' }}>
+        <div className="panel-card panel-card--accent" style={{ minHeight: '100%' }} />
+        <div className="panel-card panel-card--accent" style={{ minHeight: '100%' }} />
       </div>
     </div>
   );
-  if (!exam) return <div className="text-center py-12 text-gray-500">Exam not found</div>;
+  if (!exam) return <div className="submission-placeholder">Exam not found</div>;
 
   const getStatusBadge = (sub: Submission) => {
     const realtimeStatus = submissionStatusMap[sub.id];
@@ -156,226 +156,209 @@ export function SubmissionsList() {
     // If submission is finalized, show marking status
     if (sub.isFinal) {
       if (sub.marksAwarded !== undefined && sub.marksAwarded !== null) {
-        return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[var(--color-highlight)]/10 border border-[var(--color-highlight)]/30 text-[var(--color-highlight)]">Marked</span>;
+        return <span className="status-pill status-pill--highlight">Marked</span>;
       }
-      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-[var(--color-highlight)]/10 border border-[var(--color-highlight)]/30 text-[var(--color-highlight)]">Needs Marking</span>;
+      return <span className="status-pill status-pill--highlight">Needs Marking</span>;
     }
 
     // If not finalized, show real-time status
     if (realtimeStatus === 'active') {
-      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300">Working</span>;
+      return <span className="status-pill status-pill--working">Working</span>;
     } else if (realtimeStatus === 'left') {
-      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-orange-500/10 border border-orange-500/30 text-orange-300">Left Exam</span>;
+      return <span className="status-pill status-pill--left">Left Exam</span>;
     } else {
       // No real-time status yet (hasn't joined room yet, or old exam)
-      return <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded bg-gray-500/10 border border-gray-500/30 text-gray-400">Idle</span>;
+      return <span className="status-pill status-pill--idle">Idle</span>;
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 h-full flex flex-col">
-      <div className="flex items-center justify-between shrink-0">
+    <div className="page-content page-animate">
+      <div className="page-header page-header-row">
         <div>
-          <button 
-            onClick={() => navigate(`/dashboard/exams/${id}`)} 
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 text-sm uppercase tracking-widest font-bold"
+          <button
+            onClick={() => navigate(`/dashboard/exams/${id}`)}
+            className="button button--ghost button--sm"
           >
             ← Back to Exam
           </button>
-          <h2 className="text-3xl font-bold text-white tracking-wide">Submissions</h2>
-          <p className="text-[var(--color-highlight)] text-sm tracking-widest uppercase mt-1">{exam.title}</p>
+          <h2 className="panel-title">Submissions</h2>
+          <p className="panel-subtitle">{exam.title}</p>
         </div>
-        <div className="text-right bg-[var(--color-primary)] border border-white/5 px-6 py-4 rounded-xl relative overflow-hidden">
-          <div className="absolute right-0 top-0 w-16 h-16 bg-[var(--color-highlight)] rounded-full mix-blend-screen filter blur-[30px] opacity-20 pointer-events-none"></div>
-          <p className="text-[10px] text-gray-400 uppercase font-bold tracking-[0.2em] mb-1">Total Marks</p>
-          <p className="text-3xl font-black text-[var(--color-highlight)]">{totalPossibleMarks}</p>
+
+        <div className="panel-card panel-card--accent" style={{ minWidth: '14rem' }}>
+          <p className="status-label">Total Marks</p>
+          <p className="panel-title" style={{ marginTop: '0.75rem' }}>{totalPossibleMarks}</p>
         </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm">
+        <div className="panel-card panel-card--danger">
           {error}
         </div>
       )}
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-8 min-h-0">
-        
-        {/* Left Column: List of Submissions */}
-        <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl overflow-hidden flex flex-col h-[calc(100vh-250px)] shadow-xl relative group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-danger)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity pointer-events-none"></div>
-          <div className="p-6 border-b border-white/5 bg-[var(--color-primary)]/50 relative z-10 shrink-0">
-            <h3 className="text-[12px] tracking-widest uppercase text-[var(--color-danger)] font-bold">Student Submissions <span className="ml-2 text-white bg-white/10 px-2 py-0.5 rounded">{submissions.length}</span></h3>
+      <div className="submission-layout">
+        <section className="panel-card panel-card--danger panel-card--full-height panel-card--overflow">
+          <div className="panel-header">
+            <div>
+              <p className="panel-card__subtitle">Student Submissions</p>
+            </div>
           </div>
-          <div className="overflow-y-auto flex-1 custom-scrollbar relative z-10">
-            {submissions.length === 0 ? (
-              <div className="p-8 text-center text-gray-500 text-sm">
-                No submissions yet.
-              </div>
-            ) : (
-              <ul className="divide-y divide-white/5">
-                {submissions.map(sub => (
-                  <li 
+
+          <div className="submission-list">
+            <div className="submission-list__items">
+              {submissions.length === 0 ? (
+                <div className="submission-placeholder">
+                  No submissions yet.
+                </div>
+              ) : (
+                submissions.map((sub) => (
+                  <div
                     key={sub.id}
                     onClick={() => {
                       setSelectedSubmission(sub);
                       setMarks(sub.marksAwarded || 0);
                       setTeacherNote(sub.teacherNote || '');
                     }}
-                    className={`p-5 cursor-pointer transition-all duration-300 relative overflow-hidden ${
-                      selectedSubmission?.id === sub.id 
-                        ? 'bg-white/5 border-l-4 border-l-[var(--color-danger)]' 
-                        : 'hover:bg-white/5 border-l-4 border-l-transparent'
-                    }`}
+                    className={`submission-list-item ${selectedSubmission?.id === sub.id ? 'submission-list-item--active' : ''}`}
                   >
-                    {selectedSubmission?.id === sub.id && (
-                       <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[var(--color-danger)]/10 to-transparent pointer-events-none"></div>
-                    )}
-                    <div className="flex justify-between items-start mb-2 relative z-10">
-                      <p className={`font-bold truncate pr-2 ${selectedSubmission?.id === sub.id ? 'text-white' : 'text-gray-300'}`}>
-                        {sub.studentName} ({sub.studentRegNumber})
-                      </p>
-                      <div className="flex items-center gap-2">
+                    <div className="panel-header">
+                      <p className="submission-list-item-title">{sub.studentName} ({sub.studentRegNumber})</p>
+                      <div className="panel-actions">
                         {getStatusBadge(sub)}
                         <button
+                          type="button"
                           onClick={(e) => { e.stopPropagation(); handleDownloadPdf(sub); }}
                           title="Download PDF"
-                          className="flex items-center gap-2 px-3 py-1 border border-white/10 rounded-lg text-xs text-[var(--color-primary)] hover:bg-[var(--color-primary)]/8"
+                          className="button button--outline button--sm"
                         >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l4-4m-4 4l-4-4M21 21H3" /></svg>
-                          <span className="hidden sm:inline">Download</span>
+                          <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v12m0 0l4-4m-4 4l-4-4M21 21H3" /></svg>
+                          Download
                         </button>
                       </div>
                     </div>
-                    <div className="flex justify-between items-center text-xs mt-3 relative z-10">
-                      <p className="text-gray-500 font-mono">{sub.submittedAt ? formatDate(sub.submittedAt) : 'In Progress'}</p>
-                      {sub.marksAwarded != null && (
-                        <p className="font-bold text-[var(--color-highlight)] tracking-widest">{sub.marksAwarded} / {totalPossibleMarks}</p>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-
-        {/* Right Column: Submission Details & Marking */}
-        <div className="lg:col-span-2 h-[calc(100vh-250px)]">
-          {!selectedSubmission ? (
-            <div className="bg-[var(--color-primary)] border border-white/5 border-dashed rounded-xl h-full flex flex-col items-center justify-center p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-              </div>
-              <p className="text-gray-400 text-sm tracking-wide">Select a student from the list to view their submission and assign marks.</p>
-            </div>
-          ) : (
-            <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl h-full flex flex-col shadow-xl overflow-hidden relative group">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[100px] opacity-10 pointer-events-none"></div>
-              
-              <div className="p-6 border-b border-white/5 bg-[var(--color-primary)]/50 shrink-0 relative z-10 flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">{selectedSubmission.studentName}</h3>
-                  <p className="text-gray-500 text-xs tracking-wide">{selectedSubmission.studentRegNumber}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => handleDownloadPdf(selectedSubmission)}
-                    className="flex items-center gap-2 px-4 py-2 border border-[var(--color-primary)]/30 hover:bg-[var(--color-primary)]/10 text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-widest uppercase transition-all"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    Download PDF
-                  </button>
-                  <div className="text-right">
-                    <p className="text-[10px] tracking-widest uppercase text-gray-500 font-bold mb-1">Submitted</p>
-                    <p className="text-sm font-mono text-[var(--color-primary)]">
-                      {selectedSubmission.submittedAt ? new Date(selectedSubmission.submittedAt).toLocaleString() : 'Not Finalized'}
+                    <p className="submission-list-item-meta">
+                      {sub.submittedAt ? formatDate(sub.submittedAt) : 'In Progress'}
+                      {sub.marksAwarded != null && ` · ${sub.marksAwarded} / ${totalPossibleMarks}`}
                     </p>
                   </div>
+                ))
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="panel-card panel-card--accent panel-card--full-height panel-card--overflow">
+          {!selectedSubmission ? (
+            <div className="submission-placeholder">
+              <div className="submission-placeholder-icon">
+                <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+              </div>
+              <p className="panel-subtitle">Select a student from the list to view their submission and assign marks.</p>
+            </div>
+          ) : (
+            <div className="panel-card--body-scroll">
+              <div className="panel-header">
+                <div>
+                  <h3 className="panel-title">{selectedSubmission.studentName}</h3>
+                  <p className="panel-subtitle">{selectedSubmission.studentRegNumber}</p>
+                </div>
+                <div className="panel-actions">
+                  <button
+                    type="button"
+                    onClick={() => handleDownloadPdf(selectedSubmission)}
+                    className="button button--outline button--sm"
+                  >
+                    <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Download PDF
+                  </button>
+                  <div>
+                    <p className="status-label">Submitted</p>
+                    <p className="panel-subtitle">{selectedSubmission.submittedAt ? new Date(selectedSubmission.submittedAt).toLocaleString() : 'Not Finalized'}</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-8 overflow-y-auto flex-1 space-y-8 custom-scrollbar bg-[var(--color-primary)] relative z-10">
-                {selectedSubmission.answers?.freeform ? (
-                  /* PDF exam — render free-form HTML as plain text */
-                  <div className="bg-white rounded-xl p-8 shadow-inner prose max-w-none text-gray-900 text-sm leading-relaxed">
-                    <pre className="whitespace-pre-wrap font-sans text-sm">
-                      {selectedSubmission.answers.freeformPlain ?? stripHtml(selectedSubmission.answers.freeform)}
-                    </pre>
+              {selectedSubmission.answers?.freeform ? (
+                <div className="panel-card panel-card--accent">
+                  <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.95rem', color: '#cbd5e1', lineHeight: 1.7 }}>
+                    {selectedSubmission.answers.freeformPlain ?? stripHtml(selectedSubmission.answers.freeform)}
                   </div>
-                ) : (
-                  /* Builder exam — structured Q&A */
-                  questions.map((q, idx) => (
-                    <div key={q.id} className="bg-[var(--color-primary)] p-6 rounded-xl border border-white/5 shadow-lg relative overflow-hidden">
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--color-primary)]/50" />
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="font-medium text-white max-w-[80%] leading-relaxed text-sm">
-                          <span className="font-black text-[var(--color-primary)] mr-3 text-lg tracking-wider">Q{idx + 1}.</span>
-                          {q.prompt}
-                        </div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-[var(--color-primary)] border border-white/10 px-3 py-1.5 rounded">
-                          {q.marks} Mark{q.marks !== 1 ? 's' : ''}
-                        </span>
+                </div>
+              ) : (
+                questions.map((q, idx) => (
+                  <div key={q.id} className="panel-card panel-card--accent">
+                    <div className="panel-header" style={{ alignItems: 'flex-start' }}>
+                      <div>
+                        <p className="submission-list-item-title">Q{idx + 1}. {q.prompt}</p>
                       </div>
-                      <div className="mt-4 p-4 bg-[var(--color-primary)]/5 rounded-lg border border-[var(--color-primary)]/20">
-                        <p className="text-[10px] font-bold text-[var(--color-primary)] uppercase tracking-widest mb-3">Student's Answer</p>
-                        {selectedSubmission.answers?.[q.id] ? (
-                          q.type === 'long_answer'
-                            ? <pre className="whitespace-pre-wrap text-gray-200 text-sm leading-relaxed font-sans">{stripHtml(selectedSubmission.answers[q.id])}</pre>
-                            : <p className="text-gray-200 text-sm">{stripHtml(selectedSubmission.answers[q.id])}</p>
-                        ) : (
-                          <p className="text-gray-500 italic text-sm">No answer provided.</p>
-                        )}
-                      </div>
+                      <span className="status-pill status-pill--muted">
+                        {q.marks} Mark{q.marks !== 1 ? 's' : ''}
+                      </span>
                     </div>
-                  ))
-                )}
-              </div>
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <p className="status-label" style={{ marginBottom: '0.75rem' }}>Student's Answer</p>
+                      {selectedSubmission.answers?.[q.id] ? (
+                        q.type === 'long_answer'
+                          ? <pre style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>{stripHtml(selectedSubmission.answers[q.id])}</pre>
+                          : <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>{stripHtml(selectedSubmission.answers[q.id])}</p>
+                      ) : (
+                        <p className="panel-subtitle">No answer provided.</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
 
-              <div className="p-6 border-t border-white/5 bg-[var(--color-primary)]/80 shrink-0 relative z-10 backdrop-blur-md">
-                <form onSubmit={handleMarkSubmission} className="flex gap-6 items-start">
-                  <div className="w-32">
-                    <label className="text-[10px] tracking-widest uppercase text-gray-400 font-bold mb-2 block">Marks (Max {totalPossibleMarks})</label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={totalPossibleMarks}
-                      required
-                      value={marks}
-                      onChange={(e) => setMarks(parseInt(e.target.value) || 0)}
-                      className="w-full bg-[var(--color-primary)] text-[var(--color-highlight)] font-black text-center border border-[var(--color-highlight)]/30 rounded-lg p-3 focus:outline-none focus:border-[var(--color-highlight)] focus:ring-1 focus:ring-[var(--color-highlight)] transition-colors"
-                    />
+              <div className="panel-card panel-card--accent">
+                <form onSubmit={handleMarkSubmission} className="form-stack">
+                  <div className="form-row form-row--2">
+                    <div className="form-group">
+                      <label className="form-label">Marks (Max {totalPossibleMarks})</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={totalPossibleMarks}
+                        required
+                        value={marks}
+                        onChange={(e) => setMarks(parseInt(e.target.value) || 0)}
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="note">Teacher Note (Optional)</label>
+                      <textarea
+                        id="note"
+                        className="form-input"
+                        rows={2}
+                        placeholder="Add feedback for the student..."
+                        value={teacherNote}
+                        onChange={(e) => setTeacherNote(e.target.value)}
+                      />
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] tracking-widest uppercase text-gray-400 font-bold mb-2 block" htmlFor="note">Teacher Note (Optional)</label>
-                    <textarea
-                      id="note"
-                      className="w-full bg-[var(--color-primary)] text-white placeholder-gray-600 border border-white/10 rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors resize-none"
-                      rows={2}
-                      placeholder="Add feedback for the student..."
-                      value={teacherNote}
-                      onChange={(e) => setTeacherNote(e.target.value)}
-                    />
-                  </div>
-                  <div className="pt-6">
-                    <button 
-                      type="submit" 
+
+                  <div className="panel-actions" style={{ justifyContent: 'flex-end' }}>
+                    <button
+                      type="submit"
                       disabled={isSaving || !selectedSubmission.isFinal}
-                      className="px-8 py-3 bg-[var(--color-highlight)] hover:bg-[var(--color-highlight)] text-[var(--color-primary)] rounded-lg text-xs font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-highlight-rgb),0.4)] disabled:opacity-50 disabled:shadow-none whitespace-nowrap"
+                      className="button button--highlight button--sm"
                     >
                       {isSaving ? 'Saving...' : 'Save Marks'}
                     </button>
                   </div>
+
+                  {!selectedSubmission.isFinal && (
+                    <p className="form-status form-status--error" style={{ marginTop: '0.75rem' }}>
+                      Warning: This exam is still in draft state. The student has not submitted it.
+                    </p>
+                  )}
                 </form>
-                {!selectedSubmission.isFinal && (
-                  <p className="text-[10px] tracking-widest uppercase text-[var(--color-highlight)] mt-4 font-bold flex items-center gap-2">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                    Warning: This exam is still in draft state. The student has not submitted it.
-                  </p>
-                )}
               </div>
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

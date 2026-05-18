@@ -8,12 +8,12 @@ export function CreateExam() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const [formData, setFormData] = useState<CreateExamForm>({
     title: '',
     description: '',
     questionSource: 'builder',
-    startTime: toDatetimeLocal(new Date(Date.now() + 86400000).toISOString()), // Default: tomorrow
+    startTime: toDatetimeLocal(new Date(Date.now() + 86400000).toISOString()),
     durationMinutes: 60,
     windowBufferMinutes: 5,
   });
@@ -24,13 +24,8 @@ export function CreateExam() {
     setError('');
 
     try {
-      // Convert local datetime-local string to ISO UTC
       const startTimeISO = new Date(formData.startTime).toISOString();
-      const payload = {
-        ...formData,
-        startTime: startTimeISO,
-      };
-
+      const payload = { ...formData, startTime: startTimeISO };
       const { data } = await api.post('/exams', payload);
       navigate(`/dashboard/exams/${data.exam.id}`);
     } catch (err: any) {
@@ -41,126 +36,119 @@ export function CreateExam() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
-      
-      {/* Breadcrumb */}
-      <div className="flex items-center text-[10px] uppercase tracking-[0.2em] font-bold text-gray-500 mb-8">
-        <span className="text-gray-500 hover:text-white cursor-pointer" onClick={() => navigate('/dashboard')}>DASHBOARD</span> 
-        <span className="mx-2">/</span> 
-        <span className="text-gray-500 hover:text-white cursor-pointer" onClick={() => navigate('/dashboard')}>EXAMS</span>
-        <span className="mx-2">/</span>
-        <span className="text-[var(--color-primary)]">CREATE</span>
+    <div className="settings-page">
+      <div className="breadcrumb">
+        <button type="button" className="breadcrumb-link" onClick={() => navigate('/dashboard')}>
+          DASHBOARD
+        </button>
+        <span>/</span>
+        <button type="button" className="breadcrumb-link" onClick={() => navigate('/dashboard')}>
+          EXAMS
+        </button>
+        <span>/</span>
+        <span style={{ color: '#93c5fd' }}>CREATE</span>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-[18px] uppercase tracking-[0.2em] font-bold text-white">Create New Exam</h2>
-        <div className="h-1 w-12 bg-gradient-to-r from-[var(--color-primary)] to-transparent mt-2 rounded-full mb-4"></div>
-        <p className="text-gray-400 text-sm tracking-wide">Configure a new secure assessment environment.</p>
-      </div>
+      <header className="page-header">
+        <div className="page-heading-row">
+          <h2 className="page-title">Create New Exam</h2>
+          <div className="page-underline" />
+        </div>
+        <p className="page-subtitle">Configure a new secure assessment environment.</p>
+      </header>
 
-      <div className="bg-[var(--color-primary)] border border-white/5 p-6 sm:p-8 rounded-xl shadow-2xl">
-        {error && (
-          <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm">
-            {error}
-          </div>
-        )}
+      <div className="settings-panel">
+        {error && <div className="form-error">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          
-          <div className="space-y-2">
-            <label className="text-[11px] tracking-widest uppercase text-[var(--color-primary)] font-bold" htmlFor="title">EXAM TITLE</label>
+        <form onSubmit={handleSubmit} className="form-stack">
+          <div className="form-group">
+            <label className="form-label" htmlFor="title">
+              Exam Title
+            </label>
             <input
               id="title"
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="e.g. Midterm Computer Science 101"
-              className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg p-3 text-white placeholder-gray-600 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+              className="form-input"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-[11px] tracking-widest uppercase text-gray-400 font-bold" htmlFor="description">DESCRIPTION (OPTIONAL)</label>
+          <div className="form-group">
+            <label className="form-label" htmlFor="description">
+              Description (optional)
+            </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Instructions or information for students"
               rows={3}
-              className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg p-3 text-white placeholder-gray-600 focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all resize-none"
+              className="form-input"
             />
           </div>
 
-          <div className="space-y-3">
-            <label className="text-[11px] tracking-widest uppercase text-gray-400 font-bold">QUESTION SOURCE</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <label 
-                className={`text-left relative border rounded-lg p-5 cursor-pointer transition-all duration-300 overflow-hidden select-none ${
-                  formData.questionSource === 'builder' 
-                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.15)]' 
-                    : 'border-white/10 bg-[var(--color-primary)] hover:border-white/30'
-                }`}
+          <div className="form-group">
+            <label className="form-label">Question Source</label>
+            <div className="settings-grid">
+              <label
+                className={`option-card ${formData.questionSource === 'builder' ? 'option-card-selected' : ''}`}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <input 
-                    type="radio" 
-                    name="questionSource" 
+                <div className="option-card__header">
+                  <input
+                    type="radio"
+                    name="questionSource"
                     value="builder"
                     checked={formData.questionSource === 'builder'}
-                    onChange={() => setFormData(prev => ({ ...prev, questionSource: 'builder' }))}
-                    className="w-5 h-5 text-[var(--color-primary)] bg-[var(--color-primary)] border-gray-500 focus:ring-[var(--color-primary)] focus:ring-2 cursor-pointer"
+                    onChange={() => setFormData((prev) => ({ ...prev, questionSource: 'builder' }))}
                   />
-                  <div className={`font-bold text-sm tracking-wide ${formData.questionSource === 'builder' ? 'text-[var(--color-primary)]' : 'text-white'}`}>
-                    Question Builder
-                  </div>
+                  <div className="option-card__title">Question Builder</div>
                 </div>
-                <div className="text-[12px] text-gray-400 pl-8">
+                <p className="panel-subtitle">
                   Create questions directly using the interactive portal tools.
-                </div>
+                </p>
               </label>
-              
-              <label 
-                className={`text-left relative border rounded-lg p-5 cursor-pointer transition-all duration-300 overflow-hidden select-none ${
-                  formData.questionSource === 'pdf' 
-                    ? 'border-[var(--color-danger)] bg-[var(--color-danger)]/10 shadow-[0_0_15px_rgba(var(--color-danger-rgb),0.15)]' 
-                    : 'border-white/10 bg-[var(--color-primary)] hover:border-white/30'
-                }`}
+
+              <label
+                className={`option-card ${formData.questionSource === 'pdf' ? 'option-card-selected' : ''}`}
               >
-                <div className="flex items-center gap-3 mb-2">
-                  <input 
-                    type="radio" 
-                    name="questionSource" 
+                <div className="option-card__header">
+                  <input
+                    type="radio"
+                    name="questionSource"
                     value="pdf"
                     checked={formData.questionSource === 'pdf'}
-                    onChange={() => setFormData(prev => ({ ...prev, questionSource: 'pdf' }))}
-                    className="w-5 h-5 text-[var(--color-danger)] bg-[var(--color-primary)] border-gray-500 focus:ring-[var(--color-danger)] focus:ring-2 cursor-pointer"
+                    onChange={() => setFormData((prev) => ({ ...prev, questionSource: 'pdf' }))}
                   />
-                  <div className={`font-bold text-sm tracking-wide ${formData.questionSource === 'pdf' ? 'text-[var(--color-danger)]' : 'text-white'}`}>
-                    Upload PDF
-                  </div>
+                  <div className="option-card__title">Upload PDF</div>
                 </div>
-                <div className="text-[12px] text-gray-400 pl-8">
+                <p className="panel-subtitle">
                   Upload an existing PDF document containing the questions.
-                </div>
+                </p>
               </label>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-2">
-            <div className="space-y-2">
-              <label className="text-[11px] tracking-widest uppercase text-gray-400 font-bold" htmlFor="startTime">START DATE & TIME</label>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label" htmlFor="startTime">
+                Start Date & Time
+              </label>
               <input
                 id="startTime"
                 type="datetime-local"
                 required
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                className="form-input"
               />
             </div>
-            
-            <div className="space-y-2">
-              <label className="text-[11px] tracking-widest uppercase text-gray-400 font-bold" htmlFor="durationMinutes">DURATION (MINUTES)</label>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="durationMinutes">
+                Duration (minutes)
+              </label>
               <input
                 id="durationMinutes"
                 type="number"
@@ -169,34 +157,17 @@ export function CreateExam() {
                 required
                 value={formData.durationMinutes}
                 onChange={(e) => setFormData({ ...formData, durationMinutes: parseInt(e.target.value) || 60 })}
-                className="w-full bg-[var(--color-primary)] border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
+                className="form-input"
               />
             </div>
           </div>
 
-          {/* SEB Config Key must be generated after the exam link (gate URL) is created. Use the Exam Builder to add the key after publishing. */}
-
-          <div className="flex items-center justify-end gap-4 pt-8 border-t border-white/10">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-6 py-3 text-[11px] font-bold tracking-[0.2em] uppercase text-gray-400 hover:text-white transition-colors"
-            >
+          <div className="form-actions">
+            <button type="button" className="button button--secondary" onClick={() => navigate(-1)}>
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="px-8 py-3 bg-[var(--color-primary)] hover:bg-[#00d0db] text-[var(--color-primary)] rounded-lg text-[11px] font-bold tracking-[0.2em] uppercase transition-all shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.4)] disabled:opacity-50 flex items-center justify-center"
-            >
-              {isLoading ? (
-                <svg className="animate-spin h-4 w-4 text-[var(--color-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                'Create Exam'
-              )}
+            <button type="submit" disabled={isLoading} className="button button--primary button-full">
+              {isLoading ? 'Creating...' : 'Create Exam'}
             </button>
           </div>
         </form>
