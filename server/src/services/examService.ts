@@ -193,9 +193,7 @@ import { getUserProfile } from './authService';
 
 export async function deleteExam(examId: string, teacherId: string) {
   const exam = await assertExamOwner(examId, teacherId);
-  if (exam.status === 'closed') {
-    throw new AppError(400, 'Cannot delete a closed exam');
-  }
+  // Allow deletion regardless of exam status (including 'closed')
 
   if (exam.pdfPath) {
     const teacher = await getUserProfile(teacherId);
