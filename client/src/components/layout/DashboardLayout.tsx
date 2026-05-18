@@ -47,123 +47,115 @@ export function DashboardLayout() {
     <div className="dashboard-layout flex h-screen bg-[#081d3b] text-white overflow-hidden font-sans">
       
       {/* Sidebar */}
-      <aside className={`${isSidebarCollapsed ? 'w-[72px]' : 'w-[220px]'} flex-shrink-0 border-r border-white/10 flex flex-col z-20 transition-width duration-300`} style={{ backgroundColor: 'var(--color-action)' }}>
-        <div className="flex h-full flex-col">
-          <div className="px-4 pt-6 pb-4 text-center flex items-center justify-between">
+      <aside
+        className={`sidebar ${isSidebarCollapsed ? 'collapsed' : 'expanded'}`}
+        style={{ backgroundColor: 'var(--color-action)' }}
+      >
+        <div className="sidebar-inner">
+          <div className="sidebar-header">
             {!isSidebarCollapsed && (
-              <div className="flex-1 text-center">
-                <p className="text-[10px] uppercase tracking-[0.35em] text-cyan-200 mb-2">Navigation</p>
-                <h1 className="text-lg font-semibold text-white exam-admin-title">Exam Admin</h1>
-                <p className="mt-1 text-[10px] uppercase tracking-[0.35em] text-cyan-200">Secure Portal</p>
+              <div className="sidebar-header-content">
+                <p className="sidebar-header-label">Navigation</p>
+                <h1 className="sidebar-header-title">Exam Admin</h1>
+                <p className="sidebar-header-subtitle">Secure Portal</p>
               </div>
             )}
             <button
               aria-label="Toggle sidebar"
-              onClick={() => setIsSidebarCollapsed(s => !s)}
-              className="ml-2 text-slate-300 hover:text-white p-2 rounded"
+              onClick={() => setIsSidebarCollapsed((s) => !s)}
+              className="sidebar-toggle"
             >
-              <svg className={`w-5 h-5 transition-transform ${isSidebarCollapsed ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <svg className={`sidebar-toggle-icon ${isSidebarCollapsed ? 'rotated' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
               </svg>
             </button>
           </div>
 
-          <div className="border-t border-white/10 mx-4 my-2" />
+          <div className="sidebar-divider" />
 
-          <nav className="h-4/5 flex flex-col items-center overflow-y-auto px-6 py-6 w-full">
+          <nav className="sidebar-nav">
             {!isSidebarCollapsed && (
-              <div className="flex items-center justify-between w-full mb-4">
-                <div className="text-[10px] uppercase tracking-[0.35em] text-slate-400">Primary</div>
+              <div className="sidebar-section">
+                <div className="sidebar-section-title">Primary</div>
                 <button
                   onClick={() => setIsPrimaryCollapsed(!isPrimaryCollapsed)}
-                  className="text-slate-400 hover:text-white transition-colors"
+                  className="sidebar-section-button"
                 >
-                  <svg className={`w-4 h-4 transition-transform duration-300 ${isPrimaryCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`sidebar-section-icon ${isPrimaryCollapsed ? 'rotated' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7-7m0 0L5 14m7-7v12" />
                   </svg>
                 </button>
               </div>
             )}
 
-            <div className={`flex flex-col ${isPrimaryCollapsed ? 'h-0 overflow-hidden' : 'flex-1 justify-evenly'} items-center w-full transition-all duration-300`}>
+            <div className={`sidebar-nav-items ${isPrimaryCollapsed ? 'collapsed' : ''}`}>
               <Link
                 to="/dashboard"
-                className={`nav-link-animated flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
-                  location.pathname === '/dashboard'
-                    ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
+                className={`sidebar-nav-link ${location.pathname === '/dashboard' ? 'active' : 'inactive'}`}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                {!isSidebarCollapsed && <span className="font-semibold">Dashboard</span>}
+                <span className="sidebar-nav-icon">
+                  <svg className="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                </span>
+                {!isSidebarCollapsed && <span>Dashboard</span>}
               </Link>
               <Link
                 to="/dashboard/exams/create"
-                className={`nav-link-animated flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
-                  location.pathname === '/dashboard/exams/create'
-                    ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
+                className={`sidebar-nav-link ${location.pathname === '/dashboard/exams/create' ? 'active' : 'inactive'}`}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                {!isSidebarCollapsed && <span className="font-semibold">Create exam</span>}
+                <span className="sidebar-nav-icon">
+                  <svg className="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </span>
+                {!isSidebarCollapsed && <span>Create exam</span>}
               </Link>
               <Link
                 to="/dashboard/submissions"
-                className={`nav-link-animated flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
-                  location.pathname === '/dashboard/submissions'
-                    ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
+                className={`sidebar-nav-link ${location.pathname === '/dashboard/submissions' ? 'active' : 'inactive'}`}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {!isSidebarCollapsed && <span className="font-semibold">Submissions</span>}
+                <span className="sidebar-nav-icon">
+                  <svg className="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </span>
+                {!isSidebarCollapsed && <span>Submissions</span>}
               </Link>
               <Link
                 to="/dashboard/settings"
-                className={`nav-link-animated flex items-center gap-4 rounded-3xl px-4 py-3 text-sm transition-all w-full ${
-                  location.pathname === '/dashboard/settings'
-                    ? 'bg-[var(--color-primary)] text-cyan-100 shadow-[0_12px_30px_rgba(0,88,179,0.18)]'
-                    : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
+                className={`sidebar-nav-link ${location.pathname === '/dashboard/settings' ? 'active' : 'inactive'}`}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                {!isSidebarCollapsed && <span className="font-semibold">Settings</span>}
+                <span className="sidebar-nav-icon">
+                  <svg className="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </span>
+                {!isSidebarCollapsed && <span>Settings</span>}
               </Link>
             </div>
           </nav>
 
-          <div className="border-t border-white/10 px-6 py-5">
+          <div className="sidebar-footer">
             {!isSidebarCollapsed ? (
               <>
-                <div className="flex items-center gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400/10 text-cyan-200 font-semibold">
+                <div className="sidebar-profile">
+                  <div className="sidebar-avatar">
                     {user?.fullName?.charAt(0) ?? 'A'}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-white truncate">{user?.fullName || 'Administrator'}</p>
-                    <p className="text-xs text-slate-400 uppercase tracking-[0.25em]">Admin access</p>
+                  <div className="sidebar-profile-body">
+                    <p className="sidebar-profile-name">{user?.fullName || 'Administrator'}</p>
+                    <p className="sidebar-profile-role">Admin access</p>
                   </div>
                 </div>
-                <button
-                  onClick={logout}
-                  className="mt-4 w-full rounded-3xl border border-transparent bg-cyan-400/10 px-4 py-3 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-400/15"
-                >
+                <button onClick={logout} className="sidebar-logout">
                   Log out
                 </button>
               </>
             ) : (
-              <div className="flex justify-center">
-                <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white" style={{ backgroundColor: 'var(--color-action)' }}>
+              <div className="sidebar-collapsed-avatar">
+                <div className="sidebar-collapsed-avatar-circle" style={{ backgroundColor: 'var(--color-action)' }}>
                   {user?.fullName?.charAt(0) ?? 'A'}
                 </div>
               </div>
