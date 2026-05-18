@@ -368,6 +368,124 @@ textarea.form-input {
   font-weight: 700;
 }
 
+/* Topbar styles */
+.topbar {
+  height: 72px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  flex-shrink: 0;
+  z-index: 10;
+  box-shadow: 0 5px 35px rgba(0, 0, 0, 0.15);
+}
+
+.topbar-search {
+  position: relative;
+  width: 100%;
+  max-width: 26rem;
+}
+
+.topbar-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+}
+
+.topbar-icon-svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.topbar-search-input {
+  width: 100%;
+  color: white;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 0.75rem 1rem 0.75rem 3rem;
+  background: transparent;
+}
+
+.topbar-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.topbar-action-button {
+  position: relative;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.topbar-action-button:hover {
+  color: white;
+}
+
+.topbar-action-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.topbar-notification-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--color-danger);
+  border: 1px solid var(--color-primary);
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding-left: 1.5rem;
+  margin-left: 1rem;
+}
+
+.topbar-username {
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.topbar-avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(11, 61, 111, 0.2);
+}
+
+.topbar-avatar-icon {
+  width: 1rem;
+  height: 1rem;
+  color: white;
+}
+
 /* Skeleton loader */
 .skeleton {
   background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
