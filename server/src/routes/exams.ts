@@ -18,6 +18,7 @@ import {
   getExamById,
 } from '../services/examService';
 import { getRoomEvents, countRoomEvents } from '../services/roomEventService';
+import { getExamStats } from '../services/examStatsService';
 import { getUserProfile } from '../services/authService';
 import { uploadPdfToDrive, getPdfStreamFromDrive, DriveCredentials, getDriveCredentialsFromUser } from '../services/driveService';
 import { env } from '../config/env';
@@ -112,6 +113,30 @@ router.get(
       ]);
 
       res.json({ events, paging: { page, per, total } });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /api/exams/:id/stats
+router.get(
+  '/:id/stats',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.params.id;
+      // authorize: teacher must own exam; admin allowed
+      if (req.user!.role === 'teacher') {
+        await assertExamOwner(examId, req.user!.sub);
+      } else {
+        const exam = await getExamById(examId);
+        if (!exam) throw new Error('Exam not found');
+      }
+
+      const stats = await getExamStats(examId);
+      res.json(stats);
     } catch (err) {
       next(err);
     }

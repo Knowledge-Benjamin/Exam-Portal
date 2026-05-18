@@ -80,6 +80,7 @@ export const submissions = pgTable('submissions', {
   answers: jsonb('answers').notNull().default({}).$type<Record<string, string>>(),
   submittedAt: timestamp('submitted_at', { withTimezone: true }),
   isFinal: boolean('is_final').notNull().default(false),
+  forcedSubmit: boolean('forced_submit').notNull().default(false),
   marksAwarded: integer('marks_awarded'),
   teacherNote: text('teacher_note'),
   ipAddress: text('ip_address'),

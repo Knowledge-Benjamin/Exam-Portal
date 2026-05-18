@@ -61,6 +61,7 @@ export async function finalSubmit(
   submissionId: string,
   answers: Record<string, string>,
   sebHash: string,
+  forcedSubmit: boolean = false,
 ) {
   const existing = await getSubmissionById(submissionId);
 
@@ -79,6 +80,7 @@ export async function finalSubmit(
       answers: answersToStore,
       isFinal: true,
       submittedAt: new Date(),
+      forcedSubmit,
       sebRequestHash: sebHash,
       updatedAt: new Date(),
     })
@@ -137,6 +139,6 @@ export async function markSubmission(
 export async function forceSubmitAll(examId: string) {
   await db
     .update(submissions)
-    .set({ isFinal: true, submittedAt: new Date(), updatedAt: new Date() })
+    .set({ isFinal: true, submittedAt: new Date(), forcedSubmit: true, updatedAt: new Date() })
     .where(and(eq(submissions.examId, examId), eq(submissions.isFinal, false)));
 }

@@ -15,11 +15,18 @@ export function ExamDetail() {
   const [isRepublishing, setIsRepublishing] = useState(false);
   const [editingSebKey, setEditingSebKey] = useState(false);
   const [sebKeyInput, setSebKeyInput] = useState('');
+  const [stats, setStats] = useState<{
+    totalJoined: number;
+    totalSubmitted: number;
+    totalForced: number;
+    totalNotSubmitted: number;
+  } | null>(null);
 
   const { connectionStatus, roomState, logs, remainingSeconds, error: monitorError } = useExamRoomMonitor(id);
 
   useEffect(() => {
     fetchExam();
+    fetchStats();
   }, [id]);
 
   const fetchExam = async () => {
@@ -31,6 +38,15 @@ export function ExamDetail() {
       setError(err.error || 'Failed to load exam details');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchStats = async () => {
+    try {
+      const statsRes = await api.get(`/exams/${id}/stats`);
+      setStats(statsRes.data);
+    } catch (err: any) {
+      console.error('Failed to load stats:', err);
     }
   };
 
@@ -321,6 +337,31 @@ export function ExamDetail() {
         {/* Right Column: Students & Submissions */}
         <div className="space-y-8">
 
+          {/* Exam Statistics */}
+          {stats && (
+            <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-primary)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
+              <h3 className="text-[12px] tracking-widest uppercase text-gray-500 font-bold mb-6 relative z-10">Exam Statistics</h3>
+              <div className="grid grid-cols-2 gap-4 relative z-10">
+                <div className="rounded-xl bg-[var(--color-primary)]/80 p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Took the test</p>
+                  <p className="text-3xl font-black text-white">{stats.totalJoined}</p>
+                </div>
+                <div className="rounded-xl bg-[var(--color-primary)]/80 p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Submitted</p>
+                  <p className="text-3xl font-black text-[var(--color-highlight)]">{stats.totalSubmitted}</p>
+                </div>
+                <div className="rounded-xl bg-[var(--color-primary)]/80 p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Forced submit</p>
+                  <p className="text-3xl font-black text-[var(--color-danger)]">{stats.totalForced}</p>
+                </div>
+                <div className="rounded-xl bg-[var(--color-primary)]/80 p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-gray-400 mb-2">Not submitted</p>
+                  <p className="text-3xl font-black text-gray-500">{stats.totalNotSubmitted}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="bg-[var(--color-primary)] border border-white/5 rounded-xl p-8 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--color-highlight)] rounded-full mix-blend-screen filter blur-[80px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
