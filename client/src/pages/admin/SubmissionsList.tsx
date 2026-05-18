@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { api } from '../../api';
 import type { Exam, Submission, Question } from '../../types';
 import { formatDate } from '../../utils/formatters';
@@ -8,18 +9,38 @@ import { useSubmissionStatus } from '../../hooks/useSubmissionStatus';
 const stripHtml = (html?: string) => {
   if (!html) return '';
   try {
-    const normalized = String(html)
+    let text = String(html);
+    
+    // Normalize block tags to newlines
+    text = text
       .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n')
-      .replace(/<\/div>/gi, '\n')
-      .replace(/<\/li>/gi, '\n')
-      .replace(/<\/h[1-6]>/gi, '\n')
-      .replace(/<li>/gi, '• ')
-      .replace(/&nbsp;/gi, ' ');
+      .replace(/<\/p>/gi, '\n\n')
+      .replace(/<\/h[1-6]>/gi, '\n\n')
+      .replace(/<li>/gi, '\n- ')
+      .replace(/<\/li>/gi, '')
+      .replace(/<\/blockquote>/gi, '\n')
+      .replace(/<\/div>/gi, '\n');
 
-    const doc = new DOMParser().parseFromString(normalized, 'text/html');
-    const text = doc.body.textContent || '';
-    return text.replace(/\n{3,}/g, '\n\n').trim();
+    // Remove all remaining HTML tags
+    text = text.replace(/<[^>]+>/g, '');
+
+    // Unescape common HTML entities
+    text = text
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+    // Collapse multiple blank lines and excessive spaces
+    text = text.replace(/\r\n|\r/g, '\n').replace(/\n{3,}/g, '\n\n');
+    text = text
+      .split('\n')
+      .map(line => line.replace(/\s+/g, ' ').trim())
+      .join('\n');
+    
+    return text.trim();
   } catch {
     return String(html);
   }
@@ -32,6 +53,15 @@ const escapeHtml = (str: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+
+// Sanitize HTML to prevent XSS attacks while preserving formatting
+const sanitizeHtml = (html: string): string => {
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'u', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'br', 'code', 'pre', 'div'],
+    ALLOWED_ATTR: [],
+    KEEP_CONTENT: true,
+  });
+};
 
 export function SubmissionsList() {
   const { id } = useParams<{ id: string }>();
@@ -102,17 +132,19 @@ export function SubmissionsList() {
     let contentHtml = '';
 
     if (isFreeform) {
-      // Prefer server-provided plain text; fall back to stripping HTML safely
-      const plain = sub.answers.freeformPlain ?? stripHtml(sub.answers.freeform);
-      contentHtml = `<pre style="white-space:pre-wrap; font-family: 'Georgia', serif; color: #111; font-size:0.95rem; line-height:1.4; background:#fff; padding:16px; border-radius:8px;">${escapeHtml(plain)}</pre>`;
+      // Use the actual HTML to preserve formatting (bold, italics, lists, etc.)
+      const html = sub.answers.freeform || '<em>No answer provided</em>';
+      const sanitized = sanitizeHtml(html);
+      contentHtml = `<div style="font-family: 'Georgia', serif; color: #111; font-size:0.95rem; line-height:1.6; background:#fff; padding:16px; border-radius:8px; word-break: break-word;">${sanitized}</div>`;
     } else {
       contentHtml = questions.map((q, i) => {
         const ansRaw = sub.answers?.[q.id] || '<em>No answer provided</em>';
-        const ans = stripHtml(String(ansRaw));
+        // For long answers, preserve HTML formatting; for others, escape text
+        const ansHtml = q.type === 'long_answer' ? sanitizeHtml(String(ansRaw)) : escapeHtml(String(ansRaw)).replace(/\n/g, '<br>');
         return `
             <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb">
               <p style="font-weight:700; color:#1e3a5f; margin-bottom:8px">Q${i + 1}. ${escapeHtml(q.prompt)} <span style="font-weight:400; color:#6b7280; font-size:0.85em">(${q.marks} mark${q.marks !== 1 ? 's' : ''})</span></p>
-              <div style="padding-left:16px; color:#374151">${escapeHtml(ans).replace(/\n/g, '<br>')}</div>
+              <div style="padding-left:16px; color:#374151; word-break: break-word;">${ansHtml}</div>
             </div>
           `;
       }).join('');
@@ -281,11 +313,7 @@ export function SubmissionsList() {
               </div>
 
               {selectedSubmission.answers?.freeform ? (
-                <div className="panel-card panel-card--accent">
-                  <div style={{ whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '0.95rem', color: '#cbd5e1', lineHeight: 1.7 }}>
-                    {selectedSubmission.answers.freeformPlain ?? stripHtml(selectedSubmission.answers.freeform)}
-                  </div>
-                </div>
+                <div className="panel-card panel-card--accent essay-content" style={{ color: '#cbd5e1', lineHeight: 1.7, fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.answers.freeform) }} />
               ) : (
                 questions.map((q, idx) => (
                   <div key={q.id} className="panel-card panel-card--accent">
@@ -301,8 +329,8 @@ export function SubmissionsList() {
                       <p className="status-label" style={{ marginBottom: '0.75rem' }}>Student's Answer</p>
                       {selectedSubmission.answers?.[q.id] ? (
                         q.type === 'long_answer'
-                          ? <pre style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>{stripHtml(selectedSubmission.answers[q.id])}</pre>
-                          : <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>{stripHtml(selectedSubmission.answers[q.id])}</p>
+                          ? <div className="essay-content" style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.answers[q.id]) }} />
+                          : <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>{selectedSubmission.answers[q.id]}</p>
                       ) : (
                         <p className="panel-subtitle">No answer provided.</p>
                       )}
@@ -360,6 +388,18 @@ export function SubmissionsList() {
           )}
         </section>
       </div>
+      <style>{`
+        .essay-content p { margin: 0.5em 0; }
+        .essay-content h1, .essay-content h2, .essay-content h3, .essay-content h4, .essay-content h5, .essay-content h6 { font-weight: 700; margin: 0.75em 0 0.5em 0; color: #cbd5e1; }
+        .essay-content strong, .essay-content b { font-weight: 700; color: #e2e8f0; }
+        .essay-content em, .essay-content i { font-style: italic; }
+        .essay-content u { text-decoration: underline; }
+        .essay-content ul, .essay-content ol { margin: 0.5em 0; padding-left: 2rem; }
+        .essay-content li { margin: 0.25em 0; }
+        .essay-content blockquote { margin: 0.5em 0; padding-left: 1rem; border-left: 3px solid rgba(255,255,255,0.1); }
+        .essay-content code { background: rgba(0,0,0,0.2); padding: 0.2em 0.4em; border-radius: 4px; font-family: 'Courier New', monospace; }
+        .essay-content pre { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+      `}</style>
     </div>
   );
 }
