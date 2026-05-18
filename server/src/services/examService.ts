@@ -195,6 +195,10 @@ export async function deleteExam(examId: string, teacherId: string) {
   const exam = await assertExamOwner(examId, teacherId);
   // Allow deletion regardless of exam status (including 'closed')
 
+  if (exam.status === 'active') {
+    throw new AppError(400, 'Cannot delete an active exam');
+  }
+
   if (exam.pdfPath) {
     const teacher = await getUserProfile(teacherId);
     const creds = getDriveCredentialsFromUser(teacher);

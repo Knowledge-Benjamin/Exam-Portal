@@ -184,6 +184,10 @@ export function DashboardHome() {
                   <button
                     onClick={async (e) => {
                       e.preventDefault();
+                      if (exam.status === 'active') {
+                        alert('Active exams cannot be deleted');
+                        return;
+                      }
                       const ok = window.confirm(`Delete exam "${exam.title}"? This cannot be undone.`);
                       if (!ok) return;
                       try {
