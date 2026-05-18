@@ -215,7 +215,7 @@ export function DashboardLayout() {
 
         {/* Main Viewport */}
         <main className="content-main">
-          <div className="max-w-7xl mx-auto flex flex-col justify-between items-center">
+          <div className="content-inner">
             <Outlet />
           </div>
         </main>
