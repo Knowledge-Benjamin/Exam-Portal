@@ -54,8 +54,6 @@ export function ExamRoom() {
 
   const { isConnected, remainingSeconds, lastSaved, forceSubmitMsg } = useSocket(id!, answers, examToken);
 
-  // ─── Load ──────────────────────────────────────────────────────────────────
-
   useEffect(() => { fetchExamData(); }, [id]);
 
   useEffect(() => {
@@ -132,8 +130,6 @@ export function ExamRoom() {
     }
   };
 
-  // ─── Answer update ─────────────────────────────────────────────────────────
-
   const handleAnswerChange = useCallback((questionId: string, value: string) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   }, []);
@@ -142,11 +138,9 @@ export function ExamRoom() {
     setAnswers((prev) => ({ ...prev, freeform: html }));
   }, []);
 
-  // ─── Submit ───────────────────────────────────────────────────────────────
-
   const handleFinalSubmit = async () => {
     if (submission?.isFinal) return;
-    mute(3000); // suppress anti-cheat during the confirm dialog
+    mute(3000);
     if (!window.confirm('Submit your exam? You will not be able to make changes after this.')) return;
     setIsSubmitting(true);
     try {
@@ -161,28 +155,36 @@ export function ExamRoom() {
     }
   };
 
-  // ─── Loading ──────────────────────────────────────────────────────────────
-
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[var(--color-primary)]">
-        <div className="w-12 h-12 border-2 border-[var(--color-primary)] border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-gray-400 text-sm tracking-wide">Loading Exam Environment...</p>
+      <div className="exam-room-shell">
+        <div className="exam-room-empty-state">
+          <div className="page-panel" style={{ maxWidth: '18rem', width: '100%', padding: '2rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ width: '3rem', height: '3rem', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'transparent', borderRadius: '999px', animation: 'spin 1s linear infinite' }} />
+            </div>
+            <p style={{ color: '#94a3b8', textAlign: 'center', margin: 0 }}>Loading Exam Environment...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || submission?.isFinal) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--color-primary)] p-4">
-        <div className="bg-[var(--color-primary)] border border-white/10 rounded-2xl p-10 max-w-md w-full text-center shadow-2xl">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6 text-2xl">⚠</div>
-          <h2 className="text-xl font-bold text-white mb-2">
-            {submission?.isFinal ? 'Already Submitted' : 'Access Denied'}
-          </h2>
-          <p className="text-gray-400 text-sm leading-relaxed">
-            {error || 'This exam has already been submitted.'}
-          </p>
+      <div className="exam-room-shell">
+        <div className="exam-room-empty-state">
+          <div className="page-panel" style={{ maxWidth: '28rem', width: '100%', padding: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '4rem', height: '4rem', borderRadius: '999px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.2)', margin: '0 auto 1rem', color: '#f87171', fontSize: '1.5rem' }}>
+              ⚠
+            </div>
+            <h2 style={{ color: 'white', fontSize: '1.25rem', margin: '0', textAlign: 'center' }}>
+              {submission?.isFinal ? 'Already Submitted' : 'Access Denied'}
+            </h2>
+            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.6, marginTop: '0.75rem', textAlign: 'center', margin: 0 }}>
+              {error || 'This exam has already been submitted.'}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -197,44 +199,40 @@ export function ExamRoom() {
     ? (answers.freeform && answers.freeform !== '<p></p>' ? 100 : 0)
     : Math.round((answeredCount / Math.max(totalQuestions, 1)) * 100);
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-primary)] overflow-hidden">
-
-      {/* Violation Banner */}
+    <div className="exam-room-shell">
       {violationMsg && (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-red-600 text-white text-sm font-bold text-center py-3 px-6 shadow-lg">
+        <div className="exam-room-violation-banner">
           {violationMsg}
           {tabSwitchCount > 0 && (
-            <span className="ml-4 opacity-70 text-xs font-normal">({tabSwitchCount} violation{tabSwitchCount !== 1 ? 's' : ''} recorded)</span>
+            <span style={{ opacity: 0.7, fontSize: '0.75rem', fontWeight: 400, marginLeft: '1rem' }}>
+              ({tabSwitchCount} violation{tabSwitchCount !== 1 ? 's' : ''} recorded)
+            </span>
           )}
         </div>
       )}
 
-      {/* ─── Header ────────────────────────────────────────────────────────── */}
-      <header className="bg-[var(--color-primary)] border-b border-white/5 px-6 py-3 flex justify-between items-center shrink-0 shadow-lg z-10">
-        <div className="flex items-center gap-4 min-w-0">
-          {/* Logo mark */}
-          <div className="w-8 h-8 rounded-lg bg-[var(--color-primary)] flex items-center justify-center shrink-0">
-            <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <header className="exam-room-header">
+        <div className="exam-room-brand">
+          <div className="exam-room-brand-mark">
+            <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <div className="min-w-0">
-            <h1 className="text-white font-bold text-sm truncate leading-tight">{exam.title}</h1>
-            <div className="flex items-center gap-2 text-[11px] text-gray-400 mt-0.5">
+          <div>
+            <h1 className="exam-room-title">{exam.title}</h1>
+            <div className="exam-room-meta">
               {submission?.studentName && (
-                <span className="text-[var(--color-primary)] font-semibold">{submission.studentName} · {submission.studentRegNumber}</span>
+                <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{submission.studentName} · {submission.studentRegNumber}</span>
               )}
-              <span className="w-1 h-1 rounded-full bg-gray-600" />
-              <span className={`flex items-center gap-1 ${isConnected ? 'text-[var(--color-highlight)]' : 'text-[var(--color-danger)]'}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-[var(--color-highlight)]' : 'bg-[var(--color-danger)]'} animate-pulse`} />
+              <span className="status-dot" />
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: isConnected ? 'var(--color-highlight)' : 'var(--color-danger)' }}>
+                <span className={`status-dot ${isConnected ? 'status-dot--highlight' : 'status-dot--danger'}`} />
                 {isConnected ? 'Auto-saving' : 'Reconnecting...'}
               </span>
               {lastSaved && (
                 <>
-                  <span className="w-1 h-1 rounded-full bg-gray-600" />
+                  <span className="status-dot" style={{ background: '#94a3b8' }} />
                   <span>Saved {new Date(lastSaved).toLocaleTimeString()}</span>
                 </>
               )}
@@ -242,199 +240,152 @@ export function ExamRoom() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 shrink-0">
-          {/* Progress */}
+        <div className="exam-room-header-right">
           {!isPdf && (
-            <div className="hidden md:flex flex-col items-end gap-1">
-              <span className="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Progress</span>
-              <div className="flex items-center gap-2">
-                <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[var(--color-highlight)] rounded-full transition-all duration-500"
-                    style={{ width: `${progress}%` }}
-                  />
+            <div className="exam-room-progress">
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#94a3b8' }}>Progress</span>
+              <div className="exam-room-meter">
+                <div className="exam-room-meter-bar">
+                  <div className="exam-room-meter-fill" style={{ width: `${progress}%` }} />
                 </div>
-                <span className="text-xs text-[var(--color-highlight)] font-bold tabular-nums">{progress}%</span>
+                <span style={{ color: 'var(--color-highlight)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem' }}>{progress}%</span>
               </div>
             </div>
           )}
 
-          {/* Timer */}
-          <div className="flex flex-col items-center bg-[var(--color-primary)] border border-white/5 rounded-xl px-4 py-2 min-w-[90px]">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-gray-500">Time Left</span>
-            <span className={`text-xl font-black tabular-nums tracking-tight ${
-              remainingSeconds !== null && remainingSeconds < 300 ? 'text-[var(--color-danger)] animate-pulse' : 'text-[var(--color-primary)]'
-            }`}>
+          <div className="exam-room-timer">
+            <span className="exam-room-timer-label">Time Left</span>
+            <span className={remainingSeconds !== null && remainingSeconds < 300 ? 'exam-room-timer-value exam-room-timer-value--danger' : 'exam-room-timer-value'}>
               {remainingSeconds !== null ? formatCountdown(remainingSeconds) : '--:--'}
             </span>
           </div>
 
-          {/* Submit */}
-          <button
-            onClick={handleFinalSubmit}
-            disabled={isSubmitting}
-            className="px-5 py-2.5 bg-[var(--color-highlight)] hover:bg-[var(--color-highlight)] text-[var(--color-primary)] rounded-xl text-xs font-black tracking-[0.15em] uppercase transition-all shadow-[0_0_20px_rgba(var(--color-highlight-rgb),0.4)] hover:shadow-[0_0_30px_rgba(var(--color-highlight-rgb),0.6)] disabled:opacity-50 disabled:shadow-none"
-          >
+          <button type="button" onClick={handleFinalSubmit} disabled={isSubmitting} className="button button--highlight" style={{ whiteSpace: 'nowrap' }}>
             {isSubmitting ? 'Submitting...' : 'Submit Exam'}
           </button>
         </div>
       </header>
 
-      {/* ─── Body ──────────────────────────────────────────────────────────── */}
-      <main className="flex-1 flex overflow-hidden">
-
-        {/* ── LEFT PANEL ────────────────────────────────────────────────────── */}
-        <div
-          className="w-1/2 border-r border-white/5 bg-[var(--color-primary)] overflow-y-auto flex flex-col select-none custom-scrollbar"
-          onCopy={(e) => e.preventDefault()}
-          onCut={(e) => e.preventDefault()}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          {isPdf ? (
-            /* PDF Viewer */
-            exam.pdfPath ? (
-              <div className="flex-1 overflow-auto flex flex-col items-center py-8 px-4 gap-4">
-                {pdfError && (
-                  <div className="w-full max-w-lg bg-red-900/20 border border-red-500/40 rounded-lg p-4 text-red-200 text-sm">
-                    <p className="font-semibold mb-2">{pdfError.message}</p>
-                    {pdfError.details && (
-                      <p className="text-red-300/70 text-xs font-mono break-words">{pdfError.details}</p>
-                    )}
-                    <button
-                      onClick={() => window.location.reload()}
-                      className="mt-3 px-3 py-1 bg-red-600/30 hover:bg-red-600/50 rounded text-xs font-medium transition-colors"
-                    >
-                      Reload Page
-                    </button>
-                  </div>
-                )}
-                {isPdfLoading && !pdfBlob ? (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
-                    <div className="w-12 h-12 border-2 border-white/10 border-t-transparent rounded-full animate-spin mb-4" />
-                    <p>Loading PDF…</p>
-                  </div>
-                ) : pdfBlob ? (
-                  pdfBlobUrl ? (
-                    <div className="flex-1 w-full h-full">
-                      <object data={pdfBlobUrl} type="application/pdf" width="100%" height="100%">
-                        <div className="p-4 text-sm text-gray-400">
-                          Unable to display the PDF in this browser.{' '}
-                          <a href={pdfBlobUrl} target="_blank" rel="noreferrer" className="underline">
-                            Open PDF directly
-                          </a>.
-                        </div>
-                      </object>
+      <main className="exam-room-body">
+        <section className="exam-room-sidebar" onCopy={(e) => e.preventDefault()} onCut={(e) => e.preventDefault()} onContextMenu={(e) => e.preventDefault()}>
+          <div className="exam-room-sidebar-inner">
+            {isPdf ? (
+              exam.pdfPath ? (
+                <div className="page-panel" style={{ flex: 1, minHeight: 0, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                  {pdfError && (
+                    <div style={{ marginBottom: '1rem' }}>
+                      <p style={{ margin: 0, color: '#fda4af', fontWeight: 700 }}>{pdfError.message}</p>
+                      {pdfError.details && (
+                        <p style={{ margin: '0.75rem 0 0', color: '#f8c3c3', fontSize: '0.85rem', wordBreak: 'break-word' }}>{pdfError.details}</p>
+                      )}
+                      <button type="button" onClick={() => window.location.reload()} className="button button-secondary" style={{ width: '100%', marginTop: '1rem' }}>
+                        Reload Page
+                      </button>
                     </div>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
-                      <div className="w-12 h-12 border-2 border-white/10 border-t-transparent rounded-full animate-spin mb-4" />
-                      <p>Preparing PDF viewer…</p>
+                  )}
+                  {isPdfLoading && !pdfBlob ? (
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#94a3b8' }}>
+                      <div style={{ width: '3rem', height: '3rem', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'transparent', borderRadius: '999px', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
+                      <p>Loading PDF…</p>
                     </div>
-                  )
-                ) : (
-                  <div className="flex-1 flex flex-col items-center justify-center text-center text-gray-400">
-                    <p>No PDF loaded yet. Please refresh or contact your instructor.</p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center p-8 text-center">
-                <div>
-                  <div className="w-16 h-16 rounded-full bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/20 flex items-center justify-center mx-auto mb-4 text-2xl">!</div>
-                  <p className="text-gray-400 text-sm">No question paper uploaded for this exam.</p>
-                </div>
-              </div>
-            )
-          ) : (
-            /* Question Navigator (Builder) */
-            <div className="flex-1 flex flex-col">
-              <div className="px-5 py-4 border-b border-white/5 bg-[var(--color-primary)]/50">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-[var(--color-primary)]">Questions</h3>
-                <p className="text-[11px] text-gray-500 mt-0.5">{answeredCount} of {questions.length} answered</p>
-              </div>
-              <div className="overflow-y-auto flex-1 p-4 space-y-2 custom-scrollbar">
-                {questions.map((q, i) => {
-                  const answered = !!answers[q.id];
-                  const isActive = activeQuestionId === q.id;
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => {
-                        setActiveQuestionId(q.id);
-                        document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 ${
-                        isActive
-                          ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)]/50 text-white'
-                          : 'bg-[var(--color-primary)]/50 border-white/5 text-gray-400 hover:border-white/20 hover:text-gray-200'
-                      }`}
-                    >
-                      <span className={`w-7 h-7 rounded-full text-xs font-black flex items-center justify-center shrink-0 border ${
-                        answered
-                          ? 'bg-[var(--color-highlight)]/10 border-[var(--color-highlight)]/40 text-[var(--color-highlight)]'
-                          : isActive
-                          ? 'bg-[var(--color-primary)]/30 border-[var(--color-primary)]/50 text-white'
-                          : 'bg-white/5 border-white/10 text-gray-500'
-                      }`}>
-                        {answered ? '✓' : i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{q.prompt}</p>
-                        <p className="text-[10px] text-gray-500 mt-0.5">{q.marks} mark{q.marks !== 1 ? 's' : ''} · {q.type.replace('_', ' ')}</p>
+                  ) : pdfBlob ? (
+                    pdfBlobUrl ? (
+                      <div style={{ flex: 1, minHeight: 0 }}>
+                        <object data={pdfBlobUrl} type="application/pdf" width="100%" height="100%">
+                          <div style={{ padding: '1rem', color: '#94a3b8' }}>
+                            Unable to display the PDF in this browser. <a href={pdfBlobUrl} target="_blank" rel="noreferrer" style={{ color: '#7dd3fc', textDecoration: 'underline' }}>Open PDF directly</a>.
+                          </div>
+                        </object>
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* ── RIGHT PANEL — Answer Sheet ────────────────────────────────────── */}
-        <div
-          className="w-1/2 flex flex-col overflow-hidden bg-[var(--color-primary)]"
-          onPaste={(e) => e.preventDefault()}
-          onContextMenu={(e) => e.preventDefault()}
-        >
-          {isPdf ? (
-            /* Free-form TipTap editor for PDF exams */
-            <ExamEditor
-              content={answers.freeform ?? ''}
-              onChange={handleFreeformChange}
-            />
-          ) : (
-            /* Structured Q&A for Builder exams */
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
-              <div className="p-6 space-y-6 max-w-3xl mx-auto w-full">
-                <div className="pb-2 border-b border-white/5">
-                  <h2 className="text-lg font-bold text-white">Answer Sheet</h2>
-                  <p className="text-[11px] text-gray-500 mt-0.5 tracking-wide">
-                    {isPdf ? 'Write freely — reference question numbers from the paper on the left.' : 'Answer each question below. Your work saves automatically.'}
-                  </p>
+                    ) : (
+                      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#94a3b8' }}>
+                        <div style={{ width: '3rem', height: '3rem', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'transparent', borderRadius: '999px', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
+                        <p>Preparing PDF viewer…</p>
+                      </div>
+                    )
+                  ) : (
+                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#94a3b8' }}>
+                      <p style={{ margin: 0 }}>No PDF loaded yet. Please refresh or contact your instructor.</p>
+                    </div>
+                  )}
                 </div>
-                {questions.map((q, i) => (
-                  <QuestionAnswer
-                    key={q.id}
-                    question={q}
-                    index={i}
-                    value={answers[q.id] ?? ''}
-                    onChange={handleAnswerChange}
-                  />
-                ))}
-                {/* Bottom submit button */}
-                <div className="pt-4 pb-8 flex justify-end">
-                  <button
-                    onClick={handleFinalSubmit}
-                    disabled={isSubmitting}
-                    className="px-8 py-3 bg-[var(--color-highlight)] hover:bg-[var(--color-highlight)] text-[var(--color-primary)] rounded-xl text-xs font-black tracking-[0.15em] uppercase transition-all shadow-[0_0_20px_rgba(var(--color-highlight-rgb),0.3)] disabled:opacity-50"
-                  >
+              ) : (
+                <div className="exam-room-empty-state" style={{ minHeight: 0, padding: '2rem' }}>
+                  <div>
+                    <div style={{ width: '4rem', height: '4rem', borderRadius: '999px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#f87171', fontSize: '1.5rem' }}>
+                      !
+                    </div>
+                    <p style={{ margin: 0 }}>No question paper uploaded for this exam.</p>
+                  </div>
+                </div>
+              )
+            ) : (
+              <div style={{ display: 'flex', flex: 1, minHeight: 0, flexDirection: 'column' }}>
+                <div className="page-panel" style={{ margin: 0, borderRadius: 0, background: 'transparent', border: 'none', padding: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div>
+                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#7dd3fc' }}>Questions</p>
+                      <p style={{ margin: '0.5rem 0 0', color: '#94a3b8', fontSize: '0.75rem' }}>{answeredCount} of {questions.length} answered</p>
+                    </div>
+                  </div>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '1rem' }} className="custom-scrollbar">
+                  {questions.map((q, i) => {
+                    const answered = !!answers[q.id];
+                    const isActive = activeQuestionId === q.id;
+                    const buttonClasses = [
+                      'exam-room-question-button',
+                      isActive ? 'exam-room-question-button--active' : '',
+                      answered ? 'exam-room-question-button--answered' : '',
+                    ].filter(Boolean).join(' ');
+                    return (
+                      <button
+                        key={q.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveQuestionId(q.id);
+                          document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }}
+                        className={buttonClasses}
+                      >
+                        <span className="exam-room-question-badge">{answered ? '✓' : i + 1}</span>
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.prompt}</p>
+                          <p style={{ margin: '0.35rem 0 0', color: '#94a3b8', fontSize: '0.75rem' }}>{q.marks} mark{q.marks !== 1 ? 's' : ''} · {q.type.replace('_', ' ')}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="exam-room-content">
+          <div className="exam-room-content-inner">
+            {isPdf ? (
+              <ExamEditor content={answers.freeform ?? ''} onChange={handleFreeformChange} />
+            ) : (
+              <div className="exam-room-panel">
+                <div className="exam-room-panel-header">
+                  <h2>Answer Sheet</h2>
+                  <p>{isPdf ? 'Write freely — reference question numbers from the paper on the left.' : 'Answer each question below. Your work saves automatically.'}</p>
+                </div>
+                <div>
+                  {questions.map((q, i) => (
+                    <QuestionAnswer key={q.id} question={q} index={i} value={answers[q.id] ?? ''} onChange={handleAnswerChange} />
+                  ))}
+                </div>
+                <div className="exam-room-submit-row">
+                  <button type="button" onClick={handleFinalSubmit} disabled={isSubmitting} className="exam-room-submit-button">
                     {isSubmitting ? 'Submitting...' : 'Submit Exam'}
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </section>
       </main>
     </div>
   );
