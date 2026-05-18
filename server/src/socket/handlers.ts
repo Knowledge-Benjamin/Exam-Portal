@@ -1,4 +1,7 @@
 import { Server, Socket } from 'socket.io';
+import { desc, eq } from 'drizzle-orm';
+import { db } from '../db/db';
+import { examRoomEvents } from '../db/schema';
 import { verifyAccessToken, verifyExamToken } from '../utils/token';
 import { saveAnswers, forceSubmitAll, getSubmissionById } from '../services/submissionService';
 import { assertExamOwner, getExamById } from '../services/examService';
@@ -13,6 +16,7 @@ interface AuthenticatedSocket extends Socket {
 interface TimerHandle {
   interval: ReturnType<typeof setInterval>;
   forceSubmitTimeout: ReturnType<typeof setTimeout>;
+  forceSaveTimeout?: ReturnType<typeof setTimeout>;
 }
 
 interface StudentPresence {
@@ -45,6 +49,7 @@ export function cleanupExamRoomData(examId: string): void {
   if (timer) {
     clearInterval(timer.interval);
     clearTimeout(timer.forceSubmitTimeout);
+    if (timer.forceSaveTimeout) clearTimeout(timer.forceSaveTimeout);
     activeTimers.delete(examId);
   }
   examRoomPresence.delete(examId);
@@ -93,6 +98,53 @@ function pushRoomEvent(io: Server, examId: string, event: RoomEvent) {
   io.to(teacherRoomName(examId)).emit('exam:room:event', event);
   io.to(teacherRoomName(examId)).emit('exam:room:logs', logs);
   emitRoomState(io, examId);
+  void persistRoomEvent(examId, event).catch((err) => {
+    console.error('[socket] failed to persist room event:', err);
+  });
+}
+
+async function persistRoomEvent(examId: string, event: RoomEvent) {
+  await db.insert(examRoomEvents).values({
+    examId,
+    submissionId: event.submissionId,
+    studentName: event.studentName,
+    studentRegNumber: event.studentRegNumber,
+    type: event.type,
+    timestamp: new Date(event.timestamp),
+    message: event.message,
+  });
+}
+
+async function loadPersistedRoomLogs(examId: string) {
+  if (examRoomLogs.has(examId)) {
+    return getRoomLogs(examId);
+  }
+
+  const rows = await db
+    .select({
+      submissionId: examRoomEvents.submissionId,
+      studentName: examRoomEvents.studentName,
+      studentRegNumber: examRoomEvents.studentRegNumber,
+      type: examRoomEvents.type,
+      timestamp: examRoomEvents.timestamp,
+      message: examRoomEvents.message,
+    })
+    .from(examRoomEvents)
+    .where(eq(examRoomEvents.examId, examId))
+    .orderBy(desc(examRoomEvents.createdAt))
+    .limit(MAX_ROOM_LOGS);
+
+  const logs = rows.map((row) => ({
+    submissionId: row.submissionId,
+    studentName: row.studentName,
+    studentRegNumber: row.studentRegNumber,
+    type: row.type,
+    timestamp: row.timestamp.toISOString(),
+    message: row.message,
+  }));
+
+  examRoomLogs.set(examId, logs);
+  return logs;
 }
 
 export function registerSocketHandlers(io: Server): void {
@@ -186,7 +238,7 @@ export function registerSocketHandlers(io: Server): void {
     }
   });
 
-  io.on('connection', (socket: Socket) => {
+  io.on('connection', async (socket: Socket) => {
     const s = socket as AuthenticatedSocket;
     const room = `exam:${s.examId}`;
 
@@ -195,6 +247,11 @@ export function registerSocketHandlers(io: Server): void {
       const teacherRoom = teacherRoomName(s.examId);
       socket.join(teacherRoom);
       startExamTimer(io, s.examId);
+      try {
+        await loadPersistedRoomLogs(s.examId);
+      } catch (err) {
+        console.error('[socket] failed to load persisted room logs:', err);
+      }
       socket.emit('exam:room:logs', getRoomLogs(s.examId));
       emitRoomState(io, s.examId);
       return;
@@ -336,19 +393,28 @@ function startExamTimer(io: Server, examId: string): void {
       }, 5000);
 
       const msUntilEnd = Math.max(0, endTime - Date.now());
+      const forceSaveTimeout = setTimeout(() => {
+        io.to(room).emit('exam:force-save', {
+          message: 'Time is up. Saving your final answers before the exam is submitted.',
+        });
+        io.to(teacherRoomName(examId)).emit('exam:force-save', {
+          message: 'Exam time ended. Students are saving answers before forced submission.',
+        });
+      }, msUntilEnd);
+
       const forceSubmitTimeout = setTimeout(async () => {
         io.to(room).emit('exam:force-submit', {
           message: 'Time is up. Your answers have been submitted automatically.',
         });
         io.to(teacherRoomName(examId)).emit('exam:force-submit', {
-          message: 'Time is up. Your answers have been submitted automatically.',
+          message: 'Time is up. Student submissions have been forced closed.',
         });
         await forceSubmitAll(examId).catch(() => {});
         clearInterval(interval);
         activeTimers.delete(examId);
-      }, msUntilEnd);
+      }, msUntilEnd + 2500);
 
-      activeTimers.set(examId, { interval, forceSubmitTimeout });
+      activeTimers.set(examId, { interval, forceSubmitTimeout, forceSaveTimeout });
     })
     .catch(() => {});
 }

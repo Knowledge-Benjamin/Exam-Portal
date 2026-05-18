@@ -74,6 +74,13 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       setLastSaved(payload.savedAt);
     });
 
+    s.on('exam:force-save', (_payload: { message: string }) => {
+      const answerState = answersRef.current;
+      if (s.connected) {
+        s.emit('exam:autosave', { answers: answerState });
+      }
+    });
+
     s.on('exam:force-submit', (payload: { message: string }) => {
       setForceSubmitMsg(payload.message);
     });

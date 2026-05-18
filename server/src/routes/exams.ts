@@ -17,6 +17,7 @@ import {
   setPdfPath,
   getExamById,
 } from '../services/examService';
+import { getRoomEvents, countRoomEvents } from '../services/roomEventService';
 import { getUserProfile } from '../services/authService';
 import { uploadPdfToDrive, getPdfStreamFromDrive, DriveCredentials, getDriveCredentialsFromUser } from '../services/driveService';
 import { env } from '../config/env';
@@ -79,6 +80,38 @@ router.get(
     try {
       const exam = await assertExamOwner(req.params.id, req.user!.sub);
       res.json({ exam });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// GET /api/exams/:id/room-logs?page=1&per=50
+router.get(
+  '/:id/room-logs',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      const examId = req.params.id;
+      // authorize: teacher must own exam; admin allowed
+      if (req.user!.role === 'teacher') {
+        await assertExamOwner(examId, req.user!.sub);
+      } else {
+        const exam = await getExamById(examId);
+        if (!exam) throw new Error('Exam not found');
+      }
+
+      const page = Math.max(1, parseInt(String(req.query.page || '1'), 10));
+      const per = Math.min(200, Math.max(1, parseInt(String(req.query.per || '50'), 10)));
+      const offset = (page - 1) * per;
+
+      const [events, total] = await Promise.all([
+        getRoomEvents(examId, per, offset),
+        countRoomEvents(examId),
+      ]);
+
+      res.json({ events, paging: { page, per, total } });
     } catch (err) {
       next(err);
     }

@@ -88,6 +88,28 @@ export const submissions = pgTable('submissions', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+export const examRoomEventTypeEnum = pgEnum('exam_room_event_type', [
+  'joined',
+  'left',
+  'reconnected',
+]);
+
+export const examRoomEvents = pgTable('exam_room_events', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  examId: uuid('exam_id')
+    .notNull()
+    .references(() => exams.id, { onDelete: 'cascade' }),
+  submissionId: uuid('submission_id')
+    .notNull()
+    .references(() => submissions.id, { onDelete: 'cascade' }),
+  studentName: text('student_name').notNull(),
+  studentRegNumber: text('student_reg_number').notNull(),
+  type: examRoomEventTypeEnum('type').notNull(),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
+  message: text('message').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
 export const refreshTokens = pgTable('refresh_tokens', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id')
@@ -111,6 +133,7 @@ export const examsRelations = relations(exams, ({ one, many }) => ({
   teacher: one(users, { fields: [exams.teacherId], references: [users.id] }),
   questions: many(questions),
   submissions: many(submissions),
+  roomEvents: many(examRoomEvents),
 }));
 
 export const questionsRelations = relations(questions, ({ one }) => ({
@@ -121,6 +144,7 @@ export const questionsRelations = relations(questions, ({ one }) => ({
 
 export const submissionsRelations = relations(submissions, ({ one }) => ({
   exam: one(exams, { fields: [submissions.examId], references: [exams.id] }),
+  roomEvents: many(examRoomEvents),
 }));
 
 export const refreshTokensRelations = relations(refreshTokens, ({ one }) => ({

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import { useAuthStore } from '../../store/authStore';
 import type { ExamWithGateUrl } from '../../types';
@@ -139,7 +139,9 @@ export function DashboardHome() {
             {exams.map((exam) => (
               <div key={exam.id} className="group relative overflow-hidden dashboard-card bg-[#170C79] p-6 transition-all hover:-translate-y-0.5 hover:shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
                 <div className="flex items-start justify-between mb-6 gap-4">
-                  <h3 className="text-base font-semibold text-white tracking-wide truncate">{exam.title}</h3>
+                        <h3 className="text-base font-semibold text-white tracking-wide truncate">
+                          <Link to={`/dashboard/exams/${exam.id}`} className="hover:underline">{exam.title}</Link>
+                        </h3>
                   <span className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] ${
                     exam.status === 'active' ? 'bg-cyan-400/10 text-cyan-200 border border-cyan-400/15' :
                     exam.status === 'draft' ? 'bg-slate-700/70 text-slate-300 border border-slate-600/60' :
@@ -164,13 +166,41 @@ export function DashboardHome() {
                   </div>
                 </div>
 
-                <div className="mt-8 pt-4">
+                <div className="mt-6 pt-4 flex gap-3">
                   <Link
                     to={`/dashboard/exams/${exam.id}`}
-                    className="block w-full rounded-2xl bg-[#0c3b6c] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100 transition hover:bg-[#0d4a8b]"
+                    className="flex-1 rounded-2xl bg-[#0c3b6c] px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100 text-center transition hover:bg-[#0d4a8b]"
                   >
                     Manage
                   </Link>
+
+                  <Link
+                    to={`/dashboard/exams/${exam.id}/builder`}
+                    className="rounded-2xl bg-white/5 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-cyan-100 text-center transition hover:bg-white/10"
+                  >
+                    Edit
+                  </Link>
+
+                  <button
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      if (exam.status === 'closed') {
+                        alert('Closed exams cannot be deleted');
+                        return;
+                      }
+                      const ok = window.confirm(`Delete exam "${exam.title}"? This cannot be undone.`);
+                      if (!ok) return;
+                      try {
+                        await api.delete(`/exams/${exam.id}`);
+                        setExams((prev) => prev.filter((x) => x.id !== exam.id));
+                      } catch (err: any) {
+                        alert(err?.error || 'Failed to delete exam');
+                      }
+                    }}
+                    className="rounded-2xl bg-rose-600/80 px-4 py-3 text-sm font-semibold uppercase tracking-[0.2em] text-white text-center transition hover:bg-rose-700"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
