@@ -1802,16 +1802,21 @@ select.form-input:focus {
 }
 
 .exam-room-sidebar {
+  display: flex;
+  flex-direction: column;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--color-primary);
   overflow: auto;
   min-height: 0;
+  height: 100%;
 }
 
 .exam-room-sidebar-inner {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  flex: 1;
+  height: 100%;
 }
 
 .exam-room-list-wrapper {
@@ -1868,11 +1873,16 @@ select.form-input:focus {
 }
 
 .exam-room-content {
+  display: flex;
+  flex-direction: column;
   overflow: auto;
   min-height: 0;
+  height: 100%;
 }
 
 .exam-room-content-inner {
+  flex: 1;
+  min-height: 0;
   padding: 1.5rem;
   max-width: 72rem;
   margin: 0 auto;
