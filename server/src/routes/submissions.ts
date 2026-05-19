@@ -3,15 +3,14 @@ import { requireAuth, requireRole, requireExamAuth } from '../middleware/auth';
 import { sebGuard } from '../middleware/sebGuard';
 import { saveAnswersSchema, markSubmissionSchema } from '../utils/validators';
 import { assertExamOwner } from '../services/examService';
-import {
-  getSubmissionById,
-  saveAnswers,
-  finalSubmit,
-  getAllSubmissions,
-  markSubmission,
-} from '../services/submissionService';
+import { getExamById } from '../services/examService';
+import { getUserProfile } from '../services/authService';
+import { getSubmissionById, saveAnswers, finalSubmit, getAllSubmissions, markSubmission } from '../services/submissionService';
+import { getDriveCredentialsFromUser, getPdfStreamFromDrive } from '../services/driveService';
+import { downloadLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
+
 
 // GET /api/submissions/my/:examId  — student (SEB required)
 router.get(
@@ -93,6 +92,71 @@ router.patch(
       res.json({ submission: sub });
     } catch (err) {
       next(err);
+    }
+  },
+);
+
+
+// GET /api/submissions/file/:submissionId — teacher: download student-uploaded file
+router.get(
+  '/file/:submissionId',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  downloadLimiter,
+  async (req: Request<{ submissionId: string }>, res: Response, next: NextFunction) => {
+    try {
+      const submission = await getSubmissionById(req.params.submissionId);
+      if (!submission) {
+        res.status(404).json({ error: 'Submission not found' });
+        return;
+      }
+
+      await assertExamOwner(submission.examId, req.user!.sub);
+      if (!submission.submissionFileId) {
+        res.status(404).json({ error: 'No uploaded file attached to this submission' });
+        return;
+      }
+
+      const teacher = await getUserProfile(req.user!.sub);
+      const creds = getDriveCredentialsFromUser(teacher);
+      if (!teacher || !creds) {
+        res.status(400).json({ error: 'Google Drive is not configured for downloads' });
+        return;
+      }
+
+      console.info('[submission file download] request', {
+        submissionId: req.params.submissionId,
+        examId: submission.examId,
+        teacherId: req.user!.sub,
+      });
+
+      const stream = await getPdfStreamFromDrive(submission.submissionFileId, creds);
+
+      const rawName = submission.submissionFileName ?? 'submission';
+      const safeName = String(rawName).replace(/[\r\n"]/g, '_').slice(0, 255);
+
+      if (submission.submissionFileSize != null) {
+        res.setHeader('Content-Length', String(submission.submissionFileSize));
+      }
+      res.setHeader('Content-Type', submission.submissionFileType ?? 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+
+      stream.on('error', (err) => {
+        console.error('[submission file download] stream error', {
+          submissionId: req.params.submissionId,
+          fileId: submission.submissionFileId,
+          error: err?.message,
+        });
+        next(err);
+      });
+
+      stream.pipe(res);
+    } catch (err: any) {
+      if (err.status && typeof err.status === 'number') {
+        res.status(err.status).json({ error: err.message || 'Download failed' });
+      } else {
+        next(err);
+      }
     }
   },
 );

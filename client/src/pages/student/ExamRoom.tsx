@@ -33,6 +33,10 @@ export function ExamRoom() {
   const [isPdfLoading, setIsPdfLoading] = useState(false);
   const [pdfError, setPdfError] = useState<{ message: string; details?: string } | null>(null);
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
+  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
 
@@ -138,8 +142,72 @@ export function ExamRoom() {
     setAnswers((prev) => ({ ...prev, freeform: html }));
   }, []);
 
+  const blockedExtensions = new Set([
+    '.exe', '.dll', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js', '.jsx', '.ts', '.tsx', '.py', '.rb', '.pl', '.jar', '.apk', '.com', '.scr',
+  ]);
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setUploadSuccess(null);
+    setFileUploadError(null);
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setSelectedFile(null);
+      return;
+    }
+
+    const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
+    if (blockedExtensions.has(extension)) {
+      setSelectedFile(null);
+      setFileUploadError('This file type is not allowed for security reasons.');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setSelectedFile(null);
+      setFileUploadError('File must be smaller than 10MB.');
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleFileUpload = async () => {
+    if (!selectedFile) {
+      setFileUploadError('Please choose a file to upload.');
+      return;
+    }
+
+    setIsUploadingFile(true);
+    setFileUploadError(null);
+    setUploadSuccess(null);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await axios.post('/seb/submission/upload', formData, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      setUploadSuccess(`Uploaded ${selectedFile.name}`);
+      setSelectedFile(null);
+      setSubmission(response.data.submission);
+    } catch (err: any) {
+      setFileUploadError(err.response?.data?.error ?? 'Failed to upload file.');
+    } finally {
+      setIsUploadingFile(false);
+    }
+  };
+
   const handleFinalSubmit = async () => {
     if (submission?.isFinal) return;
+
+    const uploadBlocked = exam.allowFileUpload && fileUploadError && !submission?.submissionFileName;
+    if (uploadBlocked) {
+      alert('A file upload error occurred. Please resolve the upload before submitting your exam.');
+      return;
+    }
+
     mute(3000);
     if (!window.confirm('Submit your exam? You will not be able to make changes after this.')) return;
     setIsSubmitting(true);
@@ -290,8 +358,8 @@ export function ExamRoom() {
                     </div>
                   ) : pdfBlob ? (
                     pdfBlobUrl ? (
-                      <div style={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
-                        <object data={pdfBlobUrl} type="application/pdf" style={{ width: '100%', minHeight: '100%', border: 'none' }}>
+                      <div style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <object data={pdfBlobUrl} type="application/pdf" style={{ width: '100%', height: '100%', display: 'block', border: 'none' }}>
                           <div style={{ padding: '1rem', color: '#94a3b8' }}>
                             Unable to display the PDF in this browser. <a href={pdfBlobUrl} target="_blank" rel="noreferrer" style={{ color: '#7dd3fc', textDecoration: 'underline' }}>Open PDF directly</a>.
                           </div>
@@ -359,6 +427,50 @@ export function ExamRoom() {
                 </div>
               </div>
             )}
+
+            {exam.allowFileUpload && (
+              <div className="page-panel" style={{ marginTop: '1rem', padding: '1rem' }}>
+                <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem', fontWeight: 700 }}>Upload Supporting File</h3>
+                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.4 }}>
+                  Upload a file for your instructor to review. Executable and script files are blocked.
+                </p>
+                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <input
+                    type="file"
+                    accept=".pdf,.txt,.html,.htm,.sql,.csv,.doc,.docx,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.zip"
+                    onChange={handleFileSelect}
+                    disabled={!examActive || isUploadingFile}
+                    className="form-input"
+                  />
+                  {selectedFile && (
+                    <p style={{ margin: 0, color: '#d1fae5', fontSize: '0.9rem' }}>
+                      Selected file: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
+                    </p>
+                  )}
+                  {fileUploadError && (
+                    <p style={{ margin: 0, color: '#fecaca', fontSize: '0.9rem' }}>{fileUploadError}</p>
+                  )}
+                  {uploadSuccess && (
+                    <p style={{ margin: 0, color: '#bbf7d0', fontSize: '0.9rem' }}>{uploadSuccess}</p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={handleFileUpload}
+                    disabled={!examActive || isUploadingFile || !selectedFile}
+                    className="button button--secondary"
+                  >
+                    {isUploadingFile ? 'Uploading...' : 'Upload File'}
+                  </button>
+                  {submission?.submissionFileName && (
+                    <div style={{ background: 'rgba(15, 23, 42, 0.9)', borderRadius: '0.75rem', padding: '0.75rem', border: '1px solid rgba(148, 163, 184, 0.15)' }}>
+                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem' }}>
+                        Uploaded file: <strong>{submission.submissionFileName}</strong>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -378,10 +490,20 @@ export function ExamRoom() {
                   ))}
                 </div>
                 <div className="exam-room-submit-row">
-                  <button type="button" onClick={handleFinalSubmit} disabled={isSubmitting} className="exam-room-submit-button">
+                  <button
+                    type="button"
+                    onClick={handleFinalSubmit}
+                    disabled={isSubmitting || (exam.allowFileUpload && fileUploadError && !submission?.submissionFileName)}
+                    className="exam-room-submit-button"
+                  >
                     {isSubmitting ? 'Submitting...' : 'Submit Exam'}
                   </button>
                 </div>
+                {exam.allowFileUpload && fileUploadError && !submission?.submissionFileName && (
+                  <p style={{ marginTop: '0.75rem', color: '#fecaca', fontSize: '0.9rem' }}>
+                    Your file upload failed. Fix the upload or remove the file before submitting.
+                  </p>
+                )}
               </div>
             )}
           </div>

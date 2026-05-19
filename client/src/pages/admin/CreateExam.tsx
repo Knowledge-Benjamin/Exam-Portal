@@ -16,6 +16,7 @@ export function CreateExam() {
     startTime: toDatetimeLocal(new Date(Date.now() + 86400000).toISOString()),
     durationMinutes: 60,
     windowBufferMinutes: 5,
+    allowFileUpload: false,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,6 +161,19 @@ export function CreateExam() {
                 className="form-input"
               />
             </div>
+          </div>
+
+          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <input
+              id="allowFileUpload"
+              type="checkbox"
+              checked={formData.allowFileUpload}
+              onChange={(e) => setFormData({ ...formData, allowFileUpload: e.target.checked })}
+              style={{ width: 'auto', cursor: 'pointer' }}
+            />
+            <label className="form-label" htmlFor="allowFileUpload" style={{ margin: 0, cursor: 'pointer' }}>
+              Allow students to submit file attachments
+            </label>
           </div>
 
           <div className="form-actions">

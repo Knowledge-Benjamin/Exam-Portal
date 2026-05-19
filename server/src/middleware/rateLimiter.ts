@@ -22,6 +22,15 @@ export const apiLimiter = rateLimit({
   handler: json429 as any,
 });
 
+/** Download limiter to protect the file download endpoint */
+export const downloadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: json429 as any,
+});
+
 /** SEB gate limiter — tighter to prevent token bruteforce */
 export const sebLimiter = rateLimit({
   windowMs: 60 * 1000,

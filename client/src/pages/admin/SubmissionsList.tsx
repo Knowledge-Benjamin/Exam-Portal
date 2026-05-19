@@ -88,6 +88,15 @@ export function SubmissionsList() {
     }
   };
 
+  const handleDownloadFile = (sub: Submission) => {
+    const link = document.createElement('a');
+    link.href = `/api/submissions/file/${sub.id}`;
+    link.setAttribute('download', `${sub.studentName}_${sub.submissionFileName ?? 'submission'}`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleDownloadPdf = async (sub: Submission) => {
     // Lazy-load html2pdf to avoid SSR issues
     const html2pdf = (await import('html2pdf.js')).default;
@@ -222,6 +231,18 @@ export function SubmissionsList() {
                       <p className="submission-list-item-title">{sub.studentName} ({sub.studentRegNumber})</p>
                       <div className="panel-actions">
                         {getStatusBadge(sub)}
+                        {sub.submissionFileId && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); handleDownloadFile(sub); }}
+                            title="Download uploaded file"
+                            className="button button--outline button--sm"
+                            style={{ marginRight: '0.5rem' }}
+                          >
+                            <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            File
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); handleDownloadPdf(sub); }}
@@ -260,6 +281,16 @@ export function SubmissionsList() {
                   <p className="panel-subtitle">{selectedSubmission.studentRegNumber}</p>
                 </div>
                 <div className="panel-actions">
+                  {selectedSubmission.submissionFileId && (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadFile(selectedSubmission)}
+                      className="button button--outline button--sm"
+                    >
+                      <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                      Download File
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDownloadPdf(selectedSubmission)}

@@ -28,6 +28,7 @@ export interface Exam {
   endTime: string;
   durationMinutes: number;
   windowBufferMinutes: number;
+  allowFileUpload: boolean;
   sebConfigKey?: string | null;
   sebExamToken?: string;
   status: ExamStatus;
@@ -59,6 +60,10 @@ export interface Submission {
   submittedAt?: string;
   marksAwarded?: number;
   teacherNote?: string;
+  submissionFileId?: string;
+  submissionFileName?: string;
+  submissionFileType?: string;
+  submissionFileSize?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -76,6 +81,7 @@ export interface CreateExamForm {
   startTime: string;
   durationMinutes: number;
   windowBufferMinutes: number;
+  allowFileUpload: boolean;
 }
 
 // Question builder form state

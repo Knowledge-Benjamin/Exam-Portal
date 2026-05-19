@@ -79,6 +79,33 @@ export async function saveAnswers(
   return updated;
 }
 
+export async function saveSubmissionFile(
+  submissionId: string,
+  fileId: string,
+  fileName: string,
+  fileType: string,
+  fileSize: number,
+) {
+  const existing = await getSubmissionById(submissionId);
+
+  if (!existing) throw new AppError(404, 'Submission record not found');
+  if (existing.isFinal) throw new AppError(400, 'Exam already submitted');
+
+  const [updated] = await db
+    .update(submissions)
+    .set({
+      submissionFileId: fileId,
+      submissionFileName: fileName,
+      submissionFileType: fileType,
+      submissionFileSize: fileSize,
+      updatedAt: new Date(),
+    })
+    .where(eq(submissions.id, existing.id))
+    .returning();
+
+  return updated;
+}
+
 export async function finalSubmit(
   submissionId: string,
   answers: Record<string, string>,
@@ -123,6 +150,10 @@ export async function getAllSubmissions(examId: string) {
       submittedAt: submissions.submittedAt,
       marksAwarded: submissions.marksAwarded,
       teacherNote: submissions.teacherNote,
+      submissionFileId: submissions.submissionFileId,
+      submissionFileName: submissions.submissionFileName,
+      submissionFileType: submissions.submissionFileType,
+      submissionFileSize: submissions.submissionFileSize,
       createdAt: submissions.createdAt,
       updatedAt: submissions.updatedAt,
     })

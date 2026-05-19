@@ -15,6 +15,8 @@ export function ExamDetail() {
   const [isRepublishing, setIsRepublishing] = useState(false);
   const [editingSebKey, setEditingSebKey] = useState(false);
   const [sebKeyInput, setSebKeyInput] = useState('');
+  const [editingFileUpload, setEditingFileUpload] = useState(false);
+  const [fileUploadInput, setFileUploadInput] = useState(false);
   const [stats, setStats] = useState<{
     totalJoined: number;
     totalSubmitted: number;
@@ -34,6 +36,7 @@ export function ExamDetail() {
       const examRes = await api.get(`/exams/${id}`);
       setExam(examRes.data.exam);
       setSebKeyInput(examRes.data.exam.sebConfigKey ?? '');
+      setFileUploadInput(examRes.data.exam.allowFileUpload ?? false);
     } catch (err: any) {
       setError(err.error || 'Failed to load exam details');
     } finally {
@@ -263,6 +266,65 @@ export function ExamDetail() {
         )}
       </div>
 
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <h3 className="panel-heading">File Submissions</h3>
+            <p className="panel-subtitle">Allow students to submit file attachments with their exam submission.</p>
+          </div>
+        </div>
+
+        {!editingFileUpload ? (
+          <div className="form-group">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <p className="panel-subtitle">Students can upload files: <strong>{exam.allowFileUpload ? 'Yes' : 'No'}</strong></p>
+              </div>
+              <button type="button" className="button button--outline" onClick={() => {
+                setEditingFileUpload(true);
+                setFileUploadInput(exam.allowFileUpload ?? false);
+              }}>
+                Edit
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="form-stack">
+            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '1rem' }}>
+              <input
+                id="allowFileUpload"
+                type="checkbox"
+                checked={fileUploadInput}
+                onChange={(e) => setFileUploadInput(e.target.checked)}
+                style={{ width: 'auto', cursor: 'pointer' }}
+              />
+              <label className="form-label" htmlFor="allowFileUpload" style={{ margin: 0, cursor: 'pointer' }}>
+                Allow file submissions
+              </label>
+            </div>
+            <div className="form-actions" style={{ padding: '0 1rem' }}>
+              <button type="button" className="button button--secondary" onClick={() => {
+                setEditingFileUpload(false);
+              }}>
+                Cancel
+              </button>
+              <button type="button" className="button button--highlight" onClick={async () => {
+                try {
+                  await api.patch(`/exams/${id}`, { allowFileUpload: fileUploadInput });
+                  setExam((prev) => (prev ? { ...prev, allowFileUpload: fileUploadInput } : prev));
+                  setEditingFileUpload(false);
+                  alert('File submission setting updated successfully');
+                } catch (err: any) {
+                  alert(err.error || 'Failed to update file submission setting');
+                }
+              }}>
+                Save
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="settings-grid">
         <div>
           <div className="card">
@@ -285,6 +347,10 @@ export function ExamDetail() {
               <div>
                 <p className="meta-text">WINDOW BUFFER</p>
                 <p>±{exam.windowBufferMinutes} minutes</p>
+              </div>
+              <div>
+                <p className="meta-text">FILE SUBMISSIONS</p>
+                <p>{exam.allowFileUpload ? 'Allowed' : 'Not Allowed'}</p>
               </div>
             </div>
           </div>

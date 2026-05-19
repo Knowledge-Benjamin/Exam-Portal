@@ -36,6 +36,7 @@ export async function createExam(
     durationMinutes: number;
     windowBufferMinutes: number;
     sebConfigKey?: string;
+    allowFileUpload?: boolean;
   },
 ) {
   const start = new Date(data.startTime);
@@ -52,6 +53,7 @@ export async function createExam(
       endTime: end,
       durationMinutes: data.durationMinutes,
       windowBufferMinutes: data.windowBufferMinutes,
+      allowFileUpload: data.allowFileUpload ?? false,
       sebConfigKey: data.sebConfigKey,
       status: 'draft',
     })
@@ -70,6 +72,7 @@ export async function updateExam(
     durationMinutes: number;
     windowBufferMinutes: number;
     sebConfigKey: string;
+    allowFileUpload: boolean;
   }>,
 ) {
   const exam = await assertExamOwner(examId, teacherId);
@@ -83,6 +86,7 @@ export async function updateExam(
   if (data.durationMinutes) updates.durationMinutes = data.durationMinutes;
   if (data.windowBufferMinutes !== undefined) updates.windowBufferMinutes = data.windowBufferMinutes;
   if (data.sebConfigKey !== undefined) updates.sebConfigKey = data.sebConfigKey;
+  if (data.allowFileUpload !== undefined) updates.allowFileUpload = data.allowFileUpload;
   if (data.startTime) {
     const start = new Date(data.startTime);
     const duration = data.durationMinutes ?? exam.durationMinutes;

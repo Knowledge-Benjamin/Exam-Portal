@@ -49,6 +49,7 @@ export const createExamSchema = z.object({
   startTime: z.string().datetime(),
   durationMinutes: z.number().int().min(5).max(480),
   windowBufferMinutes: z.number().int().min(0).max(30).default(5),
+  allowFileUpload: z.boolean().default(false),
 });
 
 // Update schema: allow all create fields to be optional for edits,

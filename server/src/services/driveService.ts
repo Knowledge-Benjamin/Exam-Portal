@@ -223,6 +223,15 @@ export async function getPdfStreamFromDrive(fileId: string, creds: DriveCredenti
       statusCode: err?.response?.status,
       responseData: err?.response?.data,
     });
+
+    if (err?.response?.status === 401 || err?.response?.status === 403) {
+      throw new AppError(403, 'Google Drive credentials are invalid or access is denied.');
+    }
+
+    if (err?.response?.status === 404) {
+      throw new AppError(404, 'Google Drive file not found.');
+    }
+
     throw new AppError(404, 'Failed to fetch PDF from Google Drive.');
   }
 }
