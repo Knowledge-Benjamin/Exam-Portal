@@ -202,7 +202,7 @@ export function ExamRoom() {
   const handleFinalSubmit = async () => {
     if (submission?.isFinal) return;
 
-    const uploadBlocked = exam.allowFileUpload && fileUploadError && !submission?.submissionFileName;
+    const uploadBlocked = Boolean(exam?.allowFileUpload && fileUploadError && !submission?.submissionFileName);
     if (uploadBlocked) {
       alert('A file upload error occurred. Please resolve the upload before submitting your exam.');
       return;
@@ -493,7 +493,7 @@ export function ExamRoom() {
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    disabled={isSubmitting || (exam.allowFileUpload && fileUploadError && !submission?.submissionFileName)}
+                    disabled={isSubmitting || Boolean(exam?.allowFileUpload && fileUploadError && !submission?.submissionFileName)}
                     className="exam-room-submit-button"
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Exam'}
