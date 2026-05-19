@@ -90,16 +90,11 @@ export function SubmissionsList() {
 
   const handleDownloadFile = async (sub: Submission) => {
     try {
-      const response = await fetch(`/api/submissions/file/${sub.id}`, {
-        credentials: 'same-origin',
+      const response = await api.get(`/submissions/file/${sub.id}`, {
+        responseType: 'blob',
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.error || `Download failed with status ${response.status}`);
-      }
-
-      const blob = await response.blob();
+      const blob = response.data;
       const url = URL.createObjectURL(blob);
       const fileName = `${sub.studentName}_${sub.submissionFileName ?? 'submission'}`;
       const link = document.createElement('a');
@@ -110,7 +105,8 @@ export function SubmissionsList() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      alert(err?.message || 'Unable to download file. Please try again.');
+      const message = err?.error || err?.message || 'Unable to download file. Please try again.';
+      alert(message);
     }
   };
 
