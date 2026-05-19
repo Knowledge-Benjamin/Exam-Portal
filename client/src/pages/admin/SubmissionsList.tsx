@@ -88,13 +88,30 @@ export function SubmissionsList() {
     }
   };
 
-  const handleDownloadFile = (sub: Submission) => {
-    const link = document.createElement('a');
-    link.href = `/api/submissions/file/${sub.id}`;
-    link.setAttribute('download', `${sub.studentName}_${sub.submissionFileName ?? 'submission'}`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownloadFile = async (sub: Submission) => {
+    try {
+      const response = await fetch(`/api/submissions/file/${sub.id}`, {
+        credentials: 'same-origin',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `Download failed with status ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const fileName = `${sub.studentName}_${sub.submissionFileName ?? 'submission'}`;
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert(err?.message || 'Unable to download file. Please try again.');
+    }
   };
 
   const handleDownloadPdf = async (sub: Submission) => {

@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { pipeline } from 'stream/promises';
 import { requireAuth, requireRole, requireExamAuth } from '../middleware/auth';
 import { sebGuard } from '../middleware/sebGuard';
 import { saveAnswersSchema, markSubmissionSchema } from '../utils/validators';
@@ -139,7 +140,8 @@ router.get(
         res.setHeader('Content-Length', String(submission.submissionFileSize));
       }
       res.setHeader('Content-Type', submission.submissionFileType ?? 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}"; filename*=UTF-8''${encodeURIComponent(safeName)}`);
+      res.setHeader('Cache-Control', 'no-cache');
 
       stream.on('error', (err) => {
         console.error('[submission file download] stream error', {
@@ -147,11 +149,19 @@ router.get(
           fileId: submission.submissionFileId,
           error: err?.message,
         });
-        next(err);
       });
 
-      stream.pipe(res);
+      req.on('close', () => {
+        stream.destroy();
+      });
+
+      await pipeline(stream, res);
     } catch (err: any) {
+      if (res.headersSent) {
+        res.destroy(err);
+        return;
+      }
+
       if (err.status && typeof err.status === 'number') {
         res.status(err.status).json({ error: err.message || 'Download failed' });
       } else {
