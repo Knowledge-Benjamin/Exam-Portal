@@ -5,7 +5,7 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY}/client:latest
+    image: ghcr.io/knowledge-benjamin/exam-portal/client:latest
     container_name: exam-portal-client
     ports:
       - "8080:80"
@@ -17,7 +17,7 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    image: ghcr.io/${GITHUB_REPOSITORY}/server:latest
+    image: ghcr.io/knowledge-benjamin/exam-portal/server:latest
     container_name: exam-portal-server
     ports:
       - "5000:5000"
