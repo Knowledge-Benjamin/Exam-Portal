@@ -7,6 +7,7 @@ import {
 } from '../utils/validators';
 import {
   listExamsByTeacher,
+  listAllExams,
   assertExamOwner,
   createExam,
   updateExam,
@@ -48,7 +49,9 @@ router.get(
   requireRole('teacher', 'admin'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const examList = await listExamsByTeacher(req.user!.sub);
+      const examList = req.user!.role === 'admin' 
+        ? await listAllExams() 
+        : await listExamsByTeacher(req.user!.sub);
       res.json({ exams: examList });
     } catch (err) {
       next(err);
@@ -79,7 +82,7 @@ router.get(
   requireRole('teacher', 'admin'),
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
-      const exam = await assertExamOwner(req.params.id, req.user!.sub);
+      const exam = await assertExamOwner(req.params.id, req.user!.sub, req.user!.role);
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       res.json({
         exam: {
@@ -102,8 +105,8 @@ router.get(
     try {
       const examId = req.params.id;
       // authorize: teacher must own exam; admin allowed
-      if (req.user!.role === 'teacher') {
-        await assertExamOwner(examId, req.user!.sub);
+      if (req.user!.role !== 'admin') {
+        await assertExamOwner(examId, req.user!.sub, req.user!.role);
       } else {
         const exam = await getExamById(examId);
         if (!exam) throw new Error('Exam not found');
@@ -134,8 +137,8 @@ router.get(
     try {
       const examId = req.params.id;
       // authorize: teacher must own exam; admin allowed
-      if (req.user!.role === 'teacher') {
-        await assertExamOwner(examId, req.user!.sub);
+      if (req.user!.role !== 'admin') {
+        await assertExamOwner(examId, req.user!.sub, req.user!.role);
       } else {
         const exam = await getExamById(examId);
         if (!exam) throw new Error('Exam not found');
@@ -157,7 +160,7 @@ router.patch(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const data = updateExamSchema.parse(req.body);
-      const exam = await updateExam(req.params.id, req.user!.sub, data);
+      const exam = await updateExam(req.params.id, req.user!.sub, data, req.user!.role);
       res.json({ exam });
     } catch (err) {
       next(err);
@@ -172,7 +175,7 @@ router.delete(
   requireRole('teacher', 'admin'),
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
-      await deleteExam(req.params.id, req.user!.sub);
+      await deleteExam(req.params.id, req.user!.sub, req.user!.role);
       res.json({ ok: true });
     } catch (err) {
       next(err);
@@ -187,7 +190,7 @@ router.post(
   requireRole('teacher', 'admin'),
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
-      const exam = await publishExam(req.params.id, req.user!.sub);
+      const exam = await publishExam(req.params.id, req.user!.sub, req.user!.role);
       const baseUrl = `${req.protocol}://${req.get('host')}`;
       res.json({
         exam,
@@ -206,7 +209,7 @@ router.post(
   requireRole('teacher', 'admin'),
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
-      const exam = await closeExam(req.params.id, req.user!.sub);
+      const exam = await closeExam(req.params.id, req.user!.sub, req.user!.role);
       const { cleanupExamRoomData } = await import('../socket/handlers');
       cleanupExamRoomData(req.params.id);
       res.json({ exam });
@@ -223,7 +226,7 @@ router.post(
   requireRole('teacher', 'admin'),
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
-      const exam = await republishExam(req.params.id, req.user!.sub);
+      const exam = await republishExam(req.params.id, req.user!.sub, req.user!.role);
       res.json({ exam });
     } catch (err) {
       next(err);
@@ -250,18 +253,18 @@ router.post(
         res.status(400).json({ error: 'No PDF file provided' });
         return;
       }
-      const exam = await assertExamOwner(req.params.id, req.user!.sub);
+      const exam = await assertExamOwner(req.params.id, req.user!.sub, req.user!.role);
       
-      const teacher = await getUserProfile(req.user!.sub);
+      const teacher = await getUserProfile(exam.teacherId);
       const creds = getDriveCredentialsFromUser(teacher);
       if (!teacher || !creds) {
-        console.warn('[pdf upload] missing google drive configuration', { teacherId: req.user!.sub });
-        res.status(400).json({ error: 'Google Drive is not configured in your settings. Please configure it to upload PDFs.' });
+        console.warn('[pdf upload] missing google drive configuration', { teacherId: exam.teacherId });
+        res.status(400).json({ error: 'Google Drive is not configured for the exam owner. They must configure it to upload PDFs.' });
         return;
       }
 
       const fileId = await uploadPdfToDrive(req.file.buffer, req.file.originalname, req.file.mimetype, creds);
-      await setPdfPath(req.params.id, req.user!.sub, fileId);
+      await setPdfPath(req.params.id, req.user!.sub, fileId, req.user!.role);
 
       console.info('[pdf upload] success', { examId: req.params.id, teacherId: req.user!.sub, fileId });
       res.json({ filename: fileId });

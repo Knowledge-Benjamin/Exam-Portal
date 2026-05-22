@@ -14,15 +14,23 @@ export async function listExamsByTeacher(teacherId: string) {
     .orderBy(asc(exams.createdAt));
 }
 
+export async function listAllExams() {
+  return db
+    .select()
+    .from(exams)
+    .orderBy(asc(exams.createdAt));
+}
+
 export async function getExamById(examId: string) {
   const [exam] = await db.select().from(exams).where(eq(exams.id, examId));
   return exam ?? null;
 }
 
-export async function assertExamOwner(examId: string, teacherId: string) {
+export async function assertExamOwner(examId: string, userId: string, role?: string) {
   const exam = await getExamById(examId);
   if (!exam) throw new AppError(404, 'Exam not found');
-  if (exam.teacherId !== teacherId) throw new AppError(403, 'Access denied');
+  if (role === 'admin') return exam;
+  if (exam.teacherId !== userId) throw new AppError(403, 'Access denied');
   return exam;
 }
 
@@ -64,7 +72,7 @@ export async function createExam(
 
 export async function updateExam(
   examId: string,
-  teacherId: string,
+  userId: string,
   data: Partial<{
     title: string;
     description: string;
@@ -74,8 +82,9 @@ export async function updateExam(
     sebConfigKey: string;
     allowFileUpload: boolean;
   }>,
+  role?: string,
 ) {
-  const exam = await assertExamOwner(examId, teacherId);
+  const exam = await assertExamOwner(examId, userId, role);
   if (exam.status === 'closed') {
     throw new AppError(400, 'Cannot edit a closed exam');
   }
@@ -103,8 +112,8 @@ export async function updateExam(
   return updated;
 }
 
-export async function publishExam(examId: string, teacherId: string) {
-  const exam = await assertExamOwner(examId, teacherId);
+export async function publishExam(examId: string, userId: string, role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
   if (exam.status !== 'draft') {
     throw new AppError(400, 'Exam is already published or closed');
   }
@@ -120,8 +129,8 @@ export async function publishExam(examId: string, teacherId: string) {
   return updated;
 }
 
-export async function closeExam(examId: string, teacherId: string) {
-  await assertExamOwner(examId, teacherId);
+export async function closeExam(examId: string, userId: string, role?: string) {
+  await assertExamOwner(examId, userId, role);
   const [updated] = await db
     .update(exams)
     .set({ status: 'closed', updatedAt: new Date() })
@@ -134,8 +143,8 @@ export async function closeExam(examId: string, teacherId: string) {
  * Republish a closed exam — only allowed while the exam window is still open.
  * (now <= endTime + windowBufferMinutes)
  */
-export async function republishExam(examId: string, teacherId: string) {
-  const exam = await assertExamOwner(examId, teacherId);
+export async function republishExam(examId: string, userId: string, role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
 
   if (exam.status !== 'closed') {
     throw new AppError(400, 'Only closed exams can be republished');
@@ -195,8 +204,8 @@ export async function autoCloseExpiredExams(): Promise<string[]> {
 import { uploadPdfToDrive, deletePdfFromDrive, DriveCredentials, getDriveCredentialsFromUser } from './driveService';
 import { getUserProfile } from './authService';
 
-export async function deleteExam(examId: string, teacherId: string) {
-  const exam = await assertExamOwner(examId, teacherId);
+export async function deleteExam(examId: string, userId: string, role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
   // Allow deletion regardless of exam status (including 'closed')
 
   if (exam.status === 'active') {
@@ -204,7 +213,7 @@ export async function deleteExam(examId: string, teacherId: string) {
   }
 
   if (exam.pdfPath) {
-    const teacher = await getUserProfile(teacherId);
+    const teacher = await getUserProfile(exam.teacherId);
     const creds = getDriveCredentialsFromUser(teacher);
     if (teacher && creds) {
       await deletePdfFromDrive(exam.pdfPath, creds);
@@ -224,11 +233,11 @@ export async function deleteExam(examId: string, teacherId: string) {
   await db.delete(exams).where(eq(exams.id, examId));
 }
 
-export async function setPdfPath(examId: string, teacherId: string, pdfPath: string) {
-  const exam = await assertExamOwner(examId, teacherId);
+export async function setPdfPath(examId: string, userId: string, pdfPath: string, role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
 
   if (exam.pdfPath && exam.pdfPath !== pdfPath) {
-    const teacher = await getUserProfile(teacherId);
+    const teacher = await getUserProfile(exam.teacherId);
     const creds = getDriveCredentialsFromUser(teacher);
     if (teacher && creds) {
       await deletePdfFromDrive(exam.pdfPath, creds);
@@ -284,18 +293,19 @@ export async function addQuestion(
 
 export async function updateQuestion(
   questionId: string,
-  teacherId: string,
+  userId: string,
   data: Partial<{
     type: 'short_answer' | 'long_answer' | 'multiple_choice';
     prompt: string;
     options: string[];
     marks: number;
   }>,
+  role?: string,
 ) {
   const [q] = await db.select().from(questions).where(eq(questions.id, questionId));
   if (!q) throw new AppError(404, 'Question not found');
 
-  const exam = await assertExamOwner(q.examId, teacherId);
+  const exam = await assertExamOwner(q.examId, userId, role);
   if (exam.status === 'closed') throw new AppError(400, 'Cannot edit questions of a closed exam');
 
   const [updated] = await db
@@ -307,18 +317,18 @@ export async function updateQuestion(
   return updated;
 }
 
-export async function deleteQuestion(questionId: string, teacherId: string) {
+export async function deleteQuestion(questionId: string, userId: string, role?: string) {
   const [q] = await db.select().from(questions).where(eq(questions.id, questionId));
   if (!q) throw new AppError(404, 'Question not found');
 
-  const exam = await assertExamOwner(q.examId, teacherId);
+  const exam = await assertExamOwner(q.examId, userId, role);
   if (exam.status === 'closed') throw new AppError(400, 'Cannot delete questions of a closed exam');
 
   await db.delete(questions).where(eq(questions.id, questionId));
 }
 
-export async function reorderQuestions(examId: string, teacherId: string, orderedIds: string[]) {
-  const exam = await assertExamOwner(examId, teacherId);
+export async function reorderQuestions(examId: string, userId: string, orderedIds: string[], role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
   if (exam.status === 'closed') throw new AppError(400, 'Cannot reorder questions of a closed exam');
 
   await Promise.all(

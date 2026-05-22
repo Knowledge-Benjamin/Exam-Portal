@@ -9,6 +9,7 @@ import { ExamDetail } from './pages/admin/ExamDetail';
 import { ExamBuilder } from './pages/admin/ExamBuilder';
 import { SubmissionsList } from './pages/admin/SubmissionsList';
 import { Settings } from './pages/admin/Settings';
+import { UserManagement } from './pages/admin/UserManagement';
 import { ExamRoom } from './pages/student/ExamRoom';
 import { ExamJoin } from './pages/student/ExamJoin';
 import { Login } from './pages/auth/Login';
@@ -82,6 +83,10 @@ const router = createBrowserRouter([
       {
         path: 'settings',
         element: <Settings />,
+      },
+      {
+        path: 'users',
+        element: <UserManagement />,
       },
     ],
   },
