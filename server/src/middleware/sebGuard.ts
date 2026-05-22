@@ -71,25 +71,30 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
     const sanitizedKey = sebConfigKey.trim().toLowerCase();
 
     // The SEB client computes the hash using the URL it sees in its address bar.
-    // Since we are proxying from the frontend (CORS_ORIGIN), the Host header here 
-    // is the backend's host, but SEB hashed the frontend's host.
-    const origin = env.CORS_ORIGIN.replace(/\/$/, '');
-    const fullUrl = `${origin}${req.originalUrl}`;
+    // We use env.CORS_ORIGIN as the base, but since it might be misconfigured (e.g. http instead of https),
+    // we calculate hashes for both protocols to make the validation robust.
+    const baseOrigin = env.CORS_ORIGIN.replace(/\/$/, '');
+    const originHttps = baseOrigin.replace(/^http:\/\//, 'https://');
+    const originHttp = baseOrigin.replace(/^https:\/\//, 'http://');
+
+    const urlHttps = `${originHttps}${req.originalUrl}`;
+    const urlHttp = `${originHttp}${req.originalUrl}`;
 
     // SEB computes SHA256(URL + Key)
-    const expected = crypto.createHash('sha256').update(fullUrl + sanitizedKey, 'utf8').digest('hex');
+    const expectedHttps = crypto.createHash('sha256').update(urlHttps + sanitizedKey, 'utf8').digest('hex');
+    const expectedHttp = crypto.createHash('sha256').update(urlHttp + sanitizedKey, 'utf8').digest('hex');
     
     // Check if the expected hash matches either the BEK header or the CK header
-    const matchesBek = bekHash ? timingSafeEqual(expected, bekHash) : false;
-    const matchesCk = ckHash ? timingSafeEqual(expected, ckHash) : false;
+    const matchesBek = bekHash ? (timingSafeEqual(expectedHttps, bekHash) || timingSafeEqual(expectedHttp, bekHash)) : false;
+    const matchesCk = ckHash ? (timingSafeEqual(expectedHttps, ckHash) || timingSafeEqual(expectedHttp, ckHash)) : false;
 
     if (!matchesBek && !matchesCk) {
       const keySnippet = sanitizedKey.substring(0, 6) + '...';
       console.warn(
-        `[seb] sebGuard blocked: config key mismatch. path=${req.method} ${req.originalUrl} URL=${fullUrl} DB_Key=${keySnippet} ReceivedBEK=${bekHash || 'none'} ReceivedCK=${ckHash || 'none'}`,
+        `[seb] sebGuard blocked: config key mismatch. path=${req.method} ${req.originalUrl} URL=${urlHttps} or ${urlHttp} DB_Key=${keySnippet} ReceivedBEK=${bekHash || 'none'} ReceivedCK=${ckHash || 'none'}`,
       );
       res.status(403).json({
-        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${fullUrl}, DB_Key=${keySnippet}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
+        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${urlHttps}, DB_Key=${keySnippet}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
         details: 'SEB request hash did not match the expected hash for this URL and config key. Verify the gate URL and SEB config key are correct.',
       });
       return;
