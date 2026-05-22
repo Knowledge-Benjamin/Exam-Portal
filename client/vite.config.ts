@@ -10,6 +10,23 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/') || id.includes('node_modules/react-router')) {
+            return 'vendor';
+          }
+          if (id.includes('node_modules/axios') || id.includes('node_modules/socket.io-client')) {
+            return 'network';
+          }
+        },
+      },
+    },
+    // Target modern browsers for smaller output
+    target: 'es2020',
+    sourcemap: false,
+  },
   server: {
     port: 5173,
     proxy: {

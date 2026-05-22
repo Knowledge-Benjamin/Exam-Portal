@@ -1,19 +1,30 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider, Navigate, useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Footer } from './components/layout/Footer';
-import { DashboardHome } from './pages/admin/DashboardHome';
-import { CreateExam } from './pages/admin/CreateExam';
-import { ExamDetail } from './pages/admin/ExamDetail';
-import { ExamBuilder } from './pages/admin/ExamBuilder';
-import { SubmissionsList } from './pages/admin/SubmissionsList';
-import { Settings } from './pages/admin/Settings';
-import { UserManagement } from './pages/admin/UserManagement';
-import { ExamRoom } from './pages/student/ExamRoom';
-import { ExamJoin } from './pages/student/ExamJoin';
-import { Login } from './pages/auth/Login';
+
+// Lazy loaded pages
+const DashboardHome = lazy(() => import('./pages/admin/DashboardHome').then(module => ({ default: module.DashboardHome })));
+const CreateExam = lazy(() => import('./pages/admin/CreateExam').then(module => ({ default: module.CreateExam })));
+const ExamDetail = lazy(() => import('./pages/admin/ExamDetail').then(module => ({ default: module.ExamDetail })));
+const ExamBuilder = lazy(() => import('./pages/admin/ExamBuilder').then(module => ({ default: module.ExamBuilder })));
+const SubmissionsList = lazy(() => import('./pages/admin/SubmissionsList').then(module => ({ default: module.SubmissionsList })));
+const Settings = lazy(() => import('./pages/admin/Settings').then(module => ({ default: module.Settings })));
+const UserManagement = lazy(() => import('./pages/admin/UserManagement').then(module => ({ default: module.UserManagement })));
+const ExamRoom = lazy(() => import('./pages/student/ExamRoom').then(module => ({ default: module.ExamRoom })));
+const ExamJoin = lazy(() => import('./pages/student/ExamJoin').then(module => ({ default: module.ExamJoin })));
+const Login = lazy(() => import('./pages/auth/Login').then(module => ({ default: module.Login })));
+
 import './index.css';
+
+// Loading fallback for Suspense
+const LoadingFallback = () => (
+  <div className="min-h-screen flex items-center justify-center bg-[var(--color-background)]">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--color-primary)]"></div>
+  </div>
+);
 
 function ErrorPage() {
   const error = useRouteError();
@@ -52,7 +63,7 @@ const router = createBrowserRouter([
   },
   {
     path: '/login',
-    element: <Login />,
+    element: <Suspense fallback={<LoadingFallback />}><Login /></Suspense>,
     errorElement: <ErrorPage />,
   },
   {
@@ -62,42 +73,42 @@ const router = createBrowserRouter([
     children: [
       {
         path: '',
-        element: <DashboardHome />,
+        element: <Suspense fallback={<LoadingFallback />}><DashboardHome /></Suspense>,
       },
       {
         path: 'exams/create',
-        element: <CreateExam />,
+        element: <Suspense fallback={<LoadingFallback />}><CreateExam /></Suspense>,
       },
       {
         path: 'exams/:id',
-        element: <ExamDetail />,
+        element: <Suspense fallback={<LoadingFallback />}><ExamDetail /></Suspense>,
       },
       {
         path: 'exams/:id/builder',
-        element: <ExamBuilder />,
+        element: <Suspense fallback={<LoadingFallback />}><ExamBuilder /></Suspense>,
       },
       {
         path: 'exams/:id/submissions',
-        element: <SubmissionsList />,
+        element: <Suspense fallback={<LoadingFallback />}><SubmissionsList /></Suspense>,
       },
       {
         path: 'settings',
-        element: <Settings />,
+        element: <Suspense fallback={<LoadingFallback />}><Settings /></Suspense>,
       },
       {
         path: 'users',
-        element: <UserManagement />,
+        element: <Suspense fallback={<LoadingFallback />}><UserManagement /></Suspense>,
       },
     ],
   },
   {
     path: '/exam/:id',
-    element: <ExamRoom />,
+    element: <Suspense fallback={<LoadingFallback />}><ExamRoom /></Suspense>,
     errorElement: <ErrorPage />,
   },
   {
     path: '/exam-join/:token',
-    element: <ExamJoin />,
+    element: <Suspense fallback={<LoadingFallback />}><ExamJoin /></Suspense>,
     errorElement: <ErrorPage />,
   },
   {

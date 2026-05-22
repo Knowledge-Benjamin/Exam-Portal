@@ -7,6 +7,7 @@ import {
   jsonb,
   uuid,
   pgEnum,
+  index,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -55,6 +56,11 @@ export const exams = pgTable('exams', {
   status: examStatusEnum('status').notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    teacherIdx: index('exams_teacher_id_idx').on(table.teacherId),
+    statusIdx: index('exams_status_idx').on(table.status),
+  };
 });
 
 export const questions = pgTable('questions', {
@@ -67,6 +73,10 @@ export const questions = pgTable('questions', {
   prompt: text('prompt').notNull(),
   options: jsonb('options').$type<string[]>(),
   marks: integer('marks').notNull().default(1),
+}, (table) => {
+  return {
+    examIdIdx: index('questions_exam_id_idx').on(table.examId),
+  };
 });
 
 
@@ -92,6 +102,11 @@ export const submissions = pgTable('submissions', {
   sebRequestHash: text('seb_request_hash'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    examIdIdx: index('submissions_exam_id_idx').on(table.examId),
+    studentRegNumberIdx: index('submissions_student_reg_number_idx').on(table.studentRegNumber),
+  };
 });
 
 export const examRoomEventTypeEnum = pgEnum('exam_room_event_type', [
@@ -114,6 +129,11 @@ export const examRoomEvents = pgTable('exam_room_events', {
   timestamp: timestamp('timestamp', { withTimezone: true }).notNull(),
   message: text('message').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+}, (table) => {
+  return {
+    examIdIdx: index('exam_room_events_exam_id_idx').on(table.examId),
+    submissionIdIdx: index('exam_room_events_submission_id_idx').on(table.submissionId),
+  };
 });
 
 export const refreshTokens = pgTable('refresh_tokens', {
