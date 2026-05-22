@@ -50,7 +50,7 @@ export const BLOCKED_FILE_TYPES = new Set([
  */
 import path from 'path';
 
-export const MAX_SUBMISSION_FILE_SIZE_MB = 10;
+export const MAX_SUBMISSION_FILE_SIZE_MB = 50;
 
 const BLOCKED_FILE_EXTENSIONS = new Set([
   '.exe', '.dll', '.bat', '.cmd', '.sh', '.ps1', '.vbs',

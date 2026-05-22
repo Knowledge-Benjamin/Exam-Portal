@@ -21,7 +21,7 @@ export const env = {
   SEB_CONFIG_KEY: optional('SEB_CONFIG_KEY', 'NONE'),
   CORS_ORIGIN: optional('CORS_ORIGIN', 'http://localhost:5173'),
   UPLOAD_DIR: optional('UPLOAD_DIR', 'uploads'),
-  MAX_FILE_SIZE_MB: parseInt(optional('MAX_FILE_SIZE_MB', '10'), 10),
+  MAX_FILE_SIZE_MB: parseInt(optional('MAX_FILE_SIZE_MB', '50'), 10),
   COOKIE_DOMAIN: optional('COOKIE_DOMAIN', 'localhost'),
   GOOGLE_OAUTH_CLIENT_ID: optional('GOOGLE_OAUTH_CLIENT_ID', ''),
   GOOGLE_OAUTH_CLIENT_SECRET: optional('GOOGLE_OAUTH_CLIENT_SECRET', ''),
