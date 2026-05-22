@@ -21,6 +21,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set lowercase repository name
+        run: echo "REPO_LC=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -32,28 +35,28 @@ jobs:
         id: meta-client
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/client
+          images: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/client
 
       - name: Build and push Client Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./client
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/client:latest
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/client:latest
           labels: ${{ steps.meta-client.outputs.labels }}
 
       - name: Extract metadata for Server Docker
         id: meta-server
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ github.repository }}/server
+          images: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/server
 
       - name: Build and push Server Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./server
           push: true
-          tags: ${{ env.REGISTRY }}/${{ github.repository }}/server:latest
+          tags: ${{ env.REGISTRY }}/${{ env.REPO_LC }}/server:latest
           labels: ${{ steps.meta-server.outputs.labels }}
 
   deploy:
