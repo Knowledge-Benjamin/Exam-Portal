@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY}/client:latest
+    container_name: exam-portal-client
+    ports:
+      - "8080:80"
+    depends_on:
+      - server
+    restart: always
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY}/server:latest
+    container_name: exam-portal-server
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./server/.env
+    # If using local DB, wait for it
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+    restart: always
+
+  # OPTIONAL: Self-hosted PostgreSQL database.
+  # If you use Neon Serverless Postgres, you can ignore or remove this service.
+  # If you want to use this, uncomment 'depends_on' in the server block,
+  # and set DATABASE_URL="postgresql://user:password@db:5432/exam_db" in ./server/.env
+  #
+  # db:
+  #   image: postgres:15-alpine
+  #   container_name: exam-portal-db
+  #   environment:
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #     POSTGRES_DB: exam_db
+  #   ports:
+  #     - "5432:5432"
+  #   volumes:
+  #     - pgdata:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U user -d exam_db"]
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 5
+  #   restart: always
+
+volumes:
+  pgdata:
