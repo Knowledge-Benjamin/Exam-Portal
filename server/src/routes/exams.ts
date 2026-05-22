@@ -83,7 +83,7 @@ router.get(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const exam = await assertExamOwner(req.params.id, req.user!.sub, req.user!.role);
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const baseUrl = env.CORS_ORIGIN;
       res.json({
         exam: {
           ...exam,
@@ -191,7 +191,7 @@ router.post(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const exam = await publishExam(req.params.id, req.user!.sub, req.user!.role);
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const baseUrl = env.CORS_ORIGIN;
       res.json({
         exam,
         sebGateUrl: `${baseUrl}/seb/gate/${exam.sebExamToken}`,
