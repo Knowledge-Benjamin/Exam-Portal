@@ -13,6 +13,7 @@ export function ExamDetail() {
   const [error, setError] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [isRepublishing, setIsRepublishing] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [editingSebKey, setEditingSebKey] = useState(false);
   const [sebKeyInput, setSebKeyInput] = useState('');
   const [editingFileUpload, setEditingFileUpload] = useState(false);
@@ -94,6 +95,23 @@ export function ExamDetail() {
       alert(err.error || 'Cannot republish: the exam window has already closed.');
     } finally {
       setIsRepublishing(false);
+    }
+  };
+
+  const handleRegenerateToken = async () => {
+    if (!window.confirm('Are you sure you want to regenerate the exam link? The old link will immediately stop working.')) {
+      return;
+    }
+    
+    setIsRegenerating(true);
+    try {
+      const { data } = await api.post(`/exams/${id}/regenerate-token`);
+      setExam({ ...data.exam, sebGateUrl: data.sebGateUrl });
+      alert('New link generated successfully!');
+    } catch (err: any) {
+      alert(err.error || 'Failed to regenerate exam link');
+    } finally {
+      setIsRegenerating(false);
     }
   };
 
@@ -195,6 +213,15 @@ export function ExamDetail() {
               }}
             >
               Copy URL
+            </button>
+            <button
+              type="button"
+              className="button button--secondary"
+              onClick={handleRegenerateToken}
+              disabled={isRegenerating}
+              style={{ marginLeft: '10px' }}
+            >
+              {isRegenerating ? 'Regenerating...' : 'Regenerate Link'}
             </button>
           </div>
         </div>

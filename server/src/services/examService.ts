@@ -129,6 +129,23 @@ export async function publishExam(examId: string, userId: string, role?: string)
   return updated;
 }
 
+export async function regenerateExamToken(examId: string, userId: string, role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
+  if (exam.status === 'draft') {
+    throw new AppError(400, 'Cannot regenerate token for a draft exam. Publish it first.');
+  }
+
+  const token = randomHex(32);
+
+  const [updated] = await db
+    .update(exams)
+    .set({ sebExamToken: token, updatedAt: new Date() })
+    .where(eq(exams.id, examId))
+    .returning();
+
+  return updated;
+}
+
 export async function closeExam(examId: string, userId: string, role?: string) {
   await assertExamOwner(examId, userId, role);
   const [updated] = await db

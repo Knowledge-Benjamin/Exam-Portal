@@ -17,6 +17,7 @@ import {
   deleteExam,
   setPdfPath,
   getExamById,
+  regenerateExamToken,
 } from '../services/examService';
 import { getRoomEvents, countRoomEvents } from '../services/roomEventService';
 import { getExamStats } from '../services/examStatsService';
@@ -191,6 +192,25 @@ router.post(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const exam = await publishExam(req.params.id, req.user!.sub, req.user!.role);
+      const baseUrl = env.CORS_ORIGIN;
+      res.json({
+        exam,
+        sebGateUrl: `${baseUrl}/seb/gate/${exam.sebExamToken}`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// POST /api/exams/:id/regenerate-token
+router.post(
+  '/:id/regenerate-token',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      const exam = await regenerateExamToken(req.params.id, req.user!.sub, req.user!.role);
       const baseUrl = env.CORS_ORIGIN;
       res.json({
         exam,
