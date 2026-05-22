@@ -34,7 +34,8 @@ export function ExamJoin() {
         });
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.error || 'Failed to join the exam. Please check your token or try again.');
+      const rawError = err.response?.data?.error || err.message || JSON.stringify(err);
+      setError(`Error: ${rawError}. (Fallback check token or try again)`);
     } finally {
       setIsLoading(false);
     }
