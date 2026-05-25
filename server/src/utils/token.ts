@@ -27,7 +27,7 @@ export function signAccessToken(payload: Omit<AccessTokenPayload, 'type'>): stri
 }
 
 export function signExamToken(payload: Omit<ExamTokenPayload, 'type'>): string {
-  const opts: SignOptions = { expiresIn: '90m' };
+  const opts: SignOptions = { expiresIn: '300m' };
   return jwt.sign({ ...payload, type: 'exam' }, secretFor('exam'), opts);
 }
 
