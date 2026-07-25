@@ -90,6 +90,26 @@ router.patch(
     try {
       const { marksAwarded, teacherNote } = markSubmissionSchema.parse(req.body);
       const sub = await markSubmission(req.params.submissionId, marksAwarded, teacherNote);
+
+      // Fire-and-forget: push grade to ERP for reconciliation
+      // We need the exam to get erpCourseCode and totalMarks
+      import('../services/examService').then(({ getExamById, getQuestions }) => {
+        Promise.all([getExamById(sub.examId), getQuestions(sub.examId)]).then(([exam, questions]) => {
+          if (!exam) return;
+          const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+          import('../services/erpService').then(({ pushGradeToERP }) => {
+            pushGradeToERP({
+              studentRegNumber: sub.studentRegNumber,
+              erpCourseCode: exam.erpCourseCode,
+              examId: exam.id,
+              marksAwarded,
+              totalMarks,
+              examTitle: exam.title,
+            }).catch((err: Error) => console.warn('[grading] ERP grade push failed:', err.message));
+          });
+        });
+      });
+
       res.json({ submission: sub });
     } catch (err) {
       next(err);

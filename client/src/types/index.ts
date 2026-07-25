@@ -77,6 +77,7 @@ export interface ApiError {
 export interface CreateExamForm {
   title: string;
   description: string;
+  erpCourseCode: string;
   questionSource: QuestionSource;
   startTime: string;
   durationMinutes: number;

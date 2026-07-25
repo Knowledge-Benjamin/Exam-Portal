@@ -44,6 +44,7 @@ export const updateSystemConfigSchema = z.object({
 
 export const createExamSchema = z.object({
   title: z.string().min(3).max(200).trim(),
+  erpCourseCode: z.string().min(2).max(50).trim(),
   description: z.string().max(1000).trim().optional(),
   questionSource: z.enum(['pdf', 'builder']),
   startTime: z.string().datetime(),

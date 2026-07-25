@@ -400,6 +400,37 @@ router.get(
   },
 );
 
+import { generateAndPushSEBFile } from '../services/erpService';
 
+// POST /api/exams/:id/generate-seb
+// Generates a server-side .seb config file, stores the sebConfigKey,
+// and pushes the exam record + base64 file to the ERP.
+router.post(
+  '/:id/generate-seb',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      const exam = await assertExamOwner(req.params.id, req.user!.sub, req.user!.role);
+
+      if (exam.status !== 'active') {
+        res.status(400).json({ error: 'Exam must be published (active) before generating a SEB file.' });
+        return;
+      }
+
+      const { sebConfigKey, sebFileBase64 } = await generateAndPushSEBFile(req.params.id);
+
+      res.json({
+        ok: true,
+        sebConfigKey,
+        sebFileBase64,
+        filename: `${exam.title.replace(/[^a-z0-9]/gi, '_')}_exam.seb`,
+        message: 'SEB file generated and pushed to ERP. Students can now download it from their dashboard.',
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
 
 export default router;

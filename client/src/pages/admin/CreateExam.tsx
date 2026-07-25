@@ -1,23 +1,33 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../api';
 import type { CreateExamForm } from '../../types';
 import { toDatetimeLocal } from '../../utils/formatters';
 
 export function CreateExam() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState<CreateExamForm>({
     title: '',
     description: '',
+    erpCourseCode: '',
     questionSource: 'builder',
     startTime: toDatetimeLocal(new Date(Date.now() + 86400000).toISOString()),
     durationMinutes: 60,
     windowBufferMinutes: 5,
     allowFileUpload: false,
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const erpCourseCode = params.get('erpCourseCode');
+    if (erpCourseCode) {
+      setFormData(prev => ({ ...prev, erpCourseCode }));
+    }
+  }, [location]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,6 +84,27 @@ export function CreateExam() {
               placeholder="e.g. Midterm Computer Science 101"
               className="form-input"
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="erpCourseCode">
+              Course Code (ERP Link)
+            </label>
+            <input
+              id="erpCourseCode"
+              required
+              readOnly={!!new URLSearchParams(location.search).get('erpCourseCode')}
+              value={formData.erpCourseCode}
+              onChange={(e) => setFormData({ ...formData, erpCourseCode: e.target.value })}
+              placeholder="e.g. CS101"
+              className={`form-input ${new URLSearchParams(location.search).get('erpCourseCode') ? 'readonly-locked' : ''}`}
+              style={new URLSearchParams(location.search).get('erpCourseCode') ? { backgroundColor: 'rgba(0,0,0,0.2)', cursor: 'not-allowed', color: '#94a3b8' } : {}}
+            />
+            {new URLSearchParams(location.search).get('erpCourseCode') && (
+              <p className="panel-subtitle" style={{ color: '#10b981', marginTop: '5px' }}>
+                ✓ Linked via ERP Single Sign-On
+              </p>
+            )}
           </div>
 
           <div className="form-group">

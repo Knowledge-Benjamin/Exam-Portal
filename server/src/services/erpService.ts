@@ -1,0 +1,260 @@
+import crypto from 'crypto';
+import { env } from '../config/env';
+import { db } from '../db/db';
+import { exams } from '../db/schema';
+import { eq } from 'drizzle-orm';
+import { AppError } from '../middleware/errorHandler';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function signPayload(body: string): string {
+  return crypto.createHmac('sha256', env.ERP_WEBHOOK_SECRET).update(body).digest('hex');
+}
+
+async function postToERP(path: string, payload: object): Promise<{ ok: boolean; data?: unknown; error?: string }> {
+  if (!env.ERP_WEBHOOK_URL) {
+    console.warn('[erpService] ERP_WEBHOOK_URL not configured — skipping push');
+    return { ok: false, error: 'ERP_WEBHOOK_URL not configured' };
+  }
+
+  const body = JSON.stringify(payload);
+  const signature = signPayload(body);
+  const url = `${env.ERP_WEBHOOK_URL}${path}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-ERP-Signature': signature,
+      },
+      body,
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error(`[erpService] POST ${url} failed: ${res.status}`, data);
+      return { ok: false, error: `ERP returned ${res.status}` };
+    }
+
+    return { ok: true, data };
+  } catch (err: any) {
+    console.error(`[erpService] POST ${url} error:`, err.message);
+    return { ok: false, error: err.message };
+  }
+}
+
+// ─── PIN Verification ─────────────────────────────────────────────────────────
+
+/**
+ * Verify a student's one-time Exam PIN against the ERP.
+ * Returns the student's registration number if valid.
+ */
+export async function verifyStudentPin(pin: string): Promise<{ studentRegNumber: string; studentName: string }> {
+  if (!env.ERP_WEBHOOK_URL) {
+    throw new AppError(503, 'ERP integration is not configured on this server.');
+  }
+
+  const body = JSON.stringify({ pin });
+  const signature = signPayload(body);
+  const url = `${env.ERP_WEBHOOK_URL}/verify-pin`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-ERP-Signature': signature,
+    },
+    body,
+  });
+
+  if (res.status === 404 || res.status === 400) {
+    throw new AppError(401, 'Invalid or expired Exam PIN. Please generate a new one from the student portal.');
+  }
+
+  if (!res.ok) {
+    throw new AppError(502, 'Could not verify PIN with the ERP. Please try again.');
+  }
+
+  const data = (await res.json()) as { studentRegNumber: string; studentName: string };
+  return data;
+}
+
+// ─── Push Published Exam to ERP ───────────────────────────────────────────────
+
+/**
+ * Generate a binary .seb config file for an exam.
+ * SEB config files are plist XML files compressed with zlib then base64-encoded
+ * with the configFileEncryptionType=0 (unencrypted / password-free) approach.
+ *
+ * The sebConfigKey is the SHA256 hash of the plist XML content.
+ * We store that hash in the DB so the sebGuard can verify SEB requests later.
+ */
+export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfigKey: string; sebFileBase64: string }> {
+  const [exam] = await db.select().from(exams).where(eq(exams.id, examId));
+  if (!exam) throw new AppError(404, 'Exam not found');
+  if (exam.status !== 'active') throw new AppError(400, 'Exam must be published (active) before generating a SEB file');
+  if (!exam.sebExamToken) throw new AppError(400, 'Exam token missing — republish the exam first');
+
+  const gateUrl = `${env.CORS_ORIGIN}/seb/gate/${exam.sebExamToken}`;
+
+  // Build a SEB-compatible plist XML
+  const plistXml = buildSEBPlist({
+    startURL: gateUrl,
+    title: exam.title,
+  });
+
+  // The sebConfigKey is SHA256 of the plist content (SEB spec §5.3)
+  const sebConfigKey = crypto.createHash('sha256').update(plistXml, 'utf8').digest('hex');
+
+  // SEB expects the config file to be zlib-deflate compressed then stored as
+  // a binary .seb file. We base64-encode it for easy transport.
+  const zlib = await import('zlib');
+  const compressed: Buffer = await new Promise((resolve, reject) => {
+    zlib.deflate(Buffer.from(plistXml, 'utf8'), (err, buf) => {
+      if (err) reject(err);
+      else resolve(buf);
+    });
+  });
+
+  const sebFileBase64 = compressed.toString('base64');
+
+  // Persist the sebConfigKey into the exam row so sebGuard can validate future requests
+  await db.update(exams)
+    .set({ sebConfigKey, updatedAt: new Date() })
+    .where(eq(exams.id, examId));
+
+  // Push to ERP so students can download the file from the student dashboard
+  const pushResult = await postToERP('/exam-published', {
+    examId: exam.id,
+    erpCourseCode: exam.erpCourseCode,
+    examTitle: exam.title,
+    startTime: exam.startTime,
+    endTime: exam.endTime,
+    durationMinutes: exam.durationMinutes,
+    sebFileBase64,
+    sebConfigKey,
+    gateUrl,
+  });
+
+  if (!pushResult.ok) {
+    console.warn('[erpService] SEB file generated but ERP push failed:', pushResult.error);
+    // Don't throw — return the file anyway so the teacher still gets it
+  }
+
+  return { sebConfigKey, sebFileBase64 };
+}
+
+// ─── Teacher Provisioning Push ────────────────────────────────────────────────
+
+/**
+ * Called when the ERP creates a new teacher account. Provisions the teacher
+ * in the Exam Portal so they can log in and create exams immediately.
+ * The ERP sends the teacher data; this function is the RECEIVER side.
+ * (The actual reception is in the ERP webhook route in the exam portal)
+ */
+export async function pushTeacherToExamPortal(teacher: {
+  fullName: string;
+  email: string;
+  tempPassword: string;
+}): Promise<{ ok: boolean }> {
+  const result = await postToERP('/teacher-provisioned', teacher);
+  return { ok: result.ok };
+}
+
+// ─── Grade Push ───────────────────────────────────────────────────────────────
+
+/**
+ * Push final graded marks from the Exam Portal to the ERP.
+ * Called after a teacher marks a submission.
+ */
+export async function pushGradeToERP(payload: {
+  studentRegNumber: string;
+  erpCourseCode: string;
+  examId: string;
+  marksAwarded: number;
+  totalMarks: number;
+  examTitle: string;
+}): Promise<void> {
+  const result = await postToERP('/grade-submitted', payload);
+  if (!result.ok) {
+    console.warn('[erpService] Grade push to ERP failed:', result.error);
+    // Non-fatal: grades can be re-synced manually
+  }
+}
+
+// ─── Plist Builder ────────────────────────────────────────────────────────────
+
+function buildSEBPlist(opts: { startURL: string; title: string }): string {
+  // Standard SEB plist structure (compatible with SEB 3.x+)
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>startURL</key>
+  <string>${escapeXml(opts.startURL)}</string>
+  <key>sendBrowserExamKey</key>
+  <true/>
+  <key>browserExamKeyAllowedURLFilter</key>
+  <string>${escapeXml(new URL(opts.startURL).origin + '/*')}</string>
+  <key>allowQuit</key>
+  <false/>
+  <key>quitURLConfirm</key>
+  <true/>
+  <key>showTaskBar</key>
+  <true/>
+  <key>taskBarHeight</key>
+  <integer>40</integer>
+  <key>enableBrowserWindowToolbar</key>
+  <false/>
+  <key>allowPreferencesWindow</key>
+  <false/>
+  <key>browserWindowAllowReload</key>
+  <true/>
+  <key>newBrowserWindowAllowReload</key>
+  <true/>
+  <key>newBrowserWindowByLinkPolicy</key>
+  <integer>2</integer>
+  <key>openLinksInSameWindow</key>
+  <false/>
+  <key>enableJava</key>
+  <false/>
+  <key>enablePlugIns</key>
+  <true/>
+  <key>allowSpellCheck</key>
+  <false/>
+  <key>allowDictionaryLookup</key>
+  <false/>
+  <key>showTime</key>
+  <true/>
+  <key>showInputLanguage</key>
+  <true/>
+  <key>allowSwitchToApplications</key>
+  <false/>
+  <key>allowFlashFullscreen</key>
+  <false/>
+  <key>examSessionClearCookiesOnEnd</key>
+  <true/>
+  <key>URLFilterEnable</key>
+  <false/>
+  <key>URLFilterEnableContentFilter</key>
+  <false/>
+  <key>hashedQuitPassword</key>
+  <string></string>
+  <key>cryptoIdentity</key>
+  <string></string>
+  <key>configFileEncryptionType</key>
+  <integer>0</integer>
+</dict>
+</plist>`;
+}
+
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}

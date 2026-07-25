@@ -19,6 +19,7 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import { verifyAccessToken } from '../utils/token';
 import { env } from '../config/env';
 import { getCookieOptions } from '../utils/cookieOptions';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
 
@@ -55,6 +56,78 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     });
 
     res.json({ user: result.user });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// GET /api/auth/sso
+router.get('/sso', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = req.query;
+    if (!token || typeof token !== 'string') {
+      res.status(400).json({ error: 'Missing SSO token' });
+      return;
+    }
+
+    let payload;
+    try {
+      payload = jwt.verify(token, env.SSO_JWT_SECRET) as any;
+    } catch (err) {
+      res.status(401).json({ error: 'Invalid or expired SSO token' });
+      return;
+    }
+
+    const { email, fullName, role, courseCode } = payload;
+    
+    // Check if user exists or create them
+    const { registerUser } = await import('../services/authService');
+    const { db } = await import('../db/db');
+    const { users, refreshTokens } = await import('../db/schema');
+    const { eq } = await import('drizzle-orm');
+    
+    let [user] = await db.select().from(users).where(eq(users.email, email));
+    
+    if (!user) {
+      // Auto register using authService
+      const tempPassword = crypto.randomBytes(16).toString('hex') + 'A1!';
+      await registerUser({
+        fullName,
+        email,
+        password: tempPassword,
+        role: role || 'teacher'
+      });
+      [user] = await db.select().from(users).where(eq(users.email, email));
+    }
+
+    // Login logic
+    const { signAccessToken, signRefreshToken } = await import('../utils/token');
+    const { hashToken } = await import('../utils/crypto');
+    
+    const accessToken = signAccessToken({ sub: user.id, role: user.role });
+    const rawRefresh = signRefreshToken(user.id);
+    const tokenHash = hashToken(rawRefresh);
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    await db.insert(refreshTokens).values({
+      userId: user.id,
+      tokenHash,
+      expiresAt,
+    });
+
+    const cookieOpts = getCookieOptions(req);
+    res.cookie('access_token', accessToken, {
+      ...cookieOpts,
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh_token', rawRefresh, {
+      ...cookieOpts,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to Create Exam page with pre-filled courseCode
+    const redirectUrl = `${env.CORS_ORIGIN}/dashboard/exams/create?erpCourseCode=${encodeURIComponent(courseCode)}`;
+    res.redirect(redirectUrl);
   } catch (err) {
     next(err);
   }

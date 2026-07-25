@@ -38,6 +38,7 @@ export async function createExam(
   teacherId: string,
   data: {
     title: string;
+    erpCourseCode: string;
     description?: string;
     questionSource: 'pdf' | 'builder';
     startTime: string;
@@ -54,6 +55,7 @@ export async function createExam(
     .insert(exams)
     .values({
       title: data.title,
+      erpCourseCode: data.erpCourseCode,
       description: data.description,
       teacherId,
       questionSource: data.questionSource,

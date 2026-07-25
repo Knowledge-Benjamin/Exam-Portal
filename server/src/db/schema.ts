@@ -40,6 +40,7 @@ export const users = pgTable('users', {
 export const exams = pgTable('exams', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
+  erpCourseCode: text('erp_course_code').notNull(),
   description: text('description'),
   teacherId: uuid('teacher_id')
     .notNull()

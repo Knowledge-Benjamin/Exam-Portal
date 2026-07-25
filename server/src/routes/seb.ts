@@ -297,4 +297,56 @@ router.post(
   },
 );
 
+import { verifyStudentPin } from '../services/erpService';
+
+/**
+ * POST /seb/join-with-pin/:token
+ *
+ * PIN-based join flow. The student enters a 6-digit PIN they generated from
+ * the ERP student dashboard. This endpoint verifies the PIN with the ERP,
+ * retrieves the canonical student identity (name + reg number), then completes
+ * the standard SEB join — no manual name entry needed, no impersonation risk.
+ */
+router.post(
+  '/join-with-pin/:token',
+  sebLimiter,
+  sebGuard,
+  async (req: Request<{ token: string }>, res: Response, next: NextFunction) => {
+    try {
+      const { pin } = req.body as { pin?: string };
+      if (!pin || !/^\d{6}$/.test(pin)) {
+        res.status(400).json({ error: 'A valid 6-digit Exam PIN is required.' });
+        return;
+      }
+
+      // Verify PIN with ERP — single-use, 1-hour TTL
+      const identity = await verifyStudentPin(pin);
+
+      const ipAddress = req.ip ?? '';
+      const result = await processSEBJoin(
+        req.params.token,
+        identity.studentName,
+        identity.studentRegNumber,
+        ipAddress,
+      );
+
+      const cookieOpts = getCookieOptions(req);
+      res.cookie('exam_token', result.examToken, {
+        ...cookieOpts,
+        maxAge: 90 * 60 * 1000,
+      });
+
+      res.json({
+        ok: true,
+        examId: result.examId,
+        examToken: result.examToken,
+        studentName: identity.studentName,
+        studentRegNumber: identity.studentRegNumber,
+      });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
 export default router;

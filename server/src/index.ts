@@ -16,6 +16,7 @@ import examsRouter from './routes/exams';
 import questionsRouter from './routes/questions';
 import submissionsRouter from './routes/submissions';
 import sebRouter from './routes/seb';
+import webhooksRouter from './routes/webhooks';
 
 import { registerSocketHandlers } from './socket/handlers';
 import { autoCloseExpiredExams } from './services/examService';
@@ -54,7 +55,10 @@ app.use(
   }),
 );
 
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ 
+  limit: '2mb',
+  verify: (req: any, _res, buf) => { req.rawBody = buf.toString(); }
+}));
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(sanitizeInput);
@@ -69,6 +73,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/exams', examsRouter);
 app.use('/api/exams/:examId/questions', questionsRouter);
 app.use('/api/submissions', submissionsRouter);
+app.use('/api/webhooks', webhooksRouter);
 app.use('/seb', sebRouter);
 
 // ─── Health Check ────────────────────────────────────────────────────────────

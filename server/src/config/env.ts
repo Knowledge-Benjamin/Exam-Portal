@@ -18,6 +18,7 @@ export const env = {
   JWT_ACCESS_SECRET: required('JWT_ACCESS_SECRET'),
   JWT_REFRESH_SECRET: required('JWT_REFRESH_SECRET'),
   JWT_EXAM_SECRET: required('JWT_EXAM_SECRET'),
+  SSO_JWT_SECRET: required('SSO_JWT_SECRET'),
   SEB_CONFIG_KEY: optional('SEB_CONFIG_KEY', 'NONE'),
   CORS_ORIGIN: optional('CORS_ORIGIN', 'http://localhost:5173'),
   UPLOAD_DIR: optional('UPLOAD_DIR', 'uploads'),
@@ -26,5 +27,7 @@ export const env = {
   GOOGLE_OAUTH_CLIENT_ID: optional('GOOGLE_OAUTH_CLIENT_ID', ''),
   GOOGLE_OAUTH_CLIENT_SECRET: optional('GOOGLE_OAUTH_CLIENT_SECRET', ''),
   GOOGLE_OAUTH_REDIRECT_URI: optional('GOOGLE_OAUTH_REDIRECT_URI', ''),
+  ERP_WEBHOOK_URL: optional('ERP_WEBHOOK_URL', ''),
+  ERP_WEBHOOK_SECRET: optional('ERP_WEBHOOK_SECRET', ''),
   isProd: optional('NODE_ENV', 'development') === 'production',
 } as const;
