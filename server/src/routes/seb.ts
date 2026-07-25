@@ -80,7 +80,7 @@ router.post(
 
       res.cookie('exam_token', result.examToken, {
         ...cookieOpts,
-        maxAge: 90 * 60 * 1000,
+        maxAge: 300 * 60 * 1000,
       });
 
       res.json({ 
