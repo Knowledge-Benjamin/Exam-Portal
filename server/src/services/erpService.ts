@@ -97,7 +97,7 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
   if (exam.status !== 'active') throw new AppError(400, 'Exam must be published (active) before generating a SEB file');
   if (!exam.sebExamToken) throw new AppError(400, 'Exam token missing — republish the exam first');
 
-  const gateUrl = `${env.CORS_ORIGIN}/seb/gate/${exam.sebExamToken}`;
+  const gateUrl = `${env.CORS_ORIGIN}/exam-join/${exam.sebExamToken}`;
 
   // Build a SEB-compatible plist XML
   const plistXml = buildSEBPlist({
@@ -105,20 +105,16 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
     title: exam.title,
   });
 
-  // The sebConfigKey is SHA256 of the plist content (SEB spec §5.3)
+  // The sebConfigKey is SHA256 of the plist XML content (SEB spec §5.3)
   const sebConfigKey = crypto.createHash('sha256').update(plistXml, 'utf8').digest('hex');
 
-  // SEB expects the config file to be zlib-deflate compressed then stored as
-  // a binary .seb file. We base64-encode it for easy transport.
+  // SEB unencrypted config files (.seb) MUST follow the official Safe Exam Browser binary spec:
+  // 1. 4-byte ASCII prefix: "plnd" (Plain Data indicator)
+  // 2. Gzip-compressed stream containing the UTF-8 XML plist
   const zlib = await import('zlib');
-  const compressed: Buffer = await new Promise((resolve, reject) => {
-    zlib.deflate(Buffer.from(plistXml, 'utf8'), (err, buf) => {
-      if (err) reject(err);
-      else resolve(buf);
-    });
-  });
-
-  const sebFileBase64 = compressed.toString('base64');
+  const gzipped = zlib.gzipSync(Buffer.from(plistXml, 'utf8'));
+  const sebBinary = Buffer.concat([Buffer.from('plnd', 'ascii'), gzipped]);
+  const sebFileBase64 = sebBinary.toString('base64');
 
   // Persist the sebConfigKey into the exam row so sebGuard can validate future requests
   await db.update(exams)
@@ -187,11 +183,13 @@ export async function pushGradeToERP(payload: {
 // ─── Plist Builder ────────────────────────────────────────────────────────────
 
 function buildSEBPlist(opts: { startURL: string; title: string }): string {
-  // Standard SEB plist structure (compatible with SEB 3.x+)
+  // Standard SEB plist structure (compatible with SEB 3.x+ on Windows, Mac, and iOS)
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+  <key>originatorVersion</key>
+  <string>SEB_Win_3.5.0</string>
   <key>startURL</key>
   <string>${escapeXml(opts.startURL)}</string>
   <key>sendBrowserExamKey</key>
@@ -199,7 +197,7 @@ function buildSEBPlist(opts: { startURL: string; title: string }): string {
   <key>browserExamKeyAllowedURLFilter</key>
   <string>${escapeXml(new URL(opts.startURL).origin + '/*')}</string>
   <key>allowQuit</key>
-  <false/>
+  <true/>
   <key>quitURLConfirm</key>
   <true/>
   <key>showTaskBar</key>
