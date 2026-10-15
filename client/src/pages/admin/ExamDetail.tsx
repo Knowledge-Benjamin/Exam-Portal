@@ -14,6 +14,9 @@ export function ExamDetail() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isRepublishing, setIsRepublishing] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
+  const [isSyncingErp, setIsSyncingErp] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+  const [showAdvancedSeb, setShowAdvancedSeb] = useState(false);
   const [editingSebKey, setEditingSebKey] = useState(false);
   const [sebKeyInput, setSebKeyInput] = useState('');
   const [editingFileUpload, setEditingFileUpload] = useState(false);
@@ -55,7 +58,7 @@ export function ExamDetail() {
   };
 
   const handlePublish = async () => {
-    if (!window.confirm('Are you sure you want to publish this exam? Students will be able to access it via SEB.')) {
+    if (!window.confirm('Are you sure you want to publish this exam? It will be synchronized with the Multitech Student Portal and students will be able to download the Safe Exam Browser file.')) {
       return;
     }
     
@@ -63,10 +66,48 @@ export function ExamDetail() {
     try {
       const { data } = await api.post(`/exams/${id}/publish`);
       setExam({ ...data.exam, sebGateUrl: data.sebGateUrl });
+      alert(data.message || 'Exam successfully published and synchronized with Multitech ERP!');
     } catch (err: any) {
       alert(err.error || 'Failed to publish exam');
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleSyncErp = async () => {
+    setIsSyncingErp(true);
+    setSyncFeedback(null);
+    try {
+      const { data } = await api.post(`/exams/${id}/generate-seb`);
+      setSyncFeedback('Synchronized with Multitech ERP! Students can now download the Safe Exam Browser file.');
+      alert('SEB file successfully generated and pushed to Multitech Web System! Students can now download it from their student portal.');
+    } catch (err: any) {
+      alert(err.error || 'Failed to sync with Multitech ERP.');
+    } finally {
+      setIsSyncingErp(false);
+    }
+  };
+
+  const handleDownloadSeb = async () => {
+    try {
+      const { data } = await api.post(`/exams/${id}/generate-seb`);
+      if (data.sebFileBase64) {
+        const byteCharacters = atob(data.sebFileBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'application/seb' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = data.filename || `${exam?.title?.replace(/[^a-z0-9]/gi, '_') || 'exam'}.seb`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    } catch (err: any) {
+      alert(err.error || 'Failed to download SEB file.');
     }
   };
 
@@ -194,104 +235,174 @@ export function ExamDetail() {
 
       {error && <div className="form-error">{error}</div>}
 
-      {sebGateUrl && (
-        <div className="card">
+      {exam.status === 'active' && (
+        <div className="card" style={{ borderLeft: '4px solid #10b981', background: 'rgba(16, 185, 129, 0.05)' }}>
           <div className="card-header">
             <div>
-              <h3 className="panel-heading">Exam is Published</h3>
-              <p className="panel-subtitle">Embed this URL in your Safe Exam Browser configuration file. Students must use this exact SEB profile.</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="status-pill status-pill--info" style={{ background: '#10b981', color: '#fff' }}>LIVE ON STUDENT PORTAL</span>
+                <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>Course Code: <strong>{exam.erpCourseCode}</strong></span>
+              </div>
+              <h3 className="panel-heading" style={{ marginTop: '0.5rem' }}>Exam is Active & Ready for Students</h3>
+              <p className="panel-subtitle">
+                Students registered for <strong>{exam.erpCourseCode}</strong> can log into their Multitech Student Portal &rarr; Online Exams, generate their 6-digit PIN, and download the Safe Exam Browser configuration to begin.
+              </p>
             </div>
           </div>
           <div className="card-body">
-            <code className="code-box">{sebGateUrl}</code>
-            <button
-              type="button"
-              className="button button--outline"
-              onClick={() => {
-                navigator.clipboard.writeText(sebGateUrl);
-                alert('Copied to clipboard');
-              }}
-            >
-              Copy URL
-            </button>
-            <button
-              type="button"
-              className="button button--secondary"
-              onClick={handleRegenerateToken}
-              disabled={isRegenerating}
-              style={{ marginLeft: '10px' }}
-            >
-              {isRegenerating ? 'Regenerating...' : 'Regenerate Link'}
-            </button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="button button--highlight"
+                onClick={handleSyncErp}
+                disabled={isSyncingErp}
+              >
+                {isSyncingErp ? 'Pushing to Student Portal...' : '⚡ Push / Sync to Student Portal'}
+              </button>
+              <button
+                type="button"
+                className="button button--outline"
+                onClick={handleDownloadSeb}
+              >
+                Download .seb File (Test as Student)
+              </button>
+              <a
+                href="https://multitech-bussiness-school.onrender.com/lecturer/courses"
+                target="_blank"
+                rel="noreferrer"
+                className="button button--secondary"
+                style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
+              >
+                Return to Multitech ERP ↗
+              </a>
+            </div>
+            {syncFeedback && (
+              <p style={{ marginTop: '0.75rem', color: '#10b981', fontSize: '0.9rem', fontWeight: 500 }}>
+                ✓ {syncFeedback}
+              </p>
+            )}
           </div>
         </div>
       )}
 
-      <div className="card">
-        <div className="card-header">
-          <div>
-            <h3 className="panel-heading">Safe Exam Browser Config Key</h3>
-            <p className="panel-subtitle">Generate a config key in SEB and paste it here to enforce strict SEB validation.</p>
+      {exam.status === 'draft' && (
+        <div className="card" style={{ borderLeft: '4px solid #f59e0b', background: 'rgba(245, 158, 11, 0.05)' }}>
+          <div className="card-header">
+            <div>
+              <span className="status-pill status-pill--highlight">DRAFT MODE</span>
+              <h3 className="panel-heading" style={{ marginTop: '0.5rem' }}>Draft Exam Setup</h3>
+              <p className="panel-subtitle">
+                Add your exam questions (or upload your PDF exam paper), verify your schedule and duration, then click <strong>"Publish Exam"</strong> above. Publishing will automatically synchronize the exam with the Multitech Student Portal.
+              </p>
+            </div>
           </div>
         </div>
+      )}
 
-        {!editingSebKey ? (
-          <div className="form-group">
-            {exam.sebConfigKey ? (
-              <div className="card card-compact">
-                <div className="card-body" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                  <div className="form-input" style={{ flex: 1, padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                    {exam.sebConfigKey.substring(0, 16)}...
-                  </div>
-                  <button type="button" className="button button--outline" onClick={() => setEditingSebKey(true)}>
-                    Update
+      <div style={{ margin: '1rem 0' }}>
+        <button
+          type="button"
+          onClick={() => setShowAdvancedSeb(!showAdvancedSeb)}
+          className="button button--ghost"
+          style={{ fontSize: '0.85rem', color: '#94a3b8' }}
+        >
+          {showAdvancedSeb ? '▲ Hide Advanced SEB Security Details' : '▼ Show Advanced SEB Security Details'}
+        </button>
+      </div>
+
+      {showAdvancedSeb && (
+        <div className="card" style={{ opacity: 0.95 }}>
+          <div className="card-header">
+            <div>
+              <h3 className="panel-heading">Advanced: SEB Gateway & Custom Config Key</h3>
+              <p className="panel-subtitle">The portal automatically packages and embeds these security parameters into the student's .seb download file. No manual configuration is required.</p>
+            </div>
+          </div>
+          <div className="card-body">
+            {sebGateUrl && (
+              <div style={{ marginBottom: '1.5rem' }}>
+                <p className="meta-text--small">DIRECT SEB GATEWAY URL</p>
+                <code className="code-box">{sebGateUrl}</code>
+                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className="button button--outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(sebGateUrl);
+                      alert('Copied to clipboard');
+                    }}
+                  >
+                    Copy URL
+                  </button>
+                  <button
+                    type="button"
+                    className="button button--secondary"
+                    onClick={handleRegenerateToken}
+                    disabled={isRegenerating}
+                  >
+                    {isRegenerating ? 'Regenerating...' : 'Regenerate Link'}
                   </button>
                 </div>
               </div>
-            ) : (
-              <button type="button" className="button button--secondary" onClick={() => setEditingSebKey(true)}>
-                Add Config Key
-              </button>
             )}
-          </div>
-        ) : (
-          <div className="form-stack">
-            <div className="form-group">
-              <label className="form-label" htmlFor="sebKey">
-                SEB Config Key
-              </label>
-              <input
-                id="sebKey"
-                type="text"
-                value={sebKeyInput}
-                onChange={(e) => setSebKeyInput(e.target.value)}
-                placeholder="Paste the SEB config key here..."
-                className="form-input"
-              />
+
+            <div>
+              <p className="meta-text--small">MANUAL SEB CONFIG KEY OVERRIDE</p>
+              {!editingSebKey ? (
+                <div className="form-group">
+                  {exam.sebConfigKey ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <div className="form-input" style={{ flex: 1, padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                        {exam.sebConfigKey.substring(0, 24)}...
+                      </div>
+                      <button type="button" className="button button--outline" onClick={() => setEditingSebKey(true)}>
+                        Update
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" className="button button--secondary" onClick={() => setEditingSebKey(true)}>
+                      Add Custom Key
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="form-stack">
+                  <div className="form-group">
+                    <input
+                      id="sebKey"
+                      type="text"
+                      value={sebKeyInput}
+                      onChange={(e) => setSebKeyInput(e.target.value)}
+                      placeholder="Paste custom SEB config key here..."
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-actions">
+                    <button type="button" className="button button--secondary" onClick={() => {
+                      setEditingSebKey(false);
+                      setSebKeyInput(exam.sebConfigKey ?? '');
+                    }}>
+                      Cancel
+                    </button>
+                    <button type="button" className="button button--highlight" onClick={async () => {
+                      try {
+                        await api.patch(`/exams/${id}`, { sebConfigKey: sebKeyInput });
+                        setExam((prev) => (prev ? { ...prev, sebConfigKey: sebKeyInput } : prev));
+                        setEditingSebKey(false);
+                        alert('SEB Config Key saved successfully');
+                      } catch (err: any) {
+                        alert(err.error || 'Failed to save SEB Config Key');
+                      }
+                    }}>
+                      Save
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
-            <div className="form-actions">
-              <button type="button" className="button button--secondary" onClick={() => {
-                setEditingSebKey(false);
-                setSebKeyInput(exam.sebConfigKey ?? '');
-              }}>
-                Cancel
-              </button>
-              <button type="button" className="button button--highlight" onClick={async () => {
-                try {
-                  await api.patch(`/exams/${id}`, { sebConfigKey: sebKeyInput });
-                  setExam((prev) => (prev ? { ...prev, sebConfigKey: sebKeyInput } : prev));
-                  setEditingSebKey(false);
-                  alert('SEB Config Key saved successfully');
-                } catch (err: any) {
-                  alert(err.error || 'Failed to save SEB Config Key');
-                }
-              }}>
-                Save
-              </button>
-            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="card">
         <div className="card-header">

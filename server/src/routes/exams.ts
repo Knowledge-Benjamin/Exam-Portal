@@ -193,9 +193,24 @@ router.post(
     try {
       const exam = await publishExam(req.params.id, req.user!.sub, req.user!.role);
       const baseUrl = env.CORS_ORIGIN;
+      
+      // Auto-generate SEB config file and push to Multitech ERP webhook
+      let erpSyncSuccess = false;
+      let erpSyncMessage = '';
+      try {
+        const { sebConfigKey } = await generateAndPushSEBFile(req.params.id);
+        erpSyncSuccess = true;
+        erpSyncMessage = 'Exam published and synchronized with Multitech Web System! Students can now download the Safe Exam Browser file directly from their student dashboard.';
+      } catch (pushErr: any) {
+        console.warn('[publish] auto generateAndPushSEBFile warning:', pushErr.message);
+        erpSyncMessage = 'Exam is active, but ERP sync encountered an issue: ' + (pushErr.message || 'Check webhook config');
+      }
+
       res.json({
         exam,
         sebGateUrl: `${baseUrl}/seb/gate/${exam.sebExamToken}`,
+        erpSyncSuccess,
+        message: erpSyncMessage,
       });
     } catch (err) {
       next(err);
