@@ -20,6 +20,7 @@ export interface User {
 export interface Exam {
   id: string;
   title: string;
+  erpCourseCode?: string;
   description?: string;
   teacherId: string;
   pdfPath?: string;

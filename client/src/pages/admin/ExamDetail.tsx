@@ -78,9 +78,10 @@ export function ExamDetail() {
     setIsSyncingErp(true);
     setSyncFeedback(null);
     try {
-      const { data } = await api.post(`/exams/${id}/generate-seb`);
-      setSyncFeedback('Synchronized with Multitech ERP! Students can now download the Safe Exam Browser file.');
-      alert('SEB file successfully generated and pushed to Multitech Web System! Students can now download it from their student portal.');
+      const res = await api.post(`/exams/${id}/generate-seb`);
+      const msg = res.data?.message || 'SEB file successfully generated and pushed to Multitech Web System! Students can now download it from their student portal.';
+      setSyncFeedback(msg);
+      alert(msg);
     } catch (err: any) {
       alert(err.error || 'Failed to sync with Multitech ERP.');
     } finally {
