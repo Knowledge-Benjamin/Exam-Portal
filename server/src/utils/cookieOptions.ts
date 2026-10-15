@@ -8,25 +8,34 @@ export function getCookieOptions(req: Request, overrides?: {
   sameSite?: 'strict' | 'lax' | 'none';
   domain?: string;
 }) {
-  const originHeader = String(req.get('origin') ?? '');
-  const hostHeader = String(req.get('host') ?? '');
   const forwardedProto = String(req.get('x-forwarded-proto') ?? '');
   const protocol = req.protocol || forwardedProto.split(',')[0] || 'http';
   const isSecure = protocol.toLowerCase() === 'https';
 
-  let crossSite = false;
-  if (originHeader) {
-    try {
-      const originHost = new URL(originHeader).host;
-      const corsHost = env.CORS_ORIGIN ? new URL(env.CORS_ORIGIN).host : '';
-      crossSite = originHost !== hostHeader && originHost !== corsHost;
-    } catch {
-      crossSite = false;
+  // In production the frontend (eportal-zv74.onrender.com) and backend
+  // (exam-portal-backend-rwk8.onrender.com) are always cross-origin. Browser
+  // SSO redirects carry no Origin header so the old crossSite detection always
+  // returned false → SameSite=Lax → cookies were dropped on subsequent XHR
+  // calls from the frontend. Force SameSite=None;Secure in production.
+  const isProd = env.isProd;
+
+  let crossSite = isProd; // always cross-site in production
+  if (!isProd) {
+    const originHeader = String(req.get('origin') ?? '');
+    const hostHeader = String(req.get('host') ?? '');
+    if (originHeader) {
+      try {
+        const originHost = new URL(originHeader).host;
+        const corsHost = env.CORS_ORIGIN ? new URL(env.CORS_ORIGIN).host : '';
+        crossSite = originHost !== hostHeader && originHost !== corsHost;
+      } catch {
+        crossSite = false;
+      }
     }
   }
 
   const finalSameSite = overrides?.sameSite ?? (crossSite ? 'none' : 'lax');
-  const finalSecure = overrides?.secure ?? (finalSameSite === 'none' || env.isProd ? true : isSecure);
+  const finalSecure = overrides?.secure ?? (finalSameSite === 'none' || isProd ? true : isSecure);
 
   return {
     httpOnly: overrides?.httpOnly ?? true,
@@ -34,7 +43,6 @@ export function getCookieOptions(req: Request, overrides?: {
     sameSite: finalSameSite,
     path: overrides?.path ?? '/',
     // Never set domain attribute—let cookies be host-only so they persist
-    // regardless of frontend origin. This ensures cookies work when frontend
-    // makes requests via relative paths to the backend's actual host.
+    // regardless of frontend origin.
   };
 }
