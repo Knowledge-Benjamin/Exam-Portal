@@ -4,7 +4,6 @@ import { env } from '../config/env';
 import { timingSafeEqual } from '../utils/crypto';
 import { getExamById } from '../services/examService';
 import { getExamByToken } from '../services/sebService';
-import { getUserProfile } from '../services/authService';
 
 const SEB_BEK_HEADER = 'x-safeexambrowser-requesthash';
 const SEB_CK_HEADER = 'x-safeexambrowser-configkeyhash';
@@ -12,11 +11,16 @@ const SEB_CK_HEADER = 'x-safeexambrowser-configkeyhash';
 /**
  * Blocks access unless the request carries the SEB request hash header.
  * In production, ALWAYS requires the SEB header.
- * Then fetches the teacher's SEB config key. If configured, cryptographically validates the hash.
+ *
+ * SEB Browser Exam Key spec:
+ *   requestHash = SHA256( url_as_utf8_bytes + configKey_as_raw_bytes )
+ * where configKey_as_raw_bytes is the 32-byte binary SHA256 of the plist XML —
+ * NOT the hex string representation. We store it as hex in the DB, so we must
+ * Buffer.from(hex, 'hex') before hashing.
  */
 export async function sebGuard(req: Request, res: Response, next: NextFunction): Promise<void> {
   const bekHash = req.headers[SEB_BEK_HEADER] as string | undefined;
-  const ckHash = req.headers[SEB_CK_HEADER] as string | undefined;
+  const ckHash  = req.headers[SEB_CK_HEADER]  as string | undefined;
   const anyHeaderHash = bekHash || ckHash;
 
   // In non-production, if no SEB header is present, bypass for development
@@ -31,15 +35,15 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
       `[seb] sebGuard blocked: missing SEB header. path=${req.method} ${req.originalUrl} headers=${Object.keys(req.headers).join(', ')}`,
     );
     res.status(403).json({
-      error: `Access denied. This resource is only available inside Safe Exam Browser. (Debug: Missing header. Headers received: ${Object.keys(req.headers).join(', ')})`,
-      details: 'No SEB request hash header was present. Verify SEB is forwarding the x-safeexambrowser-requesthash or x-safeexambrowser-configkeyhash header.',
+      error: 'Access denied. This resource is only available inside Safe Exam Browser.',
+      details: 'No SEB request hash header was present.',
     });
     return;
   }
 
   // Determine examId based on route context
   let examId: string | null = null;
-  
+
   if (req.examSession?.examId) {
     examId = req.examSession.examId;
   } else if (req.params.token) {
@@ -58,44 +62,55 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
   if (examId) {
     try {
       const exam = await getExamById(examId);
-      if (exam) {
-        if (exam.sebConfigKey) {
-          sebConfigKey = exam.sebConfigKey;
-        }
+      if (exam?.sebConfigKey) {
+        sebConfigKey = exam.sebConfigKey;
       }
     } catch { /* ignore */ }
   }
-  // If a key is configured for this teacher, validate it strictly
+
+  // If a config key is stored for this exam, validate the SEB hash strictly
   if (sebConfigKey) {
-    // Sanitize the config key to prevent copy-paste whitespace or case issues
     const sanitizedKey = sebConfigKey.trim().toLowerCase();
 
-    // The SEB client computes the hash using the URL it sees in its address bar.
-    // We use env.CORS_ORIGIN as the base, but since it might be misconfigured (e.g. http instead of https),
-    // we calculate hashes for both protocols to make the validation robust.
-    const baseOrigin = env.CORS_ORIGIN.replace(/\/$/, '');
+    // configKey stored in DB is hex — decode to raw 32-byte Buffer
+    const configKeyBytes = Buffer.from(sanitizedKey, 'hex');
+
+    // Try both https and http variants of the origin (robust to misconfigured env)
+    const baseOrigin  = env.CORS_ORIGIN.replace(/\/$/, '');
     const originHttps = baseOrigin.replace(/^http:\/\//, 'https://');
-    const originHttp = baseOrigin.replace(/^https:\/\//, 'http://');
+    const originHttp  = baseOrigin.replace(/^https:\/\//, 'http://');
 
     const urlHttps = `${originHttps}${req.originalUrl}`;
-    const urlHttp = `${originHttp}${req.originalUrl}`;
+    const urlHttp  = `${originHttp}${req.originalUrl}`;
 
-    // SEB computes SHA256(URL + Key)
-    const expectedHttps = crypto.createHash('sha256').update(urlHttps + sanitizedKey, 'utf8').digest('hex');
-    const expectedHttp = crypto.createHash('sha256').update(urlHttp + sanitizedKey, 'utf8').digest('hex');
-    
-    // Check if the expected hash matches either the BEK header or the CK header
-    const matchesBek = bekHash ? (timingSafeEqual(expectedHttps, bekHash) || timingSafeEqual(expectedHttp, bekHash)) : false;
-    const matchesCk = ckHash ? (timingSafeEqual(expectedHttps, ckHash) || timingSafeEqual(expectedHttp, ckHash)) : false;
+    // SHA256( url_utf8_bytes || configKey_raw_bytes )
+    const expectedHttps = crypto.createHash('sha256')
+      .update(Buffer.from(urlHttps, 'utf8'))
+      .update(configKeyBytes)
+      .digest('hex');
+    const expectedHttp = crypto.createHash('sha256')
+      .update(Buffer.from(urlHttp, 'utf8'))
+      .update(configKeyBytes)
+      .digest('hex');
+
+    const receivedBek = bekHash?.toLowerCase() ?? null;
+    const receivedCk  = ckHash?.toLowerCase()  ?? null;
+
+    const matchesBek = receivedBek
+      ? (timingSafeEqual(expectedHttps, receivedBek) || timingSafeEqual(expectedHttp, receivedBek))
+      : false;
+    const matchesCk  = receivedCk
+      ? (timingSafeEqual(expectedHttps, receivedCk) || timingSafeEqual(expectedHttp, receivedCk))
+      : false;
 
     if (!matchesBek && !matchesCk) {
-      const keySnippet = sanitizedKey.substring(0, 6) + '...';
+      const keySnippet = `${sanitizedKey.substring(0, 6)}...${sanitizedKey.substring(sanitizedKey.length - 4)}`;
       console.warn(
-        `[seb] sebGuard blocked: config key mismatch. path=${req.method} ${req.originalUrl} URL=${urlHttps} or ${urlHttp} DB_Key=${keySnippet} ReceivedBEK=${bekHash || 'none'} ReceivedCK=${ckHash || 'none'}`,
+        `[seb] config key mismatch. URL=${urlHttps} expected=${expectedHttps} BEK=${receivedBek ?? 'none'} CK=${receivedCk ?? 'none'} DBKey=${keySnippet}`,
       );
       res.status(403).json({
-        error: `Safe Exam Browser authentication failed. Config key mismatch. (Debug: URL=${urlHttps}, DB_Key=${keySnippet}, ReceivedBEK=${bekHash || 'none'}, ReceivedCK=${ckHash || 'none'})`,
-        details: 'SEB request hash did not match the expected hash for this URL and config key. Verify the gate URL and SEB config key are correct.',
+        error: 'Safe Exam Browser authentication failed. Config key mismatch.',
+        details: `Debug: expected=${expectedHttps}, BEK=${receivedBek ?? 'none'}, CK=${receivedCk ?? 'none'}, URL=${urlHttps}`,
       });
       return;
     }
