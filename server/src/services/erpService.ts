@@ -78,8 +78,15 @@ export async function verifyStudentPin(pin: string): Promise<{ studentRegNumber:
     throw new AppError(502, 'Could not verify PIN with the ERP. Please try again.');
   }
 
-  const data = (await res.json()) as { studentRegNumber: string; studentName: string };
-  return data;
+  const raw = (await res.json()) as any;
+  const studentRegNumber = raw.studentRegNumber || raw.data?.studentRegNumber;
+  const studentName = raw.studentName || raw.data?.studentName;
+
+  if (!studentRegNumber) {
+    throw new AppError(500, 'ERP verified PIN but did not return student registration number.');
+  }
+
+  return { studentRegNumber, studentName: studentName || 'Student' };
 }
 
 // ─── Push Published Exam to ERP ───────────────────────────────────────────────
