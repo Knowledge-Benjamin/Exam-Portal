@@ -4,6 +4,7 @@ import { db } from '../db/db';
 import { exams } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { AppError } from '../middleware/errorHandler';
+import { generateConfigKey } from '../utils/sebKey';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -99,24 +100,58 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
 
   const gateUrl = `${env.CORS_ORIGIN}/exam-join/${exam.sebExamToken}`;
 
+  const sebConfig: Record<string, unknown> = {
+    startURL: gateUrl,
+    sendBrowserExamKey: true,
+    browserExamKeyAllowedURLFilter: `${new URL(gateUrl).origin}/*`,
+    allowQuit: true,
+    quitURLConfirm: true,
+    showTaskBar: true,
+    taskBarHeight: 40,
+    allowedDisplays: 1,
+    internalDisplayOnly: true,
+    enableBrowserWindowToolbar: false,
+    allowPreferencesWindow: false,
+    browserWindowAllowReload: true,
+    newBrowserWindowAllowReload: true,
+    newBrowserWindowByLinkPolicy: 2,
+    openLinksInSameWindow: false,
+    enableJava: false,
+    enablePlugIns: true,
+    allowSpellCheck: false,
+    allowDictionaryLookup: false,
+    showTime: true,
+    showInputLanguage: true,
+    allowSwitchToApplications: false,
+    allowFlashFullscreen: false,
+    examSessionClearCookiesOnEnd: true,
+    URLFilterEnable: false,
+    URLFilterEnableContentFilter: false,
+    hashedQuitPassword: '',
+    cryptoIdentity: '',
+    configFileEncryptionType: 0,
+  };
+
+  // Generate the official SEB Config Key per Safe Exam Browser specification
+  const sebConfigKey = generateConfigKey(sebConfig);
+
   // Build a SEB-compatible plist XML
   const plistXml = buildSEBPlist({
     startURL: gateUrl,
     title: exam.title,
   });
 
-  // The sebConfigKey is SHA256 of the plist XML content (SEB spec §5.3)
-  const sebConfigKey = crypto.createHash('sha256').update(plistXml, 'utf8').digest('hex');
-
   // SEB unencrypted config files (.seb) MUST follow the official Safe Exam Browser binary spec:
   // 1. 4-byte ASCII prefix: "plnd" (Plain Data indicator)
-  // 2. Gzip-compressed stream containing the UTF-8 XML plist
+  // 2. Gzip-compressed stream (mtime=0 for deterministic output) containing the UTF-8 XML plist
   const zlib = await import('zlib');
-  const gzipped = zlib.gzipSync(Buffer.from(plistXml, 'utf8'));
+  const gzipped = zlib.gzipSync(Buffer.from(plistXml, 'utf8'), { level: 9 });
+  // Strip the gzip mtime bytes (bytes 4-7) so the binary is deterministic across calls
+  gzipped.writeUInt32LE(0, 4);
   const sebBinary = Buffer.concat([Buffer.from('plnd', 'ascii'), gzipped]);
   const sebFileBase64 = sebBinary.toString('base64');
 
-  // Persist the sebConfigKey into the exam row so sebGuard can validate future requests
+  // Persist the official sebConfigKey into the exam row so sebGuard can validate future requests
   await db.update(exams)
     .set({ sebConfigKey, updatedAt: new Date() })
     .where(eq(exams.id, examId));
