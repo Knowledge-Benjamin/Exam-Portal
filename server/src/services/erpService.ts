@@ -204,6 +204,10 @@ function buildSEBPlist(opts: { startURL: string; title: string }): string {
   <true/>
   <key>taskBarHeight</key>
   <integer>40</integer>
+  <key>allowedDisplays</key>
+  <integer>3</integer>
+  <key>internalDisplayOnly</key>
+  <false/>
   <key>enableBrowserWindowToolbar</key>
   <false/>
   <key>allowPreferencesWindow</key>
