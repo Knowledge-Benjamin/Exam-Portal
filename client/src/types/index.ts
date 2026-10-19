@@ -54,6 +54,8 @@ export interface Exam {
   durationMinutes: number;
   windowBufferMinutes: number;
   allowFileUpload: boolean;
+  assessmentType?: 'final_exam' | 'coursework';
+  weightPercentage?: number;
   sebConfigKey?: string | null;
   sebExamToken?: string;
   sebSettings?: SebSettings;
@@ -109,6 +111,8 @@ export interface CreateExamForm {
   durationMinutes: number;
   windowBufferMinutes: number;
   allowFileUpload: boolean;
+  assessmentType?: 'final_exam' | 'coursework';
+  weightPercentage?: number;
   sebSettings?: SebSettings;
 }
 

@@ -8,6 +8,8 @@ import {
   uuid,
   pgEnum,
   index,
+  varchar,
+  numeric,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -89,6 +91,8 @@ export const exams = pgTable('exams', {
   durationMinutes: integer('duration_minutes').notNull(),
   windowBufferMinutes: integer('window_buffer_minutes').notNull().default(5),
   allowFileUpload: boolean('allow_file_upload').notNull().default(false),
+  assessmentType: varchar('assessment_type', { length: 50 }).notNull().default('final_exam'),
+  weightPercentage: numeric('weight_percentage', { precision: 5, scale: 2 }).notNull().default('60.00'),
   sebExamToken: text('seb_exam_token').unique(),
   sebConfigKey: text('seb_config_key'),
   sebSettings: jsonb('seb_settings').$type<SebSettings>().notNull().default({}),

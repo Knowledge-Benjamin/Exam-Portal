@@ -214,7 +214,12 @@ export function ExamDetail() {
       <div className="card">
         <div className="card-header">
           <div>
-            <h2 className="page-title">{exam.title}</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
+              <h2 className="page-title" style={{ margin: 0 }}>{exam.title}</h2>
+              <span className="status-pill status-pill--info" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                {exam.assessmentType === 'coursework' ? '📝 Coursework (CAT)' : '🎓 Final Examination'} ({exam.weightPercentage ?? (exam.assessmentType === 'coursework' ? 40 : 60)}%)
+              </span>
+            </div>
             <p className="panel-subtitle">{exam.description || 'No description provided'}</p>
           </div>
           <div className="card-actions">

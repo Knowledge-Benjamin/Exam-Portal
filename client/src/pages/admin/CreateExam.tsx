@@ -20,6 +20,8 @@ export function CreateExam() {
     durationMinutes: 60,
     windowBufferMinutes: 5,
     allowFileUpload: false,
+    assessmentType: 'final_exam',
+    weightPercentage: 60,
     sebSettings: {
       allowedDisplays: 1,
       internalDisplayOnly: true,
@@ -125,6 +127,93 @@ export function CreateExam() {
               rows={3}
               className="form-input"
             />
+          </div>
+
+          {/* Assessment Type & Grade Contribution */}
+          <div className="form-group" style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <label className="form-label" style={{ marginBottom: '0.4rem', fontWeight: 700 }}>
+              Assessment Classification &amp; Grade Weight
+            </label>
+            <p className="panel-subtitle" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
+              Determines whether this assessment flows into Coursework or the Final Exam component on the university transcript.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+              <label style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                padding: '1rem',
+                borderRadius: '10px',
+                border: `2px solid ${formData.assessmentType === 'final_exam' ? 'var(--color-primary, #3b82f6)' : 'rgba(255,255,255,0.1)'}`,
+                background: formData.assessmentType === 'final_exam' ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0.15)',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="radio"
+                  name="assessmentType"
+                  value="final_exam"
+                  checked={formData.assessmentType === 'final_exam'}
+                  onChange={() => setFormData({ ...formData, assessmentType: 'final_exam', weightPercentage: 60 })}
+                  style={{ marginTop: '3px' }}
+                />
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem', color: '#f8fafc' }}>
+                    🎓 Final Examination
+                  </strong>
+                  <span style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4, display: 'block', marginTop: '3px' }}>
+                    End-of-term examination. Populates the <strong>Exam Mark</strong> component (Default: 60%).
+                  </span>
+                </div>
+              </label>
+
+              <label style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                padding: '1rem',
+                borderRadius: '10px',
+                border: `2px solid ${formData.assessmentType === 'coursework' ? 'var(--color-primary, #3b82f6)' : 'rgba(255,255,255,0.1)'}`,
+                background: formData.assessmentType === 'coursework' ? 'rgba(59, 130, 246, 0.08)' : 'rgba(0,0,0,0.15)',
+                cursor: 'pointer'
+              }}>
+                <input
+                  type="radio"
+                  name="assessmentType"
+                  value="coursework"
+                  checked={formData.assessmentType === 'coursework'}
+                  onChange={() => setFormData({ ...formData, assessmentType: 'coursework', weightPercentage: 40 })}
+                  style={{ marginTop: '3px' }}
+                />
+                <div>
+                  <strong style={{ display: 'block', fontSize: '0.95rem', color: '#f8fafc' }}>
+                    📝 Continuous Assessment / Test (CAT)
+                  </strong>
+                  <span style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4, display: 'block', marginTop: '3px' }}>
+                    Midterm test, quiz, or practical. Populates the <strong>Coursework Mark</strong> component (Default: 40%).
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <label htmlFor="weightPercentage" style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }}>
+                Grading Weight:
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <input
+                  id="weightPercentage"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={formData.weightPercentage ?? (formData.assessmentType === 'coursework' ? 40 : 60)}
+                  onChange={(e) => setFormData({ ...formData, weightPercentage: parseInt(e.target.value) || 0 })}
+                  className="form-input"
+                  style={{ width: '80px', textAlign: 'center', padding: '6px 10px', fontWeight: 700 }}
+                />
+                <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.88rem' }}>% of overall course grade</span>
+              </div>
+            </div>
           </div>
 
           <div className="form-group">

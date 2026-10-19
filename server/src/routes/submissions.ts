@@ -105,6 +105,8 @@ router.patch(
               marksAwarded,
               totalMarks,
               examTitle: exam.title,
+              assessmentType: exam.assessmentType ?? 'final_exam',
+              weightPercentage: Number(exam.weightPercentage) || 60,
             }).catch((err: Error) => console.warn('[grading] ERP grade push failed:', err.message));
           });
         });

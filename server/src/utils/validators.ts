@@ -83,6 +83,8 @@ export const createExamSchema = z.object({
   durationMinutes: z.number().int().min(5).max(480),
   windowBufferMinutes: z.number().int().min(0).max(30).default(5),
   allowFileUpload: z.boolean().default(false),
+  assessmentType: z.enum(['final_exam', 'coursework']).default('final_exam').optional(),
+  weightPercentage: z.number().min(1).max(100).default(60).optional(),
   sebSettings: sebSettingsSchema,
 });
 

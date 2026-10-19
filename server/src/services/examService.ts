@@ -63,6 +63,8 @@ export async function createExam(
     windowBufferMinutes: number;
     sebConfigKey?: string;
     allowFileUpload?: boolean;
+    assessmentType?: 'final_exam' | 'coursework';
+    weightPercentage?: number;
     sebSettings?: SebSettings;
   },
 ) {
@@ -82,6 +84,8 @@ export async function createExam(
       durationMinutes: data.durationMinutes,
       windowBufferMinutes: data.windowBufferMinutes,
       allowFileUpload: data.allowFileUpload ?? false,
+      assessmentType: data.assessmentType ?? 'final_exam',
+      weightPercentage: String(data.weightPercentage ?? 60),
       sebConfigKey: data.sebConfigKey,
       sebSettings: data.sebSettings ?? {},
       status: 'draft',
@@ -102,6 +106,8 @@ export async function updateExam(
     windowBufferMinutes: number;
     sebConfigKey: string;
     allowFileUpload: boolean;
+    assessmentType: 'final_exam' | 'coursework';
+    weightPercentage: number;
     sebSettings: SebSettings;
   }>,
   role?: string,
@@ -118,6 +124,8 @@ export async function updateExam(
   if (data.windowBufferMinutes !== undefined) updates.windowBufferMinutes = data.windowBufferMinutes;
   if (data.sebConfigKey !== undefined) updates.sebConfigKey = data.sebConfigKey;
   if (data.allowFileUpload !== undefined) updates.allowFileUpload = data.allowFileUpload;
+  if (data.assessmentType !== undefined) updates.assessmentType = data.assessmentType;
+  if (data.weightPercentage !== undefined) updates.weightPercentage = String(data.weightPercentage);
   if (data.sebSettings !== undefined) updates.sebSettings = data.sebSettings;
   if (data.startTime) {
     const start = new Date(data.startTime);

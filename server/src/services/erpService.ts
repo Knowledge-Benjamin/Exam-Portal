@@ -202,6 +202,8 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
     gateUrl,
     allowFileUpload: exam.allowFileUpload ?? false,
     sebSettings: exam.sebSettings ?? {},
+    assessmentType: exam.assessmentType ?? 'final_exam',
+    weightPercentage: Number(exam.weightPercentage) || 60,
   });
 
   if (!pushResult.ok) {
@@ -242,6 +244,8 @@ export async function pushGradeToERP(payload: {
   marksAwarded: number;
   totalMarks: number;
   examTitle: string;
+  assessmentType?: string;
+  weightPercentage?: number;
 }): Promise<void> {
   const result = await postToERP('/grade-submitted', payload);
   if (!result.ok) {
