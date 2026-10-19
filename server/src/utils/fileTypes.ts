@@ -32,31 +32,24 @@ export const BLOCKED_FILE_TYPES = new Set([
   'application/x-msproject',
   'application/x-visio',
 
-  // Compiled code
-  'application/x-java-applet',
-  'application/x-java-jnlp-file',
-  'application/x-java-vm',
+  // Compiled binary code / system
   'application/x-msil',
-  'application/octet-stream', // Catch ambiguous/unknown binary
-
-  // Disk/System
   'application/x-iso9660-image',
   'application/x-vmdk',
   'application/x-qemu-disk',
 ]);
 
 /**
- * Maximum file size for student submissions (10 MB)
+ * Maximum file size for student submissions (50 MB)
  */
 import path from 'path';
 
 export const MAX_SUBMISSION_FILE_SIZE_MB = 50;
 
+// Block only OS executables, installers, and system-level script runners
 const BLOCKED_FILE_EXTENSIONS = new Set([
-  '.exe', '.dll', '.bat', '.cmd', '.sh', '.ps1', '.vbs',
-  '.js', '.jsx', '.ts', '.tsx', '.py', '.rb', '.pl', '.jar',
-  '.apk', '.zip', '.rar', '.7z', '.gz', '.tar', '.bz2', '.cab',
-  '.msi', '.com', '.scr', '.cpl', '.pif', '.wsf', '.psm1', '.psd1',
+  '.exe', '.dll', '.bat', '.cmd', '.ps1', '.vbs',
+  '.apk', '.msi', '.com', '.scr', '.cpl', '.pif', '.wsf', '.psm1', '.psd1',
 ]);
 
 /**

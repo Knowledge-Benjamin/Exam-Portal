@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../api';
-import type { ExamWithGateUrl } from '../../types';
+import type { ExamWithGateUrl, SebSettings } from '../../types';
 import { formatDate, formatDuration, formatDateTimeCompact } from '../../utils/formatters';
 import { useExamRoomMonitor } from '../../hooks/useExamRoomMonitor';
+import { SebSettingsConfig } from '../../components/admin/SebSettingsConfig';
 
 export function ExamDetail() {
   const { id } = useParams<{ id: string }>();
@@ -19,7 +20,9 @@ export function ExamDetail() {
   const [showAdvancedSeb, setShowAdvancedSeb] = useState(false);
   const [editingSebKey, setEditingSebKey] = useState(false);
   const [sebKeyInput, setSebKeyInput] = useState('');
-  const [editingFileUpload, setEditingFileUpload] = useState(false);
+  const [editingSebSettings, setEditingSebSettings] = useState(false);
+  const [sebSettingsInput, setSebSettingsInput] = useState<SebSettings>({});
+  const [isSavingSebSettings, setIsSavingSebSettings] = useState(false);
   const [fileUploadInput, setFileUploadInput] = useState(false);
   const [stats, setStats] = useState<{
     totalJoined: number;
@@ -41,6 +44,7 @@ export function ExamDetail() {
       setExam(examRes.data.exam);
       setSebKeyInput(examRes.data.exam.sebConfigKey ?? '');
       setFileUploadInput(examRes.data.exam.allowFileUpload ?? false);
+      setSebSettingsInput(examRes.data.exam.sebSettings ?? {});
     } catch (err: any) {
       setError(err.error || 'Failed to load exam details');
     } finally {
@@ -405,59 +409,172 @@ export function ExamDetail() {
         </div>
       )}
 
+      {/* ── Safe Exam Browser & Software Environment Card ── */}
       <div className="card">
         <div className="card-header">
           <div>
-            <h3 className="panel-heading">File Submissions</h3>
-            <p className="panel-subtitle">Allow students to submit file attachments with their exam submission.</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="status-pill status-pill--highlight" style={{ fontSize: '0.72rem' }}>
+                SAFE EXAM BROWSER
+              </span>
+              {exam.allowFileUpload && (
+                <span className="status-pill status-pill--info" style={{ background: '#10b981', color: '#fff', fontSize: '0.72rem' }}>
+                  FILE UPLOADS ENABLED
+                </span>
+              )}
+            </div>
+            <h3 className="panel-heading" style={{ marginTop: '0.4rem' }}>
+              External Applications & SEB Security Environment
+            </h3>
+            <p className="panel-subtitle">
+              Configure allowed external applications (VS Code, Word, Excel, IDEs), multi-display restrictions, and student file attachment submissions.
+            </p>
           </div>
+          {!editingSebSettings && exam.status !== 'closed' && (
+            <button
+              type="button"
+              className="button button--outline"
+              onClick={() => {
+                setEditingSebSettings(true);
+                setSebSettingsInput(exam.sebSettings ?? {});
+                setFileUploadInput(exam.allowFileUpload ?? false);
+              }}
+            >
+              ⚙️ Configure SEB Settings
+            </button>
+          )}
         </div>
 
-        {!editingFileUpload ? (
-          <div className="form-group">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <p className="panel-subtitle">Students can upload files: <strong>{exam.allowFileUpload ? 'Yes' : 'No'}</strong></p>
+        {!editingSebSettings ? (
+          <div className="card-body">
+            <div className="detail-panel detail-panel--split">
+              <div>
+                <p className="meta-text">PERMITTED EXTERNAL APPLICATIONS</p>
+                {exam.sebSettings?.permittedProcesses && exam.sebSettings.permittedProcesses.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginTop: '0.35rem' }}>
+                    {exam.sebSettings.permittedProcesses.map((p) => (
+                      <span
+                        key={p.executable}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem',
+                          padding: '0.3rem 0.6rem',
+                          borderRadius: '0.35rem',
+                          background: 'rgba(56, 189, 248, 0.12)',
+                          border: '1px solid rgba(56, 189, 248, 0.28)',
+                          fontSize: '0.8rem',
+                          color: '#e0f2fe',
+                        }}
+                      >
+                        <strong>{p.title || p.executable}</strong>
+                        <code style={{ fontSize: '0.72rem', color: '#93c5fd' }}>({p.executable})</code>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ margin: '0.35rem 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
+                    🔒 Standard Lock: No external software permitted (strictly locked to exam window).
+                  </p>
+                )}
               </div>
-              <button type="button" className="button button--outline" onClick={() => {
-                setEditingFileUpload(true);
-                setFileUploadInput(exam.allowFileUpload ?? false);
-              }}>
-                Edit
-              </button>
+
+              <div>
+                <p className="meta-text">DISPLAY ANTI-CHEAT POLICY</p>
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.88rem', color: '#fff' }}>
+                  {(exam.sebSettings?.allowedDisplays ?? 1) === 1 && (exam.sebSettings?.internalDisplayOnly ?? true) ? (
+                    <span style={{ color: '#10b981' }}>
+                      🔒 Single Internal Screen Only (External & duplicate displays blocked)
+                    </span>
+                  ) : (
+                    <span style={{ color: '#fbbf24' }}>
+                      🖥️ Dual / External Displays Permitted
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <p className="meta-text">STUDENT FILE SUBMISSIONS</p>
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.88rem', color: '#fff' }}>
+                  {exam.allowFileUpload ? (
+                    <span style={{ color: '#10b981' }}>
+                      ✓ Allowed (Students can upload source code, Word/Excel files, or archives)
+                    </span>
+                  ) : (
+                    <span style={{ color: '#94a3b8' }}>
+                      ✕ Disabled (Answers submitted solely via on-screen editor)
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <p className="meta-text">ASSISTANCE & TOOLS</p>
+                <p style={{ margin: '0.35rem 0 0', fontSize: '0.88rem', color: '#fff' }}>
+                  {exam.sebSettings?.allowSpellCheck ? '✓ Spell Check On' : '✕ Spell Check Off'} ·{' '}
+                  {exam.sebSettings?.allowDictionaryLookup ? '✓ Dictionary On' : '✕ Dictionary Off'}
+                </p>
+              </div>
             </div>
           </div>
         ) : (
-          <div className="form-stack">
-            <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '1rem' }}>
-              <input
-                id="allowFileUpload"
-                type="checkbox"
-                checked={fileUploadInput}
-                onChange={(e) => setFileUploadInput(e.target.checked)}
-                style={{ width: 'auto', cursor: 'pointer' }}
-              />
-              <label className="form-label" htmlFor="allowFileUpload" style={{ margin: 0, cursor: 'pointer' }}>
-                Allow file submissions
-              </label>
-            </div>
-            <div className="form-actions" style={{ padding: '0 1rem' }}>
-              <button type="button" className="button button--secondary" onClick={() => {
-                setEditingFileUpload(false);
-              }}>
+          <div className="card-body" style={{ background: 'rgba(0,0,0,0.15)', borderRadius: '0.5rem', padding: '1.25rem' }}>
+            <SebSettingsConfig
+              sebSettings={sebSettingsInput}
+              allowFileUpload={fileUploadInput}
+              onChangeSettings={setSebSettingsInput}
+              onChangeFileUpload={setFileUploadInput}
+              disabled={isSavingSebSettings}
+            />
+
+            <div className="form-actions" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="button button--secondary"
+                disabled={isSavingSebSettings}
+                onClick={() => {
+                  setEditingSebSettings(false);
+                  setSebSettingsInput(exam.sebSettings ?? {});
+                  setFileUploadInput(exam.allowFileUpload ?? false);
+                }}
+              >
                 Cancel
               </button>
-              <button type="button" className="button button--highlight" onClick={async () => {
-                try {
-                  await api.patch(`/exams/${id}`, { allowFileUpload: fileUploadInput });
-                  setExam((prev) => (prev ? { ...prev, allowFileUpload: fileUploadInput } : prev));
-                  setEditingFileUpload(false);
-                  alert('File submission setting updated successfully');
-                } catch (err: any) {
-                  alert(err.error || 'Failed to update file submission setting');
-                }
-              }}>
-                Save
+              <button
+                type="button"
+                className="button button--highlight"
+                disabled={isSavingSebSettings}
+                onClick={async () => {
+                  setIsSavingSebSettings(true);
+                  try {
+                    const payload = {
+                      sebSettings: sebSettingsInput,
+                      allowFileUpload: fileUploadInput,
+                    };
+                    const res = await api.patch(`/exams/${id}`, payload);
+                    setExam((prev) => (prev ? { ...prev, ...res.data.exam } : prev));
+                    setEditingSebSettings(false);
+
+                    if (exam.status === 'active') {
+                      if (
+                        window.confirm(
+                          'SEB configuration updated! Would you like to push and synchronize the updated .seb file to the Multitech Student Portal now?'
+                        )
+                      ) {
+                        handleSyncErp();
+                      }
+                    } else {
+                      alert('Safe Exam Browser settings updated successfully.');
+                    }
+                  } catch (err: any) {
+                    alert(err.error || 'Failed to update SEB settings');
+                  } finally {
+                    setIsSavingSebSettings(false);
+                  }
+                }}
+              >
+                {isSavingSebSettings ? 'Saving...' : 'Save SEB Settings'}
               </button>
             </div>
           </div>

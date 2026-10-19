@@ -40,6 +40,38 @@ export const updateSystemConfigSchema = z.object({
   googleDriveFolderId: z.string().optional().or(z.literal('')),
 });
 
+// ─── SEB Settings sub-schema ─────────────────────────────────────────────────
+
+const permittedProcessSchema = z.object({
+  executable: z.string().min(1).max(260).trim(),
+  title: z.string().max(100).trim().optional(),
+  allowUserToChooseApp: z.boolean().optional(),
+  os: z.union([z.literal(0), z.literal(1)]).optional(), // 0 = Windows, 1 = macOS
+});
+
+const urlFilterRuleSchema = z.object({
+  action: z.union([z.literal(0), z.literal(1)]), // 0 = block, 1 = allow
+  regex: z.string().max(500).trim(),
+});
+
+export const sebSettingsSchema = z.object({
+  permittedProcesses: z.array(permittedProcessSchema).max(30).optional(),
+  allowedDisplays: z.number().int().min(1).max(2).optional(),
+  internalDisplayOnly: z.boolean().optional(),
+  allowSpellCheck: z.boolean().optional(),
+  allowDictionaryLookup: z.boolean().optional(),
+  browserWindowAllowReload: z.boolean().optional(),
+  showTaskBar: z.boolean().optional(),
+  taskBarHeight: z.number().int().min(20).max(80).optional(),
+  showTime: z.boolean().optional(),
+  showInputLanguage: z.boolean().optional(),
+  allowQuit: z.boolean().optional(),
+  quitURLConfirm: z.boolean().optional(),
+  hashedQuitPassword: z.string().max(128).optional().or(z.literal('')),
+  URLFilterEnable: z.boolean().optional(),
+  URLFilterRules: z.array(urlFilterRuleSchema).max(50).optional(),
+}).optional();
+
 // ─── Exams ───────────────────────────────────────────────────────────────────
 
 export const createExamSchema = z.object({
@@ -51,6 +83,7 @@ export const createExamSchema = z.object({
   durationMinutes: z.number().int().min(5).max(480),
   windowBufferMinutes: z.number().int().min(0).max(30).default(5),
   allowFileUpload: z.boolean().default(false),
+  sebSettings: sebSettingsSchema,
 });
 
 // Update schema: allow all create fields to be optional for edits,

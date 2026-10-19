@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../api';
 import type { CreateExamForm } from '../../types';
 import { toDatetimeLocal } from '../../utils/formatters';
+import { SebSettingsConfig } from '../../components/admin/SebSettingsConfig';
 
 export function CreateExam() {
   const navigate = useNavigate();
@@ -19,6 +20,11 @@ export function CreateExam() {
     durationMinutes: 60,
     windowBufferMinutes: 5,
     allowFileUpload: false,
+    sebSettings: {
+      allowedDisplays: 1,
+      internalDisplayOnly: true,
+      permittedProcesses: [],
+    },
   });
 
   useEffect(() => {
@@ -194,17 +200,35 @@ export function CreateExam() {
             </div>
           </div>
 
-          <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <input
-              id="allowFileUpload"
-              type="checkbox"
-              checked={formData.allowFileUpload}
-              onChange={(e) => setFormData({ ...formData, allowFileUpload: e.target.checked })}
-              style={{ width: 'auto', cursor: 'pointer' }}
+          <div
+            style={{
+              marginTop: '1.5rem',
+              padding: '1.25rem',
+              borderRadius: '0.85rem',
+              background: 'rgba(255, 255, 255, 0.02)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="status-pill status-pill--highlight" style={{ fontSize: '0.72rem' }}>
+                  SAFE EXAM BROWSER SETTINGS
+                </span>
+              </div>
+              <h3 style={{ margin: '0.4rem 0 0', fontSize: '1.15rem', color: '#fff', fontWeight: 600 }}>
+                External Software & Exam Security Environment
+              </h3>
+              <p className="panel-subtitle" style={{ margin: '0.2rem 0 0' }}>
+                Configure whether this exam allows coding in VS Code, writing in Word, Excel spreadsheets, and student file attachment uploads.
+              </p>
+            </div>
+
+            <SebSettingsConfig
+              sebSettings={formData.sebSettings ?? { allowedDisplays: 1, internalDisplayOnly: true }}
+              allowFileUpload={formData.allowFileUpload}
+              onChangeSettings={(sebSettings) => setFormData((prev) => ({ ...prev, sebSettings }))}
+              onChangeFileUpload={(allowFileUpload) => setFormData((prev) => ({ ...prev, allowFileUpload }))}
             />
-            <label className="form-label" htmlFor="allowFileUpload" style={{ margin: 0, cursor: 'pointer' }}>
-              Allow students to submit file attachments
-            </label>
           </div>
 
           <div className="form-actions">

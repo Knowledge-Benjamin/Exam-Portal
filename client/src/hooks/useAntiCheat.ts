@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 
 interface AntiCheatOptions {
   onViolation?: (type: string) => void;
+  allowExternalApps?: boolean;
 }
 
 /**
@@ -11,12 +12,14 @@ interface AntiCheatOptions {
  *  - window.blur is NOT used — it fires for native dialogs (confirm/alert),
  *    fullscreen transitions, OS notifications, and any browser UI interaction.
  *    visibilitychange is the correct signal for genuine tab-switches.
+ *  - When allowExternalApps is enabled (for exams configured with VS Code, Word, etc.),
+ *    switching to the external tool does not generate spurious tab-switch penalties.
  *  - A mute() function is exported so callers can suppress detections
  *    for the duration of intentional app actions (e.g. submit confirm dialog).
  *  - visibilitychange is debounced 200ms to ignore brief browser transitions
  *    (e.g. entering fullscreen, PDF load, file download dialog).
  */
-export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions = {}) {
+export function useAntiCheat(active: boolean, { onViolation, allowExternalApps }: AntiCheatOptions = {}) {
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const fullscreenRequested = useRef(false);
@@ -50,8 +53,14 @@ export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions 
       if (ctrl && e.key === 'p') { e.preventDefault(); report('print'); return; }
       // Copy / Cut
       if (ctrl && (e.key === 'c' || e.key === 'x')) { e.preventDefault(); report('copy'); return; }
-      // Paste
-      if (ctrl && e.key === 'v') { e.preventDefault(); report('paste'); return; }
+      // Paste (allowed when external applications like IDEs are permitted)
+      if (ctrl && e.key === 'v') {
+        if (!allowExternalApps) {
+          e.preventDefault();
+          report('paste');
+        }
+        return;
+      }
       // Select all
       if (ctrl && e.key === 'a') { e.preventDefault(); return; }
       // View source
@@ -62,7 +71,7 @@ export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions 
 
     window.addEventListener('keydown', onKeyDown, true);
     return () => window.removeEventListener('keydown', onKeyDown, true);
-  }, [active, report]);
+  }, [active, allowExternalApps, report]);
 
   // ─── Clipboard Blocking ───────────────────────────────────────────────────
   useEffect(() => {
@@ -70,7 +79,11 @@ export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions 
 
     const blockCopy  = (e: ClipboardEvent) => { e.preventDefault(); report('copy'); };
     const blockCut   = (e: ClipboardEvent) => { e.preventDefault(); report('copy'); };
-    const blockPaste = (e: ClipboardEvent) => { e.preventDefault(); report('paste'); };
+    const blockPaste = (e: ClipboardEvent) => {
+      if (allowExternalApps) return; // Permitted apps can paste into answer boxes
+      e.preventDefault();
+      report('paste');
+    };
 
     document.addEventListener('copy',  blockCopy,  true);
     document.addEventListener('cut',   blockCut,   true);
@@ -81,7 +94,7 @@ export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions 
       document.removeEventListener('cut',   blockCut,   true);
       document.removeEventListener('paste', blockPaste, true);
     };
-  }, [active, report]);
+  }, [active, allowExternalApps, report]);
 
   // ─── Right-click / Drag Blocking ──────────────────────────────────────────
   useEffect(() => {
@@ -100,24 +113,18 @@ export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions 
     };
   }, [active]);
 
-  // ─── Tab-switch Detection (visibilitychange only — NOT window.blur) ───────
-  //
-  // window.blur is intentionally omitted. It fires for:
-  //   • window.confirm() / alert() / prompt() dialogs
-  //   • Fullscreen enter/exit transitions
-  //   • Any OS-level notification taking focus
-  //   • The browser address bar being clicked
-  // None of these indicate actual cheating. visibilitychange only fires when
-  // the tab is actually hidden (user switched to another tab/app).
+  // ─── Tab-switch Detection ────────────────────────────────────────────────
   useEffect(() => {
     if (!active) return;
 
     const onVisibilityChange = () => {
-      // Debounce — ignore changes < 200ms (browser transitions, PDF load, etc.)
       clearTimeout(visibilityTimer.current);
       if (document.hidden) {
+        // If external applications are permitted (e.g. VS Code, Word),
+        // switching out of the browser to work in the app is legitimate.
+        if (allowExternalApps) return;
+
         visibilityTimer.current = setTimeout(() => {
-          // Re-check: still hidden after debounce? Then it's a real tab switch.
           if (document.hidden) report('tab_switch');
         }, 200);
       }
@@ -128,7 +135,7 @@ export function useAntiCheat(active: boolean, { onViolation }: AntiCheatOptions 
       document.removeEventListener('visibilitychange', onVisibilityChange);
       clearTimeout(visibilityTimer.current);
     };
-  }, [active, report]);
+  }, [active, allowExternalApps, report]);
 
   // ─── Fullscreen ───────────────────────────────────────────────────────────
   useEffect(() => {

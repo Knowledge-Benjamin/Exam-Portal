@@ -34,6 +34,8 @@ export async function assertExamOwner(examId: string, userId: string, role?: str
   return exam;
 }
 
+import type { SebSettings } from '../db/schema';
+
 export async function createExam(
   teacherId: string,
   data: {
@@ -46,6 +48,7 @@ export async function createExam(
     windowBufferMinutes: number;
     sebConfigKey?: string;
     allowFileUpload?: boolean;
+    sebSettings?: SebSettings;
   },
 ) {
   const start = new Date(data.startTime);
@@ -65,6 +68,7 @@ export async function createExam(
       windowBufferMinutes: data.windowBufferMinutes,
       allowFileUpload: data.allowFileUpload ?? false,
       sebConfigKey: data.sebConfigKey,
+      sebSettings: data.sebSettings ?? {},
       status: 'draft',
     })
     .returning();
@@ -83,6 +87,7 @@ export async function updateExam(
     windowBufferMinutes: number;
     sebConfigKey: string;
     allowFileUpload: boolean;
+    sebSettings: SebSettings;
   }>,
   role?: string,
 ) {
@@ -98,6 +103,7 @@ export async function updateExam(
   if (data.windowBufferMinutes !== undefined) updates.windowBufferMinutes = data.windowBufferMinutes;
   if (data.sebConfigKey !== undefined) updates.sebConfigKey = data.sebConfigKey;
   if (data.allowFileUpload !== undefined) updates.allowFileUpload = data.allowFileUpload;
+  if (data.sebSettings !== undefined) updates.sebSettings = data.sebSettings;
   if (data.startTime) {
     const start = new Date(data.startTime);
     const duration = data.durationMinutes ?? exam.durationMinutes;

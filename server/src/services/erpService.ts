@@ -106,46 +106,72 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
   if (!exam.sebExamToken) throw new AppError(400, 'Exam token missing — republish the exam first');
 
   const gateUrl = `${env.CORS_ORIGIN}/exam-join/${exam.sebExamToken}`;
+  const s = (exam.sebSettings ?? {}) as Record<string, unknown>;
 
+  // ── Merge teacher overrides on top of secure defaults ──────────────────────
   const sebConfig: Record<string, unknown> = {
     startURL: gateUrl,
     sendBrowserExamKey: true,
     browserExamKeyAllowedURLFilter: `${new URL(gateUrl).origin}/*`,
-    allowQuit: true,
-    quitURLConfirm: true,
-    showTaskBar: true,
-    taskBarHeight: 40,
-    allowedDisplays: 1,
-    internalDisplayOnly: true,
-    enableBrowserWindowToolbar: false,
-    allowPreferencesWindow: false,
-    browserWindowAllowReload: true,
+
+    // Display / anti-cheat (teacher can override via sebSettings)
+    allowedDisplays:     s.allowedDisplays     ?? 1,
+    internalDisplayOnly: s.internalDisplayOnly  ?? true,
+
+    // Quit / UI
+    allowQuit:           s.allowQuit           ?? true,
+    quitURLConfirm:      s.quitURLConfirm      ?? true,
+    showTaskBar:         s.showTaskBar         ?? true,
+    taskBarHeight:       s.taskBarHeight       ?? 40,
+    showTime:            s.showTime            ?? true,
+    showInputLanguage:   s.showInputLanguage   ?? true,
+
+    // Browser behaviour
+    enableBrowserWindowToolbar:  false,
+    allowPreferencesWindow:      false,
+    browserWindowAllowReload:    s.browserWindowAllowReload ?? true,
     newBrowserWindowAllowReload: true,
     newBrowserWindowByLinkPolicy: 2,
     openLinksInSameWindow: false,
-    enableJava: false,
-    enablePlugIns: true,
-    allowSpellCheck: false,
-    allowDictionaryLookup: false,
-    showTime: true,
-    showInputLanguage: true,
-    allowSwitchToApplications: false,
+
+    // App switching — teachers with permitted processes must have this enabled
+    allowSwitchToApplications: Array.isArray(s.permittedProcesses) && (s.permittedProcesses as unknown[]).length > 0,
     allowFlashFullscreen: false,
+
+    // Language / spelling
+    allowSpellCheck:       s.allowSpellCheck       ?? false,
+    allowDictionaryLookup: s.allowDictionaryLookup ?? false,
+
+    // Session
     examSessionClearCookiesOnEnd: true,
-    URLFilterEnable: false,
-    URLFilterEnableContentFilter: false,
-    hashedQuitPassword: '',
+    enableJava:    false,
+    enablePlugIns: true,
+
+    // Quit password (empty = no password required)
+    hashedQuitPassword: s.hashedQuitPassword ?? '',
     cryptoIdentity: '',
     configFileEncryptionType: 0,
+
+    // URL filtering
+    URLFilterEnable:              s.URLFilterEnable ?? false,
+    URLFilterEnableContentFilter: false,
   };
 
+  // Permitted processes (external apps like VSCode, Word, etc.)
+  const processes = Array.isArray(s.permittedProcesses) ? s.permittedProcesses as Array<{
+    executable: string; title?: string; allowUserToChooseApp?: boolean; os?: number;
+  }> : [];
+
   // Generate the official SEB Config Key per Safe Exam Browser specification
-  const sebConfigKey = generateConfigKey(sebConfig);
+  const sebConfigKey = generateConfigKey({ ...sebConfig, permittedProcesses: processes });
 
   // Build a SEB-compatible plist XML
   const plistXml = buildSEBPlist({
     startURL: gateUrl,
     title: exam.title,
+    allowFileUpload: exam.allowFileUpload,
+    sebConfig,
+    permittedProcesses: processes,
   });
 
   // SEB unencrypted config files (.seb) MUST follow the official Safe Exam Browser binary spec:
@@ -224,7 +250,45 @@ export async function pushGradeToERP(payload: {
 
 // ─── Plist Builder ────────────────────────────────────────────────────────────
 
-function buildSEBPlist(opts: { startURL: string; title: string }): string {
+function buildSEBPlist(opts: {
+  startURL: string;
+  title: string;
+  allowFileUpload?: boolean;
+  sebConfig: Record<string, unknown>;
+  permittedProcesses?: Array<{
+    executable: string;
+    title?: string;
+    allowUserToChooseApp?: boolean;
+    os?: number;
+  }>;
+}): string {
+  const { sebConfig: c, permittedProcesses = [] } = opts;
+
+  // Helper: render a plist boolean
+  const bool = (v: unknown, def: boolean) => (v !== undefined ? !!v : def) ? '<true/>' : '<false/>';
+  // Helper: render a plist integer
+  const int = (v: unknown, def: number) => `<integer>${typeof v === 'number' ? v : def}</integer>`;
+  // Helper: render a plist string (with XML escaping)
+  const str = (v: unknown, def = '') => `<string>${escapeXml(v !== undefined ? String(v) : def)}</string>`;
+
+  // Build permittedProcesses plist array
+  const processesXml = permittedProcesses.length > 0
+    ? `
+  <key>permittedProcesses</key>
+  <array>
+${permittedProcesses.map((p) => `    <dict>
+      <key>executable</key>
+      <string>${escapeXml(p.executable)}</string>
+      <key>title</key>
+      <string>${escapeXml(p.title ?? p.executable)}</string>
+      <key>allowUserToChooseApp</key>
+      ${p.allowUserToChooseApp ? '<true/>' : '<false/>'}
+      <key>os</key>
+      <integer>${p.os ?? 0}</integer>
+    </dict>`).join('\n')}
+  </array>`
+    : '';
+
   // Standard SEB plist structure (compatible with SEB 3.x+ on Windows, Mac, and iOS)
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -239,23 +303,25 @@ function buildSEBPlist(opts: { startURL: string; title: string }): string {
   <key>browserExamKeyAllowedURLFilter</key>
   <string>${escapeXml(new URL(opts.startURL).origin + '/*')}</string>
   <key>allowQuit</key>
-  <true/>
+  ${bool(c.allowQuit, true)}
   <key>quitURLConfirm</key>
-  <true/>
+  ${bool(c.quitURLConfirm, true)}
+  <key>hashedQuitPassword</key>
+  ${str(c.hashedQuitPassword, '')}
   <key>showTaskBar</key>
-  <true/>
+  ${bool(c.showTaskBar, true)}
   <key>taskBarHeight</key>
-  <integer>40</integer>
+  ${int(c.taskBarHeight, 40)}
   <key>allowedDisplays</key>
-  <integer>1</integer>
+  ${int(c.allowedDisplays, 1)}
   <key>internalDisplayOnly</key>
-  <true/>
+  ${bool(c.internalDisplayOnly, true)}
   <key>enableBrowserWindowToolbar</key>
   <false/>
   <key>allowPreferencesWindow</key>
   <false/>
   <key>browserWindowAllowReload</key>
-  <true/>
+  ${bool(c.browserWindowAllowReload, true)}
   <key>newBrowserWindowAllowReload</key>
   <true/>
   <key>newBrowserWindowByLinkPolicy</key>
@@ -267,29 +333,27 @@ function buildSEBPlist(opts: { startURL: string; title: string }): string {
   <key>enablePlugIns</key>
   <true/>
   <key>allowSpellCheck</key>
-  <false/>
+  ${bool(c.allowSpellCheck, false)}
   <key>allowDictionaryLookup</key>
-  <false/>
+  ${bool(c.allowDictionaryLookup, false)}
   <key>showTime</key>
-  <true/>
+  ${bool(c.showTime, true)}
   <key>showInputLanguage</key>
-  <true/>
+  ${bool(c.showInputLanguage, true)}
   <key>allowSwitchToApplications</key>
-  <false/>
+  ${bool(c.allowSwitchToApplications, false)}
   <key>allowFlashFullscreen</key>
   <false/>
   <key>examSessionClearCookiesOnEnd</key>
   <true/>
   <key>URLFilterEnable</key>
-  <false/>
+  ${bool(c.URLFilterEnable, false)}
   <key>URLFilterEnableContentFilter</key>
   <false/>
-  <key>hashedQuitPassword</key>
-  <string></string>
   <key>cryptoIdentity</key>
   <string></string>
   <key>configFileEncryptionType</key>
-  <integer>0</integer>
+  <integer>0</integer>${processesXml}
 </dict>
 </plist>`;
 }

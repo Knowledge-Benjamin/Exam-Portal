@@ -17,6 +17,30 @@ export interface User {
   createdAt?: string;
 }
 
+export interface PermittedProcess {
+  executable: string;
+  title?: string;
+  allowUserToChooseApp?: boolean;
+  os?: 0 | 1;
+}
+
+export interface SebSettings {
+  permittedProcesses?: PermittedProcess[];
+  allowedDisplays?: number;
+  internalDisplayOnly?: boolean;
+  allowSpellCheck?: boolean;
+  allowDictionaryLookup?: boolean;
+  browserWindowAllowReload?: boolean;
+  showTaskBar?: boolean;
+  taskBarHeight?: number;
+  showTime?: boolean;
+  showInputLanguage?: boolean;
+  allowQuit?: boolean;
+  quitURLConfirm?: boolean;
+  hashedQuitPassword?: string;
+  URLFilterEnable?: boolean;
+}
+
 export interface Exam {
   id: string;
   title: string;
@@ -32,6 +56,7 @@ export interface Exam {
   allowFileUpload: boolean;
   sebConfigKey?: string | null;
   sebExamToken?: string;
+  sebSettings?: SebSettings;
   status: ExamStatus;
   createdAt: string;
   updatedAt: string;
@@ -84,6 +109,7 @@ export interface CreateExamForm {
   durationMinutes: number;
   windowBufferMinutes: number;
   allowFileUpload: boolean;
+  sebSettings?: SebSettings;
 }
 
 // Question builder form state

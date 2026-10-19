@@ -37,6 +37,43 @@ export const users = pgTable('users', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
 });
 
+// ─── SEB Settings type ───────────────────────────────────────────────────────
+// Mirrors the subset of SEB plist keys that teachers are allowed to control.
+// Stored as JSONB per exam; merged into the generated .seb file at publish time.
+export interface SebSettings {
+  // Allowed external applications (permittedProcesses array in SEB plist)
+  permittedProcesses?: Array<{
+    executable: string;    // e.g. "Code.exe" or "WINWORD.EXE"
+    title?: string;        // friendly name shown in the SEB taskbar
+    allowUserToChooseApp?: boolean;
+    os?: 0 | 1;           // 0 = Windows, 1 = macOS (default 0)
+  }>;
+
+  // Display / anti-cheat
+  allowedDisplays?: number;        // 1 = single display (default); 2 = allow dual
+  internalDisplayOnly?: boolean;   // true = block HDMI/external monitors
+
+  // Browser behaviour
+  allowSpellCheck?: boolean;
+  allowDictionaryLookup?: boolean;
+  browserWindowAllowReload?: boolean;
+
+  // Task-bar & UI
+  showTaskBar?: boolean;
+  taskBarHeight?: number;          // pixels (default 40)
+  showTime?: boolean;
+  showInputLanguage?: boolean;
+
+  // Quit / exit
+  allowQuit?: boolean;
+  quitURLConfirm?: boolean;
+  hashedQuitPassword?: string;     // SHA-256 of quit password; empty = no password
+
+  // URL filtering (advanced)
+  URLFilterEnable?: boolean;
+  URLFilterRules?: Array<{ action: 0 | 1; regex: string }>; // 0=block, 1=allow
+}
+
 export const exams = pgTable('exams', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
@@ -54,6 +91,7 @@ export const exams = pgTable('exams', {
   allowFileUpload: boolean('allow_file_upload').notNull().default(false),
   sebExamToken: text('seb_exam_token').unique(),
   sebConfigKey: text('seb_config_key'),
+  sebSettings: jsonb('seb_settings').$type<SebSettings>().notNull().default({}),
   status: examStatusEnum('status').notNull().default('draft'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

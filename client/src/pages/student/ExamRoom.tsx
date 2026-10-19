@@ -39,8 +39,13 @@ export function ExamRoom() {
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
+  const allowExternalApps = Boolean(
+    (exam?.sebSettings?.permittedProcesses && exam.sebSettings.permittedProcesses.length > 0) ||
+    exam?.allowFileUpload
+  );
 
   const { tabSwitchCount, mute } = useAntiCheat(examActive, {
+    allowExternalApps,
     onViolation: (type) => {
       const msgs: Record<string, string> = {
         tab_switch: '⚠ Tab switch detected — this is logged.',
@@ -143,7 +148,7 @@ export function ExamRoom() {
   }, []);
 
   const blockedExtensions = new Set([
-    '.exe', '.dll', '.bat', '.cmd', '.sh', '.ps1', '.vbs', '.js', '.jsx', '.ts', '.tsx', '.py', '.rb', '.pl', '.jar', '.apk', '.com', '.scr',
+    '.exe', '.dll', '.bat', '.cmd', '.ps1', '.vbs', '.apk', '.msi', '.com', '.scr', '.pif', '.cpl',
   ]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,13 +163,13 @@ export function ExamRoom() {
     const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
     if (blockedExtensions.has(extension)) {
       setSelectedFile(null);
-      setFileUploadError('This file type is not allowed for security reasons.');
+      setFileUploadError('Executable files (.exe, .bat, etc.) are blocked for security reasons.');
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 50 * 1024 * 1024) {
       setSelectedFile(null);
-      setFileUploadError('File must be smaller than 10MB.');
+      setFileUploadError('File must be smaller than 50MB.');
       return;
     }
 
