@@ -26,6 +26,27 @@ export async function findActiveSubmissionByRegNumber(
   return submission ?? null;
 }
 
+export async function findLatestSubmissionByRegNumber(
+  examId: string,
+  studentRegNumber: string,
+) {
+  const normalizedRegNumber = studentRegNumber.trim().toLowerCase();
+
+  const [submission] = await db
+    .select()
+    .from(submissions)
+    .where(
+      and(
+        eq(submissions.examId, examId),
+        sql`LOWER(${submissions.studentRegNumber}) = ${normalizedRegNumber}`,
+      ),
+    )
+    .orderBy(desc(submissions.createdAt))
+    .limit(1);
+
+  return submission ?? null;
+}
+
 export async function createSubmission(
   examId: string,
   studentName: string,

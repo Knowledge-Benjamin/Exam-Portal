@@ -37,12 +37,12 @@ export function ExamEditor({ content, onChange, readOnly = false }: ExamEditorPr
     },
   });
 
-  // Sync external content changes (e.g. on restore from socket)
+  // Sync external content changes (e.g. on restore from socket/storage) only when not focused
   useEffect(() => {
-    if (editor && content && editor.getHTML() !== content) {
+    if (editor && content && !editor.isFocused && editor.getHTML() !== content) {
       editor.commands.setContent(content);
     }
-  }, [content]);
+  }, [content, editor]);
 
   return (
     <div className="flex flex-col h-full">

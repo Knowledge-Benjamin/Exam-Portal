@@ -37,12 +37,25 @@ export function useAntiCheat(active: boolean, { onViolation, allowExternalApps }
     onViolation?.(type);
   }, [onViolation]);
 
+  const isEditableElement = (el: EventTarget | null): boolean => {
+    if (!el || !(el instanceof HTMLElement)) return false;
+    return (
+      el.tagName === 'INPUT' ||
+      el.tagName === 'TEXTAREA' ||
+      el.isContentEditable ||
+      !!el.closest('.tiptap') ||
+      !!el.closest('.essay-prose') ||
+      !!el.closest('[contenteditable="true"]')
+    );
+  };
+
   // ─── Keyboard Blocking ────────────────────────────────────────────────────
   useEffect(() => {
     if (!active) return;
 
     const onKeyDown = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey;
+      const insideEditable = isEditableElement(e.target);
 
       // DevTools
       if (e.key === 'F12') { e.preventDefault(); report('devtools'); return; }
@@ -51,9 +64,29 @@ export function useAntiCheat(active: boolean, { onViolation, allowExternalApps }
       }
       // Print
       if (ctrl && e.key === 'p') { e.preventDefault(); report('print'); return; }
-      // Copy / Cut
-      if (ctrl && (e.key === 'c' || e.key === 'x')) { e.preventDefault(); report('copy'); return; }
-      // Paste (allowed when external applications like IDEs are permitted)
+
+      // Inside editable text areas (answer inputs & essay editor), allow standard text editing:
+      if (insideEditable) {
+        // Ctrl+A, Ctrl+Z, Ctrl+Y, Cut/Copy within own answers are normal writing operations
+        if (ctrl && (e.key === 'a' || e.key === 'z' || e.key === 'y' || e.key === 'c' || e.key === 'x')) {
+          return;
+        }
+        if (ctrl && e.key === 'v') {
+          if (!allowExternalApps) {
+            // In strict mode without external apps, allow paste only within the editor
+            return;
+          }
+          return;
+        }
+      }
+
+      // Outside editable areas: Block Copy / Cut of exam questions
+      if (ctrl && (e.key === 'c' || e.key === 'x')) {
+        e.preventDefault();
+        report('copy');
+        return;
+      }
+      // Paste outside editable areas
       if (ctrl && e.key === 'v') {
         if (!allowExternalApps) {
           e.preventDefault();
@@ -61,7 +94,7 @@ export function useAntiCheat(active: boolean, { onViolation, allowExternalApps }
         }
         return;
       }
-      // Select all
+      // Block Select All outside editable areas (e.g. whole page scraping)
       if (ctrl && e.key === 'a') { e.preventDefault(); return; }
       // View source
       if (ctrl && e.key === 'u') { e.preventDefault(); return; }
@@ -77,10 +110,20 @@ export function useAntiCheat(active: boolean, { onViolation, allowExternalApps }
   useEffect(() => {
     if (!active) return;
 
-    const blockCopy  = (e: ClipboardEvent) => { e.preventDefault(); report('copy'); };
-    const blockCut   = (e: ClipboardEvent) => { e.preventDefault(); report('copy'); };
+    const blockCopy = (e: ClipboardEvent) => {
+      if (isEditableElement(e.target)) return; // Allow student to copy their own typed answer text
+      e.preventDefault();
+      report('copy');
+    };
+
+    const blockCut = (e: ClipboardEvent) => {
+      if (isEditableElement(e.target)) return; // Allow student to cut text within their own answers
+      e.preventDefault();
+      report('copy');
+    };
+
     const blockPaste = (e: ClipboardEvent) => {
-      if (allowExternalApps) return; // Permitted apps can paste into answer boxes
+      if (allowExternalApps || isEditableElement(e.target)) return; // Allow pasting into answers
       e.preventDefault();
       report('paste');
     };

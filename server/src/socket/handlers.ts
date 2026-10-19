@@ -379,10 +379,11 @@ function startExamTimer(io: Server, examId: string): void {
       if (!exam) return;
 
       const room = `exam:${examId}`;
-      const endTime = exam.endTime.getTime();
+      const bufferMs = (exam.windowBufferMinutes ?? 0) * 60 * 1000;
+      const effectiveEndTime = exam.endTime.getTime() + bufferMs;
 
       const interval = setInterval(() => {
-        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+        const remaining = Math.max(0, Math.floor((effectiveEndTime - Date.now()) / 1000));
         io.to(room).emit('exam:timer:sync', { remaining });
         io.to(teacherRoomName(examId)).emit('exam:timer:sync', { remaining });
 
@@ -392,7 +393,7 @@ function startExamTimer(io: Server, examId: string): void {
         }
       }, 5000);
 
-      const msUntilEnd = Math.max(0, endTime - Date.now());
+      const msUntilEnd = Math.max(0, effectiveEndTime - Date.now());
       const forceSaveTimeout = setTimeout(() => {
         io.to(room).emit('exam:force-save', {
           message: 'Time is up. Saving your final answers before the exam is submitted.',

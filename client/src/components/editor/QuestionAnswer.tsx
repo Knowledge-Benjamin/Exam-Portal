@@ -116,10 +116,10 @@ function LongAnswer({
   });
 
   useEffect(() => {
-    if (editor && value && editor.getHTML() !== value) {
+    if (editor && value && !editor.isFocused && editor.getHTML() !== value) {
       editor.commands.setContent(value);
     }
-  }, [value]);
+  }, [value, editor]);
 
   return (
     <div className="mt-4 border border-white/10 rounded-xl overflow-hidden bg-[var(--color-primary)]/50 focus-within:border-[var(--color-primary)]/40 focus-within:ring-1 focus-within:ring-[var(--color-primary)]/20 transition-all">

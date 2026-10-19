@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
+import axios from 'axios';
 import { AUTOSAVE_INTERVAL_MS } from '../utils/constants';
 
 interface UseSocketResult {
@@ -26,22 +27,42 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     answersRef.current = initialAnswers;
   }, [initialAnswers]);
 
+  // Fallback REST auto-save when WebSocket is unavailable or disconnected
+  const saveViaRest = useCallback(async (answers: Record<string, string>) => {
+    try {
+      const res = await axios.put('/seb/submission/save', { answers }, { withCredentials: true });
+      if (res.data?.savedAt) {
+        setLastSaved(res.data.savedAt);
+        savedAnswersRef.current = answers;
+      }
+    } catch (err: any) {
+      console.warn('[autosave] REST fallback error:', err.message);
+    }
+  }, []);
+
+  // Smooth local countdown ticker every second so the timer never freezes on network disconnect
+  useEffect(() => {
+    if (remainingSeconds === null || remainingSeconds <= 0) return;
+    const ticker = setInterval(() => {
+      setRemainingSeconds((prev) => (prev !== null && prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(ticker);
+  }, [remainingSeconds !== null]);
+
   const triggerSave = useCallback((answers: Record<string, string>) => {
-    if (!socket || !isConnected) return;
-    
-    // Check if answers actually changed since last save
     const current = JSON.stringify(answers);
     const saved = JSON.stringify(savedAnswersRef.current);
-    
-    if (current !== saved) {
+    if (current === saved) return;
+
+    if (socket && isConnected) {
       socket.emit('exam:autosave', { answers });
       savedAnswersRef.current = answers;
+    } else {
+      saveViaRest(answers);
     }
-  }, [socket, isConnected]);
+  }, [socket, isConnected, saveViaRest]);
 
   useEffect(() => {
-    // We don't manually send the token via query params because the server
-    // uses standard HTTP cookies (exam_token is httpOnly).
     // Socket.io automatically includes credentials (cookies) due to withCredentials: true
     const socketUrl = import.meta.env.VITE_API_URL 
       ? import.meta.env.VITE_API_URL.replace(/\/api$/, '') 
@@ -59,10 +80,18 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     s.on('connect', () => {
       console.info('[socket-client] connected successfully');
       setIsConnected(true);
+
+      // Flush any dirty answers immediately on connection/reconnection
+      const current = JSON.stringify(answersRef.current);
+      const saved = JSON.stringify(savedAnswersRef.current);
+      if (current !== saved) {
+        s.emit('exam:autosave', { answers: answersRef.current });
+        savedAnswersRef.current = answersRef.current;
+      }
     });
 
     s.on('disconnect', () => {
-      console.info('[socket-client] disconnected');
+      console.info('[socket-client] disconnected — falling back to REST autosave');
       setIsConnected(false);
     });
 
@@ -78,6 +107,8 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       const answerState = answersRef.current;
       if (s.connected) {
         s.emit('exam:autosave', { answers: answerState });
+      } else {
+        saveViaRest(answerState);
       }
     });
 
@@ -86,7 +117,8 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     });
 
     s.on('connect_error', (err) => {
-      console.error('[socket-client] connection error:', err);
+      console.warn('[socket-client] connection error, relying on REST:', err.message);
+      setIsConnected(false);
     });
 
     s.on('error', (err) => {
@@ -95,15 +127,17 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
 
     setSocket(s);
 
-    // Setup auto-save interval
+    // Setup auto-save interval with dual-transport resilience (WebSocket + REST fallback)
     const interval = setInterval(() => {
-      if (s.connected) {
-        const answers = answersRef.current;
-        const currentStr = JSON.stringify(answers);
-        const savedStr = JSON.stringify(savedAnswersRef.current);
-        if (currentStr !== savedStr) {
+      const answers = answersRef.current;
+      const currentStr = JSON.stringify(answers);
+      const savedStr = JSON.stringify(savedAnswersRef.current);
+      if (currentStr !== savedStr) {
+        if (s.connected) {
           s.emit('exam:autosave', { answers });
           savedAnswersRef.current = answers;
+        } else {
+          saveViaRest(answers);
         }
       }
     }, AUTOSAVE_INTERVAL_MS);
@@ -112,7 +146,7 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
       clearInterval(interval);
       s.disconnect();
     };
-  }, [examId, examToken]);
+  }, [examId, examToken, saveViaRest]);
 
   return { socket, isConnected, remainingSeconds, lastSaved, forceSubmitMsg, triggerSave };
 }

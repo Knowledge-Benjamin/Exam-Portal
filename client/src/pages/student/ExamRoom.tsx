@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import type { Exam, Question, Submission } from '../../types';
@@ -63,6 +63,11 @@ export function ExamRoom() {
 
   const { isConnected, remainingSeconds, lastSaved, forceSubmitMsg } = useSocket(id!, answers, examToken);
 
+  const answersRef = useRef<Answers>({});
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   useEffect(() => { fetchExamData(); }, [id]);
 
   useEffect(() => {
@@ -81,10 +86,17 @@ export function ExamRoom() {
 
   useEffect(() => {
     if (forceSubmitMsg) {
+      // Auto-flush draft to server on time-up
+      axios.post('/seb/submission/submit', { answers: answersRef.current }, { withCredentials: true }).catch(() => {});
+      if (id) {
+        try {
+          localStorage.removeItem(`exam_draft_answers_${id}`);
+        } catch {}
+      }
       alert(forceSubmitMsg);
       navigate('/', { replace: true });
     }
-  }, [forceSubmitMsg, navigate]);
+  }, [forceSubmitMsg, navigate, id]);
 
   const fetchPdfBlob = async () => {
     if (!exam?.id) return;
@@ -129,7 +141,21 @@ export function ExamRoom() {
       setQuestions(qRes.data.questions);
       const sub = subRes.data.submission;
       setSubmission(sub);
-      if (sub?.answers) setAnswers(sub.answers);
+      
+      let initialAnswers: Answers = sub?.answers || {};
+      try {
+        if (id) {
+          const localDraft = localStorage.getItem(`exam_draft_answers_${id}`);
+          if (localDraft) {
+            const parsed = JSON.parse(localDraft);
+            initialAnswers = { ...initialAnswers, ...parsed };
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse local draft answers', e);
+      }
+      setAnswers(initialAnswers);
+
       if (sub?.isFinal) setError('This exam has already been submitted.');
       if (qRes.data.questions.length > 0) setActiveQuestionId(qRes.data.questions[0].id);
     } catch (err: any) {
@@ -140,12 +166,28 @@ export function ExamRoom() {
   };
 
   const handleAnswerChange = useCallback((questionId: string, value: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  }, []);
+    setAnswers((prev) => {
+      const next = { ...prev, [questionId]: value };
+      if (id) {
+        try {
+          localStorage.setItem(`exam_draft_answers_${id}`, JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
+  }, [id]);
 
   const handleFreeformChange = useCallback((html: string) => {
-    setAnswers((prev) => ({ ...prev, freeform: html }));
-  }, []);
+    setAnswers((prev) => {
+      const next = { ...prev, freeform: html };
+      if (id) {
+        try {
+          localStorage.setItem(`exam_draft_answers_${id}`, JSON.stringify(next));
+        } catch {}
+      }
+      return next;
+    });
+  }, [id]);
 
   const blockedExtensions = new Set([
     '.exe', '.dll', '.bat', '.cmd', '.ps1', '.vbs', '.apk', '.msi', '.com', '.scr', '.pif', '.cpl',
@@ -213,11 +255,28 @@ export function ExamRoom() {
       return;
     }
 
+    const isPdfExam = exam?.questionSource === 'pdf';
+    const currentAnswered = isPdfExam 
+      ? (answers.freeform && answers.freeform !== '<p></p>' ? 1 : 0)
+      : questions.filter(q => Boolean(answers[q.id]?.trim())).length;
+    const totalQCount = isPdfExam ? 1 : questions.length;
+    const unansweredCount = totalQCount - currentAnswered;
+
+    let confirmMsg = 'Submit your exam? You will not be able to make changes after this.';
+    if (unansweredCount > 0) {
+      confirmMsg = `You have ${unansweredCount} unanswered question${unansweredCount > 1 ? 's' : ''}.\n\nAre you sure you want to submit your exam now? You will not be able to return to answer them.`;
+    }
+
     mute(3000);
-    if (!window.confirm('Submit your exam? You will not be able to make changes after this.')) return;
+    if (!window.confirm(confirmMsg)) return;
     setIsSubmitting(true);
     try {
       await axios.post('/seb/submission/submit', { answers }, { withCredentials: true });
+      if (id) {
+        try {
+          localStorage.removeItem(`exam_draft_answers_${id}`);
+        } catch {}
+      }
       mute(3000);
       alert('Exam submitted successfully! You may now close this window.');
       navigate('/', { replace: true });
@@ -299,9 +358,9 @@ export function ExamRoom() {
                 <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{submission.studentName} · {submission.studentRegNumber}</span>
               )}
               <span className="status-dot" />
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: isConnected ? 'var(--color-highlight)' : 'var(--color-danger)' }}>
-                <span className={`status-dot ${isConnected ? 'status-dot--highlight' : 'status-dot--danger'}`} />
-                {isConnected ? 'Auto-saving' : 'Reconnecting...'}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: isConnected ? 'var(--color-highlight)' : '#f59e0b' }}>
+                <span className={`status-dot ${isConnected ? 'status-dot--highlight' : 'status-dot--warning'}`} style={{ backgroundColor: isConnected ? undefined : '#f59e0b' }} />
+                {isConnected ? 'Auto-saving' : 'Working offline · Saved on device'}
               </span>
               {lastSaved && (
                 <>

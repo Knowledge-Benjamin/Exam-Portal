@@ -3,7 +3,7 @@ import { db } from '../db/db';
 import { exams } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
 import { signExamToken } from '../utils/token';
-import { createSubmission, findActiveSubmissionByRegNumber } from './submissionService';
+import { createSubmission, findLatestSubmissionByRegNumber } from './submissionService';
 import { examScheduler } from './examScheduler';
 
 export async function getExamByToken(token: string) {
@@ -50,7 +50,11 @@ export async function processSEBJoin(
   }
 
   const normalizedRegNumber = studentRegNumber.trim();
-  const existingSubmission = await findActiveSubmissionByRegNumber(exam.id, normalizedRegNumber);
+  const existingSubmission = await findLatestSubmissionByRegNumber(exam.id, normalizedRegNumber);
+
+  if (existingSubmission?.isFinal) {
+    throw new AppError(403, 'You have already submitted this exam.');
+  }
 
   const submission = existingSubmission
     ? existingSubmission
