@@ -200,6 +200,8 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
     sebFileBase64,
     sebConfigKey,
     gateUrl,
+    allowFileUpload: exam.allowFileUpload ?? false,
+    sebSettings: exam.sebSettings ?? {},
   });
 
   if (!pushResult.ok) {
