@@ -21,9 +21,24 @@ export async function listAllExams() {
     .orderBy(asc(exams.createdAt));
 }
 
+import { examScheduler } from './examScheduler';
+
 export async function getExamById(examId: string) {
   const [exam] = await db.select().from(exams).where(eq(exams.id, examId));
-  return exam ?? null;
+  if (!exam) return null;
+
+  // JIT Evaluation: if active but past deadline, self-close immediately
+  if (exam.status === 'active') {
+    const bufferMs = exam.windowBufferMinutes * 60 * 1000;
+    const deadline = new Date(exam.endTime.getTime() + bufferMs);
+    if (Date.now() > deadline.getTime()) {
+      await db.update(exams).set({ status: 'closed', updatedAt: new Date() }).where(eq(exams.id, examId));
+      examScheduler.cancel(examId);
+      exam.status = 'closed';
+    }
+  }
+
+  return exam;
 }
 
 export async function assertExamOwner(examId: string, userId: string, role?: string) {
@@ -117,6 +132,10 @@ export async function updateExam(
     .where(eq(exams.id, examId))
     .returning();
 
+  if (updated.status === 'active' && (updates.startTime || updates.durationMinutes || updates.windowBufferMinutes)) {
+    examScheduler.reschedule(updated);
+  }
+
   return updated;
 }
 
@@ -133,6 +152,9 @@ export async function publishExam(examId: string, userId: string, role?: string)
     .set({ status: 'active', sebExamToken: token, updatedAt: new Date() })
     .where(eq(exams.id, examId))
     .returning();
+
+  // Event-driven: schedule exact deadline auto-closure
+  examScheduler.schedule(updated);
 
   return updated;
 }
@@ -161,6 +183,10 @@ export async function closeExam(examId: string, userId: string, role?: string) {
     .set({ status: 'closed', updatedAt: new Date() })
     .where(eq(exams.id, examId))
     .returning();
+
+  // Cancel any scheduled timer
+  examScheduler.cancel(examId);
+
   return updated;
 }
 
@@ -189,6 +215,9 @@ export async function republishExam(examId: string, userId: string, role?: strin
     .where(eq(exams.id, examId))
     .returning();
 
+  // Reschedule timer for remaining duration
+  examScheduler.schedule(updated);
+
   return updated;
 }
 
@@ -213,12 +242,13 @@ export async function autoCloseExpiredExams(): Promise<string[]> {
   if (expired.length === 0) return [];
 
   await Promise.all(
-    expired.map((e) =>
-      db
+    expired.map((e) => {
+      examScheduler.cancel(e.id);
+      return db
         .update(exams)
         .set({ status: 'closed', updatedAt: new Date() })
-        .where(eq(exams.id, e.id)),
-    ),
+        .where(eq(exams.id, e.id));
+    }),
   );
 
   const expiredIds = expired.map((e) => e.id);
@@ -236,6 +266,8 @@ export async function deleteExam(examId: string, userId: string, role?: string) 
   if (exam.status === 'active') {
     throw new AppError(400, 'Cannot delete an active exam');
   }
+
+  examScheduler.cancel(examId);
 
   if (exam.pdfPath) {
     const teacher = await getUserProfile(exam.teacherId);

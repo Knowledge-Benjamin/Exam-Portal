@@ -4,6 +4,7 @@ import { exams } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
 import { signExamToken } from '../utils/token';
 import { createSubmission, findActiveSubmissionByRegNumber } from './submissionService';
+import { examScheduler } from './examScheduler';
 
 export async function getExamByToken(token: string) {
   const [exam] = await db
@@ -44,6 +45,7 @@ export async function processSEBJoin(
   }
 
   if (now > openUntil) {
+    await examScheduler.executeAutoClose(exam.id);
     throw new AppError(403, 'The exam window has closed');
   }
 

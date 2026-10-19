@@ -19,7 +19,7 @@ import sebRouter from './routes/seb';
 import webhooksRouter from './routes/webhooks';
 
 import { registerSocketHandlers } from './socket/handlers';
-import { autoCloseExpiredExams } from './services/examService';
+import { examScheduler } from './services/examScheduler';
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -94,24 +94,10 @@ httpServer.listen(env.PORT, () => {
   console.log(`[server] CORS origin: ${env.CORS_ORIGIN}`);
   console.log(`[server] SEB validation: ${env.SEB_CONFIG_KEY === 'NONE' ? 'header-presence only' : 'HMAC enabled'}`);
 
-  // Auto-close exams whose window has expired — runs every 60 seconds
-  const runAutoClose = async () => {
-    try {
-      const expiredIds = await autoCloseExpiredExams();
-      if (expiredIds.length > 0) {
-        const { cleanupExamRoomData } = await import('./socket/handlers');
-        expiredIds.forEach((id) => cleanupExamRoomData(id));
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        if (err.message?.includes('fetch failed') || err.message?.includes('ETIMEDOUT')) return;
-        console.warn('[scheduler] autoClose error:', err.message);
-      }
-    }
-  };
-
-  runAutoClose();
-  setInterval(runAutoClose, 60 * 1000);
+  // Initialize event-driven exam closure timers (zero periodic database polling)
+  examScheduler.init(io).catch((err) => {
+    console.error('[server] Failed to initialize exam scheduler:', err);
+  });
 });
 
 export { app, httpServer, io };
