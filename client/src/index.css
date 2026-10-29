@@ -2800,9 +2800,12 @@ select.form-input:focus {
   color: #0f172a;
 }
 .dashboard-hero {
-  min-width: 30rem;
-  aspect-ratio: 2 / 1;
-  padding: 2rem;
+  min-width: 0;
+  background: linear-gradient(135deg, rgba(0, 82, 204, 0.18) 0%, rgba(17, 28, 52, 0.6) 60%, rgba(23, 37, 84, 0.4) 100%);
+  border: 1px solid rgba(0, 82, 204, 0.2);
+  padding: 2.5rem 2rem;
+  position: relative;
+  overflow: hidden;
 }
 .dashboard-hero-content {
   display: flex;
@@ -3172,17 +3175,25 @@ select.form-input:focus {
 }
 
 .sidebar-toggle {
-  margin-left: 0.5rem;
+  flex-shrink: 0;
   color: #cbd5e1;
-  padding: 0.5rem;
+  padding: 0.4rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 9999px;
-  border: none;
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .sidebar-toggle:hover {
   color: white;
+  background: rgba(0, 82, 204, 0.25);
+  border-color: rgba(0, 82, 204, 0.5);
 }
 
 .sidebar-toggle-icon {
@@ -3376,12 +3387,14 @@ select.form-input:focus {
   width: 2rem;
   height: 2rem;
   border-radius: 9999px;
+  background: #0052cc;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-size: 0.75rem;
   font-weight: 700;
+  box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.3);
 }
 
 /* Topbar styles */
