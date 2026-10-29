@@ -44,9 +44,11 @@ export const updateSystemConfigSchema = z.object({
 
 const permittedProcessSchema = z.object({
   executable: z.string().min(1).max(260).trim(),
+  path: z.string().max(500).trim().optional().or(z.literal('')),
   title: z.string().max(100).trim().optional(),
   allowUserToChooseApp: z.boolean().optional(),
   os: z.union([z.literal(0), z.literal(1)]).optional(), // 0 = Windows, 1 = macOS
+  autostart: z.boolean().optional(),
 });
 
 const urlFilterRuleSchema = z.object({

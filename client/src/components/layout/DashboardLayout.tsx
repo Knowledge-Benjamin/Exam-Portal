@@ -40,21 +40,30 @@ export function DashboardLayout() {
     );
   }
 
+  const erpBaseUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:5173'
+    : 'https://portal.multitech.ac.ug';
+
   return (
     <div className="dashboard-layout">
-      
       {/* Sidebar */}
-      <aside
-        className={`sidebar ${isSidebarCollapsed ? 'collapsed' : 'expanded'}`}
-        style={{ backgroundColor: 'var(--color-action)' }}
-      >
+      <aside className={`sidebar ${isSidebarCollapsed ? 'collapsed' : 'expanded'}`}>
         <div className="sidebar-inner">
           <div className="sidebar-header">
             {!isSidebarCollapsed && (
               <div className="sidebar-header-content">
-                <p className="sidebar-header-label">Navigation</p>
-                <h1 className="sidebar-header-title">Exam Admin</h1>
-                <p className="sidebar-header-subtitle">Secure Portal</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '1.1rem' }}>🏛️</span>
+                  <span className="sidebar-header-label" style={{ margin: 0, color: '#38bdf8', fontWeight: 700, letterSpacing: '0.12em' }}>
+                    MULTITECH
+                  </span>
+                </div>
+                <h1 className="sidebar-header-title" style={{ fontSize: '0.95rem', fontWeight: 700, color: '#ffffff' }}>
+                  Exam Portal
+                </h1>
+                <p className="sidebar-header-subtitle" style={{ fontSize: '0.65rem', color: '#94a3b8', margin: '2px 0 0' }}>
+                  Safe Exam Browser
+                </p>
               </div>
             )}
             <button
@@ -63,7 +72,7 @@ export function DashboardLayout() {
               className="sidebar-toggle"
             >
               <svg className={`sidebar-toggle-icon ${isSidebarCollapsed ? 'rotated' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           </div>
@@ -73,7 +82,7 @@ export function DashboardLayout() {
           <nav className="sidebar-nav">
             {!isSidebarCollapsed && (
               <div className="sidebar-section">
-                <div className="sidebar-section-title">Primary</div>
+                <div className="sidebar-section-title">Navigation</div>
                 <button
                   onClick={() => setIsPrimaryCollapsed(!isPrimaryCollapsed)}
                   className="sidebar-section-button"
@@ -106,7 +115,7 @@ export function DashboardLayout() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </span>
-                {!isSidebarCollapsed && <span>Create exam</span>}
+                {!isSidebarCollapsed && <span>Create Exam</span>}
               </Link>
               <Link
                 to="/dashboard/settings"
@@ -133,6 +142,21 @@ export function DashboardLayout() {
                   {!isSidebarCollapsed && <span>User Management</span>}
                 </Link>
               )}
+
+              {/* Multitech ERP Quick Return */}
+              <a
+                href={erpBaseUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="sidebar-nav-link inactive"
+                style={{ marginTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '0.75rem' }}
+                title="Go to Multitech Web System"
+              >
+                <span className="sidebar-nav-icon" style={{ fontSize: '1rem', color: '#38bdf8' }}>
+                  ↗
+                </span>
+                {!isSidebarCollapsed && <span style={{ color: '#38bdf8' }}>Multitech ERP</span>}
+              </a>
             </div>
           </nav>
 
@@ -145,7 +169,7 @@ export function DashboardLayout() {
                   </div>
                   <div className="sidebar-profile-body">
                     <p className="sidebar-profile-name">{user?.fullName || 'Administrator'}</p>
-                    <p className="sidebar-profile-role">Admin access</p>
+                    <p className="sidebar-profile-role">{user?.role === 'admin' ? 'System Administrator' : 'Lecturer / Teacher'}</p>
                   </div>
                 </div>
                 <button onClick={logout} className="sidebar-logout">
@@ -154,7 +178,7 @@ export function DashboardLayout() {
               </>
             ) : (
               <div className="sidebar-collapsed-avatar">
-                <div className="sidebar-collapsed-avatar-circle" style={{ backgroundColor: 'var(--color-action)' }}>
+                <div className="sidebar-collapsed-avatar-circle">
                   {user?.fullName?.charAt(0) ?? 'A'}
                 </div>
               </div>
@@ -165,10 +189,8 @@ export function DashboardLayout() {
 
       {/* Main Content Wrapper */}
       <div className="content-wrapper">
-        
         {/* Topbar */}
-        <header className="topbar" style={{ backgroundColor: 'var(--color-action)' }}>
-          
+        <header className="topbar">
           {/* Search Bar */}
           <div className="topbar-search">
             <div className="topbar-search-icon">
@@ -178,21 +200,42 @@ export function DashboardLayout() {
             </div>
             <input 
               type="text" 
-              placeholder="SEARCH" 
+              placeholder="SEARCH EXAMS OR COURSES..." 
               className="topbar-search-input"
-              style={{ backgroundColor: 'var(--color-action)' }}
             />
           </div>
 
           {/* Right Icons */}
           <div className="topbar-actions">
-            <button className="topbar-action-button topbar-action-notification">
+            <a
+              href={`${erpBaseUrl}/lecturer/courses`}
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '0.78rem',
+                color: '#38bdf8',
+                background: 'rgba(56, 189, 248, 0.1)',
+                border: '1px solid rgba(56, 189, 248, 0.25)',
+                borderRadius: '6px',
+                padding: '0.35rem 0.65rem',
+                textDecoration: 'none',
+                fontWeight: 600,
+              }}
+            >
+              <span>🏛️ Multitech Web System</span>
+              <span>↗</span>
+            </a>
+
+            <button className="topbar-action-button topbar-action-notification" aria-label="Notifications">
               <svg className="topbar-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               <span className="topbar-notification-dot"></span>
             </button>
-            <Link to="/dashboard/settings" className="topbar-action-button">
+            <Link to="/dashboard/settings" className="topbar-action-button" aria-label="Settings">
               <svg className="topbar-action-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -202,14 +245,11 @@ export function DashboardLayout() {
               <span className="topbar-username">
                 {user?.fullName?.split(' ')[0] || 'ADMIN'}
               </span>
-              <div className="topbar-avatar" style={{ backgroundColor: 'var(--color-action)' }}>
-                <svg className="topbar-avatar-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
+              <div className="topbar-avatar">
+                {user?.fullName?.charAt(0) || 'A'}
               </div>
             </div>
           </div>
-
         </header>
 
         {/* Main Viewport */}
@@ -218,10 +258,7 @@ export function DashboardLayout() {
             <Outlet />
           </div>
         </main>
-
       </div>
     </div>
   );
 }
-
-

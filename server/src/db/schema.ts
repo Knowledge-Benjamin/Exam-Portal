@@ -46,9 +46,11 @@ export interface SebSettings {
   // Allowed external applications (permittedProcesses array in SEB plist)
   permittedProcesses?: Array<{
     executable: string;    // e.g. "Code.exe" or "WINWORD.EXE"
+    path?: string;          // file path or directory (e.g. "%LOCALAPPDATA%\Programs\Microsoft VS Code\" or "C:\Windows\System32\")
     title?: string;        // friendly name shown in the SEB taskbar
     allowUserToChooseApp?: boolean;
     os?: 0 | 1;           // 0 = Windows, 1 = macOS (default 0)
+    autostart?: boolean;
   }>;
 
   // Display / anti-cheat
@@ -97,6 +99,7 @@ export const exams = pgTable('exams', {
   sebConfigKey: text('seb_config_key'),
   sebSettings: jsonb('seb_settings').$type<SebSettings>().notNull().default({}),
   status: examStatusEnum('status').notNull().default('draft'),
+  archivedAt: timestamp('archived_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, (table) => {

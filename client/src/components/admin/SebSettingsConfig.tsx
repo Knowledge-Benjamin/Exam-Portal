@@ -4,6 +4,7 @@ import type { SebSettings, PermittedProcess } from '../../types';
 export const APP_PRESETS: Array<{
   title: string;
   executable: string;
+  path: string;
   category: string;
   icon: string;
   description: string;
@@ -11,6 +12,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'Visual Studio Code',
     executable: 'Code.exe',
+    path: '%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\',
     category: 'Development',
     icon: '💻',
     description: 'Code editor for Python, JavaScript, C++, Web, etc.',
@@ -18,6 +20,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'Microsoft Word',
     executable: 'WINWORD.EXE',
+    path: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\',
     category: 'Office',
     icon: '📝',
     description: 'Word processor for essays, structured documents, reports',
@@ -25,6 +28,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'Microsoft Excel',
     executable: 'EXCEL.EXE',
+    path: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\',
     category: 'Office',
     icon: '📊',
     description: 'Spreadsheet for accounting, finance, statistics, data',
@@ -32,6 +36,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'IntelliJ IDEA',
     executable: 'idea64.exe',
+    path: 'C:\\Program Files\\JetBrains\\IntelliJ IDEA\\bin\\',
     category: 'Development',
     icon: '☕',
     description: 'Java & Kotlin development IDE',
@@ -39,6 +44,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'PyCharm',
     executable: 'pycharm64.exe',
+    path: 'C:\\Program Files\\JetBrains\\PyCharm\\bin\\',
     category: 'Development',
     icon: '🐍',
     description: 'Python IDE for programming & data science',
@@ -46,6 +52,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'Notepad',
     executable: 'notepad.exe',
+    path: 'C:\\Windows\\System32\\',
     category: 'Utilities',
     icon: '📄',
     description: 'Lightweight plain text scratchpad',
@@ -53,6 +60,7 @@ export const APP_PRESETS: Array<{
   {
     title: 'Windows Calculator',
     executable: 'calc.exe',
+    path: 'C:\\Windows\\System32\\',
     category: 'Utilities',
     icon: '🧮',
     description: 'Calculator for quantitative & math questions',
@@ -76,6 +84,7 @@ export function SebSettingsConfig({
 }: SebSettingsConfigProps) {
   const [customTitle, setCustomTitle] = useState('');
   const [customExe, setCustomExe] = useState('');
+  const [customPath, setCustomPath] = useState('');
   const [customError, setCustomError] = useState('');
 
   const permitted = sebSettings.permittedProcesses ?? [];
@@ -100,6 +109,7 @@ export function SebSettingsConfig({
         ...permitted,
         {
           executable: preset.executable,
+          path: preset.path,
           title: preset.title,
           allowUserToChooseApp: true,
           os: 0,
@@ -127,6 +137,17 @@ export function SebSettingsConfig({
     });
   };
 
+  const updateProcessPath = (executable: string, newPath: string) => {
+    if (disabled) return;
+    const next = permitted.map((p) =>
+      p.executable.toLowerCase() === executable.toLowerCase() ? { ...p, path: newPath } : p
+    );
+    onChangeSettings({
+      ...sebSettings,
+      permittedProcesses: next,
+    });
+  };
+
   const addCustomProcess = (e: React.FormEvent) => {
     e.preventDefault();
     if (disabled) return;
@@ -134,6 +155,7 @@ export function SebSettingsConfig({
 
     const cleanTitle = customTitle.trim();
     let cleanExe = customExe.trim();
+    const cleanPath = customPath.trim();
 
     if (!cleanExe) {
       setCustomError('Executable name is required (e.g., Code.exe or devcpp.exe)');
@@ -153,6 +175,7 @@ export function SebSettingsConfig({
       ...permitted,
       {
         executable: cleanExe,
+        path: cleanPath || undefined,
         title: cleanTitle || cleanExe,
         allowUserToChooseApp: true,
         os: 0,
@@ -170,6 +193,7 @@ export function SebSettingsConfig({
 
     setCustomTitle('');
     setCustomExe('');
+    setCustomPath('');
   };
 
   const setDisplayPolicy = (single: boolean) => {
@@ -275,16 +299,21 @@ export function SebSettingsConfig({
         <div
           style={{
             marginTop: '0.9rem',
-            padding: '0.85rem',
+            padding: '1rem',
             borderRadius: '0.65rem',
             background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px dashed rgba(255, 255, 255, 0.12)',
+            border: '1px dashed rgba(255, 255, 255, 0.15)',
           }}
         >
-          <p style={{ margin: '0 0 0.5rem', fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 500 }}>
-            + Add Custom Software / IDE
-          </p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+            <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600 }}>
+              + Add Custom Software / Tool
+            </p>
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+              Safe Exam Browser requires the executable file path / directory
+            </span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1.6fr auto', gap: '0.5rem', alignItems: 'center' }}>
             <input
               type="text"
               placeholder="Application Title (e.g. Eclipse IDE)"
@@ -292,7 +321,7 @@ export function SebSettingsConfig({
               onChange={(e) => setCustomTitle(e.target.value)}
               disabled={disabled}
               className="form-input"
-              style={{ flex: '1 1 180px', fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
             />
             <input
               type="text"
@@ -301,14 +330,23 @@ export function SebSettingsConfig({
               onChange={(e) => setCustomExe(e.target.value)}
               disabled={disabled}
               className="form-input"
-              style={{ flex: '1 1 160px', fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+            />
+            <input
+              type="text"
+              placeholder="File Path (e.g. C:\Program Files\Eclipse\ or %LOCALAPPDATA%\...)"
+              value={customPath}
+              onChange={(e) => setCustomPath(e.target.value)}
+              disabled={disabled}
+              className="form-input"
+              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
             />
             <button
               type="button"
               disabled={disabled || !customExe.trim()}
               onClick={addCustomProcess}
               className="button button--secondary"
-              style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+              style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
             >
               Add App
             </button>
@@ -326,40 +364,70 @@ export function SebSettingsConfig({
             <p style={{ margin: '0 0 0.4rem', fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Configured Allowed Applications ({permitted.length})
             </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
               {permitted.map((p) => (
                 <div
                   key={p.executable}
                   style={{
-                    display: 'inline-flex',
+                    display: 'flex',
+                    flexWrap: 'wrap',
                     alignItems: 'center',
-                    gap: '0.45rem',
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '0.4rem',
-                    background: 'rgba(56, 189, 248, 0.1)',
+                    justifyContent: 'space-between',
+                    gap: '0.65rem',
+                    padding: '0.55rem 0.85rem',
+                    borderRadius: '0.5rem',
+                    background: 'rgba(56, 189, 248, 0.08)',
                     border: '1px solid rgba(56, 189, 248, 0.25)',
-                    fontSize: '0.8rem',
+                    fontSize: '0.82rem',
                     color: '#e0f2fe',
                   }}
                 >
-                  <span style={{ fontWeight: 600 }}>{p.title || p.executable}</span>
-                  <code style={{ fontSize: '0.72rem', color: '#93c5fd' }}>({p.executable})</code>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
+                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>{p.title || p.executable}</span>
+                    <code style={{ fontSize: '0.75rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', color: '#93c5fd' }}>
+                      {p.executable}
+                    </code>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flex: '1 1 200px' }}>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>📂 Path:</span>
+                      <input
+                        type="text"
+                        value={p.path ?? ''}
+                        disabled={disabled}
+                        placeholder="e.g. C:\Windows\System32\ or %LOCALAPPDATA%\..."
+                        onChange={(e) => updateProcessPath(p.executable, e.target.value)}
+                        style={{
+                          fontSize: '0.75rem',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          background: 'rgba(0,0,0,0.25)',
+                          color: '#e2e8f0',
+                          flex: 1,
+                          minWidth: '150px',
+                        }}
+                      />
+                    </div>
+                    <span style={{ fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', padding: '1px 6px', borderRadius: '4px' }}>
+                      ✓ User Browse Enabled
+                    </span>
+                  </div>
                   {!disabled && (
                     <button
                       type="button"
                       onClick={() => removeProcess(p.executable)}
                       title="Remove application"
                       style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#94a3b8',
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '4px',
+                        color: '#f87171',
                         cursor: 'pointer',
-                        padding: '0 0.2rem',
-                        fontSize: '0.9rem',
-                        lineHeight: 1,
+                        padding: '2px 8px',
+                        fontSize: '0.78rem',
+                        lineHeight: 1.2,
                       }}
                     >
-                      ×
+                      Remove
                     </button>
                   )}
                 </div>

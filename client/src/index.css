@@ -21,7 +21,7 @@ html {
 
 body {
   font-family: var(--font-family-sans);
-  background-color: #081d38;
+  background-color: #0b1528;
   color: #e2e8f0;
   line-height: 1.5;
   min-height: 100vh;
@@ -32,7 +32,7 @@ body {
 /* ─── Global Utility Classes ─────────────────────────────────────────────── */
 
 .card {
-  background: var(--color-primary);
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 16px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
@@ -100,7 +100,7 @@ textarea.form-input {
 .panel-card,
 .card-panel,
 .review-panel {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   padding: 2rem;
@@ -516,9 +516,9 @@ select.form-input:focus {
 }
 
 .button--primary {
-  background: var(--color-primary);
-  color: #cffafe;
-  border-color: rgba(8, 29, 56, 0.4);
+  background: #0052cc;
+  color: #ffffff;
+  border-color: rgba(0, 82, 204, 0.4);
 }
 
 .button--secondary {
@@ -533,8 +533,8 @@ select.form-input:focus {
 }
 
 .button--highlight {
-  background: var(--color-highlight);
-  color: var(--color-primary);
+  background: #2563eb;
+  color: #ffffff;
 }
 
 .button--outline {
@@ -1519,7 +1519,7 @@ select.form-input:focus {
 }
 
 .page-panel {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   padding: 2rem;
@@ -2363,7 +2363,7 @@ select.form-input:focus {
 }
 
 .card {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   padding: 1.5rem;
@@ -2394,7 +2394,7 @@ select.form-input:focus {
 }
 
 .list-panel {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   overflow: hidden;
@@ -2452,7 +2452,7 @@ select.form-input:focus {
 }
 
 .admin-panel {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   padding: 2rem;
@@ -2643,7 +2643,7 @@ select.form-input:focus {
 }
 
 .submission-panel {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   overflow: hidden;
@@ -2789,7 +2789,7 @@ select.form-input:focus {
   width: 100%;
 }
 .dashboard-card {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
@@ -3021,7 +3021,7 @@ select.form-input:focus {
   overflow: hidden;
 }
 .exam-card-body {
-  background: #170c79;
+  background: #111c34;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 1.5rem;
   padding: 1.5rem;
@@ -3119,8 +3119,9 @@ select.form-input:focus {
 }
 
 .sidebar {
+  background: linear-gradient(180deg, #0b1528 0%, #111c34 50%, #172554 100%);
   flex-shrink: 0;
-  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   flex-direction: column;
   z-index: 20;
@@ -3386,7 +3387,10 @@ select.form-input:focus {
 /* Topbar styles */
 .topbar {
   height: 72px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(11, 21, 40, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3486,13 +3490,17 @@ select.form-input:focus {
 }
 
 .topbar-avatar {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 25px rgba(11, 61, 111, 0.2);
+  background: #0052cc;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 10px rgba(0, 82, 204, 0.4);
 }
 
 .topbar-avatar-icon {

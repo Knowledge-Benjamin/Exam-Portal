@@ -18,6 +18,8 @@ import {
   setPdfPath,
   getExamById,
   regenerateExamToken,
+  archiveExam,
+  unarchiveExam,
 } from '../services/examService';
 import { getRoomEvents, countRoomEvents } from '../services/roomEventService';
 import { getExamStats } from '../services/examStatsService';
@@ -43,16 +45,17 @@ const upload = multer({
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 
-// GET /api/exams
+// GET /api/exams  (supports ?archived=true)
 router.get(
   '/',
   requireAuth,
   requireRole('teacher', 'admin'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const examList = req.user!.role === 'admin' 
-        ? await listAllExams() 
-        : await listExamsByTeacher(req.user!.sub);
+      const archived = req.query.archived === 'true';
+      const examList = req.user!.role === 'admin'
+        ? await listAllExams(archived)
+        : await listExamsByTeacher(req.user!.sub, archived);
       res.json({ exams: examList });
     } catch (err) {
       next(err);
@@ -76,6 +79,51 @@ router.post(
   },
 );
 
+// GET /api/exams/erp-courses (Fetch courses from Multitech Web System / ERP)
+router.get(
+  '/erp-courses',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (_req: Request, res: Response) => {
+    try {
+      const erpBaseUrl = env.ERP_WEBHOOK_URL
+        ? new URL(env.ERP_WEBHOOK_URL).origin
+        : 'http://localhost:3000';
+
+      const response = await fetch(`${erpBaseUrl}/api/course-units`, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(3000),
+      });
+
+      if (response.ok) {
+        const body = (await response.json()) as any;
+        if (body.success && Array.isArray(body.data)) {
+          return res.json({ success: true, courses: body.data, source: 'live' });
+        }
+      }
+    } catch {
+      // ERP endpoint unreachable or timed out; return standard Multitech catalog
+    }
+
+    const fallbackCourses = [
+      { id: '1', course_code: 'BIT1101', name: 'Computer Applications & Office Tech', credits: 4, programme_name: 'Bachelor of Information Technology', target_year: 1, target_semester: 1 },
+      { id: '2', course_code: 'BIT1102', name: 'Structured Programming in C', credits: 4, programme_name: 'Bachelor of Information Technology', target_year: 1, target_semester: 1 },
+      { id: '3', course_code: 'BIT1201', name: 'Database Management Systems', credits: 4, programme_name: 'Bachelor of Information Technology', target_year: 1, target_semester: 2 },
+      { id: '4', course_code: 'BIT2101', name: 'Object-Oriented Programming (Java)', credits: 4, programme_name: 'Bachelor of Information Technology', target_year: 2, target_semester: 1 },
+      { id: '5', course_code: 'BIT2201', name: 'Web Systems Development', credits: 4, programme_name: 'Bachelor of Information Technology', target_year: 2, target_semester: 2 },
+      { id: '6', course_code: 'BIT3101', name: 'Network Security & Cryptography', credits: 4, programme_name: 'Bachelor of Information Technology', target_year: 3, target_semester: 1 },
+      { id: '7', course_code: 'ACC1101', name: 'Principles of Accounting I', credits: 4, programme_name: 'Bachelor of Commerce', target_year: 1, target_semester: 1 },
+      { id: '8', course_code: 'ACC1201', name: 'Financial Accounting & Reporting', credits: 4, programme_name: 'Bachelor of Commerce', target_year: 1, target_semester: 2 },
+      { id: '9', course_code: 'BBA1101', name: 'Principles of Business Administration', credits: 3, programme_name: 'Bachelor of Business Administration', target_year: 1, target_semester: 1 },
+      { id: '10', course_code: 'BBA2101', name: 'Strategic Management & Leadership', credits: 3, programme_name: 'Bachelor of Business Administration', target_year: 2, target_semester: 1 },
+      { id: '11', course_code: 'CS101', name: 'Introduction to Computer Science', credits: 3, programme_name: 'Computer Science & IT', target_year: 1, target_semester: 1 },
+      { id: '12', course_code: 'DIT1101', name: 'Fundamentals of Computing', credits: 3, programme_name: 'Diploma in Information Technology', target_year: 1, target_semester: 1 },
+    ];
+
+    return res.json({ success: true, courses: fallbackCourses, source: 'fallback' });
+  },
+);
+
 // GET /api/exams/:id
 router.get(
   '/:id',
@@ -91,6 +139,36 @@ router.get(
           sebGateUrl: exam.sebExamToken ? `${baseUrl}/seb/gate/${exam.sebExamToken}` : undefined,
         },
       });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /api/exams/:id/archive
+router.patch(
+  '/:id/archive',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      await archiveExam(req.params.id, req.user!.sub, req.user!.role);
+      res.json({ success: true });
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+// PATCH /api/exams/:id/unarchive
+router.patch(
+  '/:id/unarchive',
+  requireAuth,
+  requireRole('teacher', 'admin'),
+  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+    try {
+      await unarchiveExam(req.params.id, req.user!.sub, req.user!.role);
+      res.json({ success: true });
     } catch (err) {
       next(err);
     }

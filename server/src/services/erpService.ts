@@ -158,9 +158,27 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
   };
 
   // Permitted processes (external apps like VSCode, Word, etc.)
-  const processes = Array.isArray(s.permittedProcesses) ? s.permittedProcesses as Array<{
-    executable: string; title?: string; allowUserToChooseApp?: boolean; os?: number;
-  }> : [];
+  const rawProcesses = Array.isArray(s.permittedProcesses) ? (s.permittedProcesses as Array<{
+    executable: string;
+    path?: string;
+    title?: string;
+    allowUserToChooseApp?: boolean;
+    os?: number;
+    autostart?: boolean;
+  }>) : [];
+
+  // Canonicalize permitted processes per official Safe Exam Browser spec
+  const processes = rawProcesses.map((p) => ({
+    active: true,
+    allowUserToChooseApp: p.allowUserToChooseApp !== false,
+    autostart: !!p.autostart,
+    executable: p.executable,
+    os: p.os ?? 0,
+    path: p.path ?? '',
+    runInBackground: false,
+    title: p.title ?? p.executable,
+    windowHandlingMethod: 1,
+  }));
 
   // Generate the official SEB Config Key per Safe Exam Browser specification
   const sebConfigKey = generateConfigKey({ ...sebConfig, permittedProcesses: processes });
@@ -262,10 +280,15 @@ function buildSEBPlist(opts: {
   allowFileUpload?: boolean;
   sebConfig: Record<string, unknown>;
   permittedProcesses?: Array<{
+    active?: boolean;
     executable: string;
+    path?: string;
     title?: string;
     allowUserToChooseApp?: boolean;
     os?: number;
+    autostart?: boolean;
+    runInBackground?: boolean;
+    windowHandlingMethod?: number;
   }>;
 }): string {
   const { sebConfig: c, permittedProcesses = [] } = opts;
@@ -277,20 +300,30 @@ function buildSEBPlist(opts: {
   // Helper: render a plist string (with XML escaping)
   const str = (v: unknown, def = '') => `<string>${escapeXml(v !== undefined ? String(v) : def)}</string>`;
 
-  // Build permittedProcesses plist array
+  // Build permittedProcesses plist array adhering to Safe Exam Browser specification
   const processesXml = permittedProcesses.length > 0
     ? `
   <key>permittedProcesses</key>
   <array>
 ${permittedProcesses.map((p) => `    <dict>
+      <key>active</key>
+      <true/>
+      <key>allowUserToChooseApp</key>
+      ${p.allowUserToChooseApp !== false ? '<true/>' : '<false/>'}
+      <key>autostart</key>
+      ${p.autostart ? '<true/>' : '<false/>'}
       <key>executable</key>
       <string>${escapeXml(p.executable)}</string>
-      <key>title</key>
-      <string>${escapeXml(p.title ?? p.executable)}</string>
-      <key>allowUserToChooseApp</key>
-      ${p.allowUserToChooseApp ? '<true/>' : '<false/>'}
       <key>os</key>
       <integer>${p.os ?? 0}</integer>
+      <key>path</key>
+      <string>${escapeXml(p.path ?? '')}</string>
+      <key>runInBackground</key>
+      <false/>
+      <key>title</key>
+      <string>${escapeXml(p.title ?? p.executable)}</string>
+      <key>windowHandlingMethod</key>
+      <integer>${p.windowHandlingMethod ?? 1}</integer>
     </dict>`).join('\n')}
   </array>`
     : '';

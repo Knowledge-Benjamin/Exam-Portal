@@ -277,13 +277,13 @@ export function ExamDetail() {
                 Download .seb File (Test as Student)
               </button>
               <a
-                href="https://multitech-bussiness-school.onrender.com/lecturer/courses"
+                href={typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:5173/lecturer/courses' : 'https://portal.multitech.ac.ug/lecturer/courses'}
                 target="_blank"
                 rel="noreferrer"
                 className="button button--secondary"
                 style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}
               >
-                Return to Multitech ERP ↗
+                Open in Multitech Web System ↗
               </a>
             </div>
             {syncFeedback && (

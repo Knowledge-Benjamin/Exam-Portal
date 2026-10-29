@@ -19,9 +19,11 @@ export interface User {
 
 export interface PermittedProcess {
   executable: string;
+  path?: string;
   title?: string;
   allowUserToChooseApp?: boolean;
   os?: 0 | 1;
+  autostart?: boolean;
 }
 
 export interface SebSettings {
@@ -60,6 +62,7 @@ export interface Exam {
   sebExamToken?: string;
   sebSettings?: SebSettings;
   status: ExamStatus;
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

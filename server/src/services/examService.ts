@@ -1,4 +1,4 @@
-import { eq, and, asc } from 'drizzle-orm';
+import { eq, and, asc, isNull, isNotNull } from 'drizzle-orm';
 import { db } from '../db/db';
 import { exams, questions, submissions, examRoomEvents } from '../db/schema';
 import { AppError } from '../middleware/errorHandler';
@@ -6,19 +6,34 @@ import { randomHex } from '../utils/crypto';
 
 // ─── Exams ───────────────────────────────────────────────────────────────────
 
-export async function listExamsByTeacher(teacherId: string) {
+export async function listExamsByTeacher(teacherId: string, archived = false) {
   return db
     .select()
     .from(exams)
-    .where(eq(exams.teacherId, teacherId))
+    .where(and(
+      eq(exams.teacherId, teacherId),
+      archived ? isNotNull(exams.archivedAt) : isNull(exams.archivedAt),
+    ))
     .orderBy(asc(exams.createdAt));
 }
 
-export async function listAllExams() {
+export async function listAllExams(archived = false) {
   return db
     .select()
     .from(exams)
+    .where(archived ? isNotNull(exams.archivedAt) : isNull(exams.archivedAt))
     .orderBy(asc(exams.createdAt));
+}
+
+export async function archiveExam(examId: string, userId: string, role?: string) {
+  const exam = await assertExamOwner(examId, userId, role);
+  if (exam.status === 'active') throw new AppError(400, 'Cannot archive an active exam — close it first');
+  await db.update(exams).set({ archivedAt: new Date(), updatedAt: new Date() }).where(eq(exams.id, examId));
+}
+
+export async function unarchiveExam(examId: string, userId: string, role?: string) {
+  await assertExamOwner(examId, userId, role);
+  await db.update(exams).set({ archivedAt: null, updatedAt: new Date() }).where(eq(exams.id, examId));
 }
 
 import { examScheduler } from './examScheduler';
