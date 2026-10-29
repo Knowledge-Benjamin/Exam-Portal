@@ -29,6 +29,13 @@
       "when": 1779483411301,
       "tag": "0003_flowery_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793311552280,
+      "tag": "0004_archived_at_column",
+      "breakpoints": true
     }
   ]
 }

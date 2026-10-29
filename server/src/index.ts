@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser';
 import { Server as SocketIOServer } from 'socket.io';
 
 import { env } from './config/env';
+import { runMigrations } from './db/db';
 import { apiLimiter } from './middleware/rateLimiter';
 import { sanitizeInput } from './middleware/sanitize';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
@@ -89,15 +90,30 @@ app.use(errorHandler);
 
 // ─── Start ───────────────────────────────────────────────────────────────────
 
-httpServer.listen(env.PORT, () => {
-  console.log(`[server] Running on port ${env.PORT} (${env.NODE_ENV})`);
-  console.log(`[server] CORS origin: ${env.CORS_ORIGIN}`);
-  console.log(`[server] SEB validation: ${env.SEB_CONFIG_KEY === 'NONE' ? 'header-presence only' : 'HMAC enabled'}`);
+// ─── Bootstrap ───────────────────────────────────────────────────────────────
 
-  // Initialize event-driven exam closure timers (zero periodic database polling)
-  examScheduler.init(io).catch((err) => {
-    console.error('[server] Failed to initialize exam scheduler:', err);
+async function bootstrap() {
+  // Run all pending Drizzle migrations before accepting traffic.
+  // Already-applied migrations are skipped automatically.
+  try {
+    await runMigrations();
+  } catch (err) {
+    console.error('[db] Migration failed — server will NOT start:', err);
+    process.exit(1);
+  }
+
+  httpServer.listen(env.PORT, () => {
+    console.log(`[server] Running on port ${env.PORT} (${env.NODE_ENV})`);
+    console.log(`[server] CORS origin: ${env.CORS_ORIGIN}`);
+    console.log(`[server] SEB validation: ${env.SEB_CONFIG_KEY === 'NONE' ? 'header-presence only' : 'HMAC enabled'}`);
+
+    // Initialize event-driven exam closure timers (zero periodic database polling)
+    examScheduler.init(io).catch((err) => {
+      console.error('[server] Failed to initialize exam scheduler:', err);
+    });
   });
-});
+}
+
+bootstrap();
 
 export { app, httpServer, io };
