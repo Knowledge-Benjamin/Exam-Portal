@@ -5,18 +5,17 @@ import { useAuthStore } from '../../store/authStore';
 import type { ExamWithGateUrl } from '../../types';
 import { formatDate, formatDuration } from '../../utils/formatters';
 
-type FilterTab = 'all' | 'draft' | 'active' | 'closed' | 'archived';
+type FilterTab = 'all' | 'active' | 'draft' | 'closed' | 'archived';
 
 export function DashboardHome() {
   const [exams, setExams] = useState<ExamWithGateUrl[]>([]);
   const [archivedExams, setArchivedExams] = useState<ExamWithGateUrl[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [archiveMsg, setArchiveMsg] = useState('');
+  const [feedbackMsg, setFeedbackMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   const { user } = useAuthStore();
 
-  // Pagination & filter state
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -32,7 +31,7 @@ export function DashboardHome() {
       setExams(activeRes.data.exams ?? []);
       setArchivedExams(archiveRes.data.exams ?? []);
     } catch (err: any) {
-      setError(err.error || 'Failed to load exams');
+      setError(err?.error || 'Failed to load examinations');
     } finally {
       setIsLoading(false);
     }
@@ -42,457 +41,453 @@ export function DashboardHome() {
     fetchExams();
   }, [fetchExams]);
 
-  if (isLoading) {
-    return (
-      <div className="page-loader">
-        <div className="spinner" />
-      </div>
-    );
-  }
-
-  const safeExams = exams || [];
-  const safeArchived = archivedExams || [];
-  const activeExams = safeExams.filter((e) => e.status === 'active').length;
-  const draftExams = safeExams.filter((e) => e.status === 'draft').length;
-  const firstName = user?.fullName?.split(' ')[0] || 'Administrator';
-
-  // Which pool are we drawing from?
-  const pool = statusFilter === 'archived' ? safeArchived : safeExams;
-
-  // Filter by status (skip for archived tab)
-  const statusFiltered =
-    statusFilter === 'all' || statusFilter === 'archived'
-      ? pool
-      : pool.filter((exam) => exam.status === statusFilter);
-
-  // Search filter
-  const q = searchQuery.toLowerCase();
-  const filteredExams = statusFiltered.filter(
-    (exam) =>
-      !searchQuery ||
-      exam.title.toLowerCase().includes(q) ||
-      (exam.erpCourseCode && exam.erpCourseCode.toLowerCase().includes(q)),
-  );
-
-  // Pagination
-  const totalPages = Math.max(1, Math.ceil(filteredExams.length / EXAMS_PER_PAGE));
-  const safePage = Math.min(currentPage, totalPages);
-  const startIdx = (safePage - 1) * EXAMS_PER_PAGE;
-  const paginatedExams = filteredExams.slice(startIdx, startIdx + EXAMS_PER_PAGE);
-
-  const handleFilterChange = (filter: FilterTab) => {
-    setStatusFilter(filter);
-    setCurrentPage(1);
-    setSearchQuery('');
-  };
-
-  const handleSearchChange = (val: string) => {
-    setSearchQuery(val);
-    setCurrentPage(1);
+  const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
+    setFeedbackMsg({ text, type });
+    setTimeout(() => setFeedbackMsg(null), 4000);
   };
 
   const handleArchive = async (examId: string, title: string) => {
-    if (!window.confirm(`Archive exam "${title}"? You can restore it later from the Archived tab.`)) return;
+    if (!window.confirm(`Archive "${title}"? It will be moved to the Archived tab.`)) return;
     try {
       await api.patch(`/exams/${examId}/archive`);
-      setArchiveMsg(`"${title}" archived.`);
-      setTimeout(() => setArchiveMsg(''), 3500);
+      showFeedback(`"${title}" has been archived.`);
       await fetchExams();
     } catch (err: any) {
-      alert(err?.error || 'Failed to archive exam');
+      showFeedback(err?.error || 'Failed to archive exam', 'error');
     }
   };
 
   const handleUnarchive = async (examId: string, title: string) => {
     try {
       await api.patch(`/exams/${examId}/unarchive`);
-      setArchiveMsg(`"${title}" restored to active exams.`);
-      setTimeout(() => setArchiveMsg(''), 3500);
+      showFeedback(`"${title}" restored to active assessments.`);
       await fetchExams();
     } catch (err: any) {
-      alert(err?.error || 'Failed to restore exam');
+      showFeedback(err?.error || 'Failed to restore exam', 'error');
     }
   };
 
   const handleDelete = async (examId: string, title: string, status: string) => {
     if (status === 'active') {
-      alert('Active exams cannot be deleted. Close the exam first.');
+      alert('Active exams cannot be deleted while live. Please close the exam first.');
       return;
     }
-    if (!window.confirm(`Delete exam "${title}"? This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently delete "${title}"? This cannot be undone.`)) return;
     try {
       await api.delete(`/exams/${examId}`);
+      showFeedback(`"${title}" has been deleted.`);
       setExams((prev) => prev.filter((x) => x.id !== examId));
       setArchivedExams((prev) => prev.filter((x) => x.id !== examId));
     } catch (err: any) {
-      alert(err?.error || 'Failed to delete exam');
+      showFeedback(err?.error || 'Failed to delete exam', 'error');
     }
   };
 
-  const tabCounts: Record<FilterTab, number> = {
-    all: safeExams.length,
-    draft: safeExams.filter((e) => e.status === 'draft').length,
-    active: safeExams.filter((e) => e.status === 'active').length,
-    closed: safeExams.filter((e) => e.status === 'closed').length,
-    archived: safeArchived.length,
+  const safeExams = exams || [];
+  const safeArchived = archivedExams || [];
+  const activeCount = safeExams.filter((e) => e.status === 'active').length;
+  const draftCount = safeExams.filter((e) => e.status === 'draft').length;
+  const closedCount = safeExams.filter((e) => e.status === 'closed').length;
+  const archivedCount = safeArchived.length;
+
+  const pool = statusFilter === 'archived' ? safeArchived : safeExams;
+  const statusFiltered =
+    statusFilter === 'all' || statusFilter === 'archived'
+      ? pool
+      : pool.filter((exam) => exam.status === statusFilter);
+
+  const query = searchQuery.trim().toLowerCase();
+  const filteredExams = statusFiltered.filter((exam) => {
+    if (!query) return true;
+    const matchTitle = exam.title?.toLowerCase().includes(query);
+    const matchCourse = exam.erpCourseCode?.toLowerCase().includes(query);
+    return matchTitle || matchCourse;
+  });
+
+  const totalPages = Math.max(1, Math.ceil(filteredExams.length / EXAMS_PER_PAGE));
+  const safePage = Math.min(currentPage, totalPages);
+  const startIdx = (safePage - 1) * EXAMS_PER_PAGE;
+  const paginatedExams = filteredExams.slice(startIdx, startIdx + EXAMS_PER_PAGE);
+
+  const handleTabChange = (tab: FilterTab) => {
+    setStatusFilter(tab);
+    setCurrentPage(1);
   };
 
-  const TAB_LABELS: { key: FilterTab; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'draft', label: 'Draft' },
-    { key: 'active', label: 'Live' },
-    { key: 'closed', label: 'Closed' },
-    { key: 'archived', label: '🗄 Archived' },
-  ];
+  const firstName = user?.fullName?.split(' ')[0] || 'Administrator';
+
+  if (isLoading) {
+    return (
+      <div className="dash-loading-container">
+        <div className="spinner" />
+        <p className="dash-loading-text">Loading examinations...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard-page fade-in">
-      {/* Hero */}
-      <section className="dashboard-hero dashboard-card">
-        <div className="dashboard-hero-content">
-          <div>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', padding: '3px 10px', borderRadius: '9999px', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
-                MULTITECH BUSINESS SCHOOL
-              </span>
-            </div>
-            <h1 className="dashboard-hero-title">Welcome back, {firstName}</h1>
-            <p className="dashboard-hero-text">
-              Review your course examinations, configure Safe Exam Browser locks, and synchronize results directly with the Multitech Web System.
-            </p>
+    <div className="dash-container fade-in">
+      {/* Sleek, proportional Header Strip */}
+      <header className="dash-header-strip">
+        <div className="dash-header-left">
+          <div className="dash-badge-pill">
+            <span className="dash-badge-dot" />
+            Institutional Assessments
           </div>
-
-          <div className="dashboard-hero-pill">
-            <span className="dashboard-pill-dot" />
-            Connected to Multitech ERP
-          </div>
-        </div>
-      </section>
-
-      {/* Stats + Quick Action */}
-      <section className="dashboard-panels">
-        <div className="dashboard-stats-grid">
-          <article className="dashboard-stat-card">
-            <div className="dashboard-stat-meta">
-              <span className="dashboard-stat-title">Total Exams</span>
-              <span className="dashboard-pill">All time</span>
-            </div>
-            <div className="dashboard-stat-value">{safeExams.length}</div>
-            <p className="dashboard-stat-note">Assessments configured in your institution portal.</p>
-          </article>
-
-          <article className="dashboard-stat-card">
-            <div className="dashboard-stat-meta">
-              <span className="dashboard-stat-title">Published</span>
-              <span className="dashboard-pill" style={{ color: '#10b981', background: 'rgba(16, 185, 129, 0.15)' }}>Live</span>
-            </div>
-            <div className="dashboard-stat-value">{activeExams}</div>
-            <p className="dashboard-stat-note">Active and downloadable by students via .seb.</p>
-          </article>
-
-          <article className="dashboard-stat-card">
-            <div className="dashboard-stat-meta">
-              <span className="dashboard-stat-title">Drafts</span>
-              <span className="dashboard-pill" style={{ color: '#f59e0b', background: 'rgba(245, 158, 11, 0.15)' }}>Pending</span>
-            </div>
-            <div className="dashboard-stat-value">{draftExams}</div>
-            <p className="dashboard-stat-note">Exams currently in preparation or staging.</p>
-          </article>
-
-          <article className="dashboard-stat-card">
-            <div className="dashboard-stat-meta">
-              <span className="dashboard-stat-title">Archived</span>
-              <span className="dashboard-pill" style={{ color: '#94a3b8', background: 'rgba(148, 163, 184, 0.12)' }}>Hidden</span>
-            </div>
-            <div className="dashboard-stat-value">{safeArchived.length}</div>
-            <p className="dashboard-stat-note">Closed exams moved to the archive for record-keeping.</p>
-          </article>
+          <h1 className="dash-heading">Examinations Dashboard</h1>
+          <p className="dash-subheading">
+            Welcome back, {firstName}. Manage secure exam rooms, configure Safe Exam Browser locks, and synchronize grades.
+          </p>
         </div>
 
-        <aside className="dashboard-quick-card dashboard-card">
-          <div className="dashboard-quick-header">
-            <span className="dashboard-stat-title">Quick Action</span>
-            <div className="dashboard-quick-badge">+</div>
-          </div>
-
-          <div className="dashboard-quick-body">
-            <h2 className="dashboard-quick-title">Create a new examination</h2>
-            <p className="dashboard-quick-copy">
-              Link a verified Multitech course unit, configure permitted IDEs/Office tools, and publish securely.
-            </p>
-          </div>
-
-          <Link to="/dashboard/exams/create" className="button button--primary" style={{ textAlign: 'center', textDecoration: 'none', display: 'block', padding: '0.75rem 1rem' }}>
-            + Create New Exam
+        <div className="dash-header-right">
+          <Link to="/dashboard/exams/create" className="btn-dash-create">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="btn-icon">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Create New Exam</span>
           </Link>
-        </aside>
+        </div>
+      </header>
+
+      {/* Clean 4-card metric grid (fully balanced, no orphan cards) */}
+      <section className="dash-stats-grid">
+        <article className="dash-stat-tile">
+          <div className="dash-stat-top">
+            <span className="dash-stat-label">Total Exams</span>
+            <div className="dash-stat-icon-wrap bg-blue-subtle">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="dash-tile-svg text-blue">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+          </div>
+          <div className="dash-stat-number">{safeExams.length}</div>
+          <span className="dash-stat-hint">Registered assessments</span>
+        </article>
+
+        <article className="dash-stat-tile">
+          <div className="dash-stat-top">
+            <span className="dash-stat-label">Live Now</span>
+            <div className="dash-stat-icon-wrap bg-emerald-subtle">
+              <span className="pulse-indicator" />
+            </div>
+          </div>
+          <div className="dash-stat-number text-emerald">{activeCount}</div>
+          <span className="dash-stat-hint">Active in Safe Exam Browser</span>
+        </article>
+
+        <article className="dash-stat-tile">
+          <div className="dash-stat-top">
+            <span className="dash-stat-label">Draft Papers</span>
+            <div className="dash-stat-icon-wrap bg-amber-subtle">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="dash-tile-svg text-amber">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </div>
+          </div>
+          <div className="dash-stat-number text-amber">{draftCount}</div>
+          <span className="dash-stat-hint">Pending publication</span>
+        </article>
+
+        <article className="dash-stat-tile">
+          <div className="dash-stat-top">
+            <span className="dash-stat-label">Archived</span>
+            <div className="dash-stat-icon-wrap bg-slate-subtle">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="dash-tile-svg text-slate">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </div>
+          </div>
+          <div className="dash-stat-number text-slate">{archivedCount}</div>
+          <span className="dash-stat-hint">Stored historical records</span>
+        </article>
       </section>
 
-      {error && <div className="dashboard-error">{error}</div>}
-      {archiveMsg && (
-        <div style={{ margin: '0 0 1rem', padding: '0.75rem 1.25rem', borderRadius: '0.75rem', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.3)', color: '#10b981', fontSize: '0.875rem', fontWeight: 600 }}>
-          ✓ {archiveMsg}
+      {/* Feedback Alert */}
+      {feedbackMsg && (
+        <div className={`dash-alert ${feedbackMsg.type === 'error' ? 'dash-alert-error' : 'dash-alert-success'}`}>
+          <span>{feedbackMsg.type === 'error' ? '✕' : '✓'}</span>
+          <span>{feedbackMsg.text}</span>
         </div>
       )}
 
-      {/* Main Exam Table Section */}
-      <section className="dashboard-overview">
-        <div className="overview-header">
-          <div>
-            <h2 className="section-title">
-              {statusFilter === 'archived' ? 'Archived Examinations' : 'Institutional Examinations'}
-            </h2>
-            <p className="section-copy">
-              {statusFilter === 'archived'
-                ? 'These exams are archived. You can restore or permanently delete them.'
-                : 'Manage your exams, monitor student submissions, and download Safe Exam Browser configurations.'}
-            </p>
-          </div>
-          <div className="dashboard-pill dashboard-pill-small">
-            <span className="dashboard-pill-dot" />
-            {filteredExams.length} Exam{filteredExams.length !== 1 ? 's' : ''}
-          </div>
+      {error && (
+        <div className="dash-alert dash-alert-error">
+          <span>✕</span>
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Controls Bar: Tabs on Left, Search on Right */}
+      <div className="dash-controls-bar">
+        <div className="dash-tabs-group">
+          {(
+            [
+              { key: 'all', label: 'All Exams', count: safeExams.length },
+              { key: 'active', label: 'Live', count: activeCount },
+              { key: 'draft', label: 'Drafts', count: draftCount },
+              { key: 'closed', label: 'Closed', count: closedCount },
+              { key: 'archived', label: 'Archived', count: archivedCount },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => handleTabChange(tab.key)}
+              className={`dash-tab-btn ${statusFilter === tab.key ? 'active' : ''}`}
+            >
+              <span>{tab.label}</span>
+              <span className="dash-tab-pill">{tab.count}</span>
+            </button>
+          ))}
         </div>
 
-        {/* Filter Tabs + Search */}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.25rem', background: 'rgba(255,255,255,0.05)', borderRadius: '0.75rem', padding: '0.25rem', flexWrap: 'wrap' }}>
-            {TAB_LABELS.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => handleFilterChange(key)}
-                style={{
-                  padding: '0.45rem 0.9rem',
-                  borderRadius: '0.5rem',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontWeight: 700,
-                  fontSize: '0.78rem',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.05em',
-                  transition: 'all 0.2s',
-                  background: statusFilter === key
-                    ? key === 'archived' ? '#475569' : '#0052cc'
-                    : 'transparent',
-                  color: statusFilter === key ? '#ffffff' : 'rgba(255,255,255,0.6)',
-                  boxShadow: statusFilter === key
-                    ? key === 'archived' ? '0 2px 8px rgba(71,85,105,0.4)' : '0 2px 8px rgba(0,82,204,0.4)'
-                    : 'none',
-                }}
-              >
-                {label} ({tabCounts[key]})
-              </button>
-            ))}
-          </div>
-
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <input
-              type="text"
-              placeholder="Search by title or course code..."
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '0.6rem 1rem',
-                borderRadius: '0.75rem',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: 'rgba(255,255,255,0.05)',
-                color: '#fff',
-                fontSize: '0.875rem',
-                outline: 'none',
-                transition: 'border-color 0.2s',
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => (e.target.style.borderColor = '#38bdf8')}
-              onBlur={(e) => (e.target.style.borderColor = 'rgba(255,255,255,0.12)')}
-            />
-          </div>
+        <div className="dash-search-wrap">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="dash-search-icon">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Search by title or course code..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="dash-search-input"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery('')}
+              className="dash-search-clear"
+              title="Clear search"
+            >
+              ✕
+            </button>
+          )}
         </div>
+      </div>
 
-        {filteredExams.length === 0 ? (
-          <div className="dashboard-empty-state">
-            {statusFilter === 'archived' ? (
-              <p>No archived exams. Archive a closed exam using the button on its card.</p>
-            ) : (
-              <p>{searchQuery || statusFilter !== 'all' ? 'No exams match your search.' : 'No exams yet — create your first examination above.'}</p>
-            )}
+      {/* Exam Cards Grid */}
+      {filteredExams.length === 0 ? (
+        <div className="dash-empty-box">
+          <div className="dash-empty-icon-wrap">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="dash-empty-svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
           </div>
-        ) : (
-          <>
-            <div className="exam-list-grid">
-              {paginatedExams.map((exam) => {
-                const isArchived = statusFilter === 'archived';
-                const variantClass =
-                  isArchived
-                    ? 'status-closed'
-                    : exam.status === 'active'
-                    ? 'status-active'
-                    : exam.status === 'draft'
-                    ? 'status-draft'
-                    : 'status-closed';
+          <h3 className="dash-empty-title">
+            {searchQuery
+              ? 'No matching examinations'
+              : statusFilter === 'archived'
+              ? 'No archived examinations'
+              : 'No examinations found'}
+          </h3>
+          <p className="dash-empty-desc">
+            {searchQuery
+              ? `No exams matched "${searchQuery}". Try searching for another keyword or course code.`
+              : statusFilter === 'archived'
+              ? 'Closed exams that you archive will appear here for safe keeping.'
+              : 'Create your first course assessment to get started with Safe Exam Browser.'}
+          </p>
+          {!searchQuery && statusFilter !== 'archived' && (
+            <Link to="/dashboard/exams/create" className="btn-dash-create" style={{ margin: '1rem auto 0' }}>
+              + Create Examination
+            </Link>
+          )}
+        </div>
+      ) : (
+        <>
+          <div className="dash-exam-grid">
+            {paginatedExams.map((exam) => {
+              const isArchived = statusFilter === 'archived';
+              const statusClass =
+                isArchived
+                  ? 'status-archived'
+                  : exam.status === 'active'
+                  ? 'status-live'
+                  : exam.status === 'draft'
+                  ? 'status-draft'
+                  : 'status-closed';
 
-                return (
-                  <article key={exam.id} className="exam-card" style={isArchived ? { opacity: 0.8 } : {}}>
-                    <div className="exam-card-body">
-                      {/* Course badge & assessment type */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
-                          {exam.erpCourseCode ? `Course: ${exam.erpCourseCode}` : 'Institutional Exam'}
-                        </span>
-                        {isArchived ? (
-                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', background: 'rgba(148,163,184,0.1)', padding: '2px 8px', borderRadius: '4px', border: '1px solid rgba(148,163,184,0.2)' }}>
-                            🗄 Archived
-                          </span>
-                        ) : (
-                          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                            {exam.assessmentType === 'coursework' ? '📝 Coursework' : '🎓 Final Exam'}
-                          </span>
-                        )}
-                      </div>
+              const statusText = isArchived ? 'Archived' : exam.status === 'active' ? 'Live' : exam.status === 'draft' ? 'Draft' : 'Closed';
 
-                      <div className="exam-card-header">
-                        <h3 className="exam-card-title">
-                          <Link to={`/dashboard/exams/${exam.id}`} className="exam-card-link">
-                            {exam.title}
-                          </Link>
-                        </h3>
-                        <span className={`status-pill ${variantClass}`}>
-                          {isArchived ? 'archived' : exam.status}
-                        </span>
-                      </div>
-
-                      <div className="exam-card-details">
-                        <div className="exam-card-detail">
-                          <span>Starts</span>
-                          <strong>{formatDate(exam.startTime)}</strong>
-                        </div>
-                        <div className="exam-card-detail">
-                          <span>Duration</span>
-                          <strong>{formatDuration(exam.durationMinutes)}</strong>
-                        </div>
-                        <div className="exam-card-detail">
-                          <span>Type</span>
-                          <strong>{exam.questionSource === 'pdf' ? 'PDF Paper' : 'Question Builder'}</strong>
-                        </div>
-                      </div>
-
-                      <div className="exam-card-actions">
-                        {isArchived ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => handleUnarchive(exam.id, exam.title)}
-                              className="button button--secondary button-block"
-                              style={{ fontSize: '0.8rem' }}
-                            >
-                              ↩ Restore
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(exam.id, exam.title, exam.status)}
-                              className="button button--danger button-block"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <Link to={`/dashboard/exams/${exam.id}`} className="button button--secondary button-block" style={{ textAlign: 'center', textDecoration: 'none' }}>
-                              Manage
-                            </Link>
-                            {exam.status !== 'active' && (
-                              <Link to={`/dashboard/exams/${exam.id}/builder`} className="button button--secondary button-block" style={{ textAlign: 'center', textDecoration: 'none' }}>
-                                Edit
-                              </Link>
-                            )}
-                            {exam.status === 'closed' && (
-                              <button
-                                type="button"
-                                onClick={() => handleArchive(exam.id, exam.title)}
-                                className="button button--secondary button-block"
-                                style={{ fontSize: '0.8rem', color: '#94a3b8', borderColor: 'rgba(148,163,184,0.3)' }}
-                              >
-                                🗄 Archive
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(exam.id, exam.title, exam.status)}
-                              className="button button--danger button-block"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
-                      </div>
+              return (
+                <article key={exam.id} className={`dash-exam-card ${isArchived ? 'is-archived' : ''}`}>
+                  {/* Card Top: Badges */}
+                  <div className="dash-card-header">
+                    <div className="dash-card-tags">
+                      <span className="dash-course-pill">
+                        {exam.erpCourseCode || 'General'}
+                      </span>
+                      <span className="dash-assessment-pill">
+                        {exam.assessmentType === 'coursework' ? 'Coursework' : 'Final Exam'}
+                      </span>
                     </div>
-                  </article>
-                );
-              })}
-            </div>
+                    <span className={`dash-status-pill ${statusClass}`}>
+                      {exam.status === 'active' && <span className="status-live-dot" />}
+                      {statusText}
+                    </span>
+                  </div>
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginTop: '2rem', paddingBottom: '1rem' }}>
-                <button
-                  onClick={() => setCurrentPage(1)}
-                  disabled={safePage <= 1}
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: 'none', background: safePage <= 1 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)', color: safePage <= 1 ? 'rgba(255,255,255,0.2)' : '#fff', cursor: safePage <= 1 ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.8rem' }}
-                >
-                  &#171;
-                </button>
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={safePage <= 1}
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: 'none', background: safePage <= 1 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)', color: safePage <= 1 ? 'rgba(255,255,255,0.2)' : '#fff', cursor: safePage <= 1 ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.8rem' }}
-                >
-                  &#8249; Prev
-                </button>
+                  {/* Card Title */}
+                  <h3 className="dash-card-title">
+                    <Link to={`/dashboard/exams/${exam.id}`} className="dash-card-title-link">
+                      {exam.title}
+                    </Link>
+                  </h3>
 
+                  {/* Card Meta Grid */}
+                  <div className="dash-meta-grid">
+                    <div className="dash-meta-item">
+                      <span className="dash-meta-key">Starts</span>
+                      <span className="dash-meta-val">{formatDate(exam.startTime)}</span>
+                    </div>
+                    <div className="dash-meta-item">
+                      <span className="dash-meta-key">Duration</span>
+                      <span className="dash-meta-val">{formatDuration(exam.durationMinutes)}</span>
+                    </div>
+                    <div className="dash-meta-item">
+                      <span className="dash-meta-key">Format</span>
+                      <span className="dash-meta-val">
+                        {exam.questionSource === 'pdf' ? 'PDF Paper' : 'Questions'}
+                      </span>
+                    </div>
+                    <div className="dash-meta-item">
+                      <span className="dash-meta-key">Security</span>
+                      <span className="dash-meta-val text-blue">SEB Protected</span>
+                    </div>
+                  </div>
+
+                  {/* Card Actions Footer */}
+                  <div className="dash-card-actions">
+                    {isArchived ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleUnarchive(exam.id, exam.title)}
+                          className="btn-card-primary"
+                        >
+                          ↩ Restore
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(exam.id, exam.title, exam.status)}
+                          className="btn-card-danger"
+                          title="Permanently Delete"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <Link to={`/dashboard/exams/${exam.id}`} className="btn-card-primary">
+                          Manage
+                        </Link>
+                        {exam.status !== 'active' && (
+                          <Link to={`/dashboard/exams/${exam.id}/builder`} className="btn-card-secondary">
+                            Edit
+                          </Link>
+                        )}
+                        {exam.status === 'closed' && (
+                          <button
+                            type="button"
+                            onClick={() => handleArchive(exam.id, exam.title)}
+                            className="btn-card-secondary"
+                            title="Move to Archive"
+                          >
+                            Archive
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(exam.id, exam.title, exam.status)}
+                          className="btn-card-danger"
+                          title="Delete Exam"
+                        >
+                          Delete
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="dash-pagination-wrap">
+              <button
+                type="button"
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                className="btn-page-step"
+                title="First Page"
+              >
+                &#171;
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                className="btn-page-step"
+              >
+                Prev
+              </button>
+
+              <div className="dash-page-numbers">
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
-                  .filter((page) => page === 1 || page === totalPages || Math.abs(page - safePage) <= 1)
-                  .reduce<(number | string)[]>((acc, page, idx, arr) => {
-                    if (idx > 0 && page - (arr[idx - 1] as number) > 1) acc.push('…' + idx);
-                    acc.push(page);
+                  .filter((p) => p === 1 || p === totalPages || Math.abs(p - safePage) <= 1)
+                  .reduce<(number | string)[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push(`ellipsis-${idx}`);
+                    acc.push(p);
                     return acc;
                   }, [])
                   .map((item) =>
                     typeof item === 'string' ? (
-                      <span key={item} style={{ color: 'rgba(255,255,255,0.3)', padding: '0 0.25rem', fontWeight: 700 }}>…</span>
+                      <span key={item} className="dash-page-ellipsis">
+                        &hellip;
+                      </span>
                     ) : (
                       <button
                         key={item}
+                        type="button"
                         onClick={() => setCurrentPage(item)}
-                        style={{ padding: '0.5rem 0.85rem', borderRadius: '0.5rem', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem', background: safePage === item ? '#0052cc' : 'rgba(255,255,255,0.08)', color: '#fff', transform: safePage === item ? 'scale(1.05)' : 'scale(1)', transition: 'all 0.2s' }}
+                        className={`btn-page-number ${safePage === item ? 'active' : ''}`}
                       >
                         {item}
                       </button>
                     ),
                   )}
-
-                <button
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={safePage >= totalPages}
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: 'none', background: safePage >= totalPages ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)', color: safePage >= totalPages ? 'rgba(255,255,255,0.2)' : '#fff', cursor: safePage >= totalPages ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.8rem' }}
-                >
-                  Next &#8250;
-                </button>
-                <button
-                  onClick={() => setCurrentPage(totalPages)}
-                  disabled={safePage >= totalPages}
-                  style={{ padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: 'none', background: safePage >= totalPages ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.08)', color: safePage >= totalPages ? 'rgba(255,255,255,0.2)' : '#fff', cursor: safePage >= totalPages ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.8rem' }}
-                >
-                  &#187;
-                </button>
               </div>
-            )}
 
-            <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', fontWeight: 600, marginTop: '0.5rem' }}>
-              Showing {startIdx + 1}–{Math.min(startIdx + EXAMS_PER_PAGE, filteredExams.length)} of {filteredExams.length} exam{filteredExams.length !== 1 ? 's' : ''}
-            </p>
-          </>
-        )}
-      </section>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                className="btn-page-step"
+              >
+                Next
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                className="btn-page-step"
+                title="Last Page"
+              >
+                &#187;
+              </button>
+            </div>
+          )}
+
+          <div className="dash-results-footer">
+            Showing {startIdx + 1}–{Math.min(startIdx + EXAMS_PER_PAGE, filteredExams.length)} of {filteredExams.length} assessment{filteredExams.length !== 1 ? 's' : ''}
+          </div>
+        </>
+      )}
     </div>
   );
 }

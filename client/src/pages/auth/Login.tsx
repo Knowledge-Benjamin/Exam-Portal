@@ -63,15 +63,11 @@ export function Login() {
       <div className="relative z-10 w-full max-w-[380px] flex flex-col items-center px-6 py-12">
         
         {/* Circular Profile Icon matching the image */}
-        <div className="w-[88px] h-[88px] bg-[var(--color-primary)] rounded-full flex items-center justify-center mb-6 shadow-lg shadow-black/10">
-          <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-          </svg>
+        <div className="flex flex-col items-center mb-8">
+          <img src="/logo_asset.png" alt="Multitech Business School" className="w-20 h-20 object-contain filter drop-shadow-md mb-3" />
+          <span className="text-[11px] font-bold tracking-[0.25em] text-blue-200 uppercase">Multitech Business School</span>
+          <h1 className="text-white text-[19px] font-semibold tracking-wide uppercase mt-1">Exam Portal</h1>
         </div>
-        
-        <h1 className="text-white text-[18px] font-light tracking-[0.15em] uppercase mb-10 text-center">
-          Exam Portal
-        </h1>
 
         {error && (
           <div className="w-full mb-6 p-3 bg-red-500/20 border border-red-400/50 rounded flex items-center justify-center text-white text-sm">
