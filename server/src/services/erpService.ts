@@ -138,6 +138,12 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
     allowSwitchToApplications: Array.isArray(s.permittedProcesses) && (s.permittedProcesses as unknown[]).length > 0,
     allowFlashFullscreen: false,
 
+    // File upload / download permissions inside Safe Exam Browser
+    allowDownUploads: Boolean(exam.allowFileUpload),
+    allowUploads: Boolean(exam.allowFileUpload),
+    allowDownloads: false,
+    chooseFileToUploadPolicy: 0,
+
     // Language / spelling
     allowSpellCheck:       s.allowSpellCheck       ?? false,
     allowDictionaryLookup: s.allowDictionaryLookup ?? false,
@@ -416,6 +422,14 @@ ${permittedProcesses.map((p) => `    <dict>
   <true/>
   <key>allowSwitchToApplications</key>
   ${bool(permittedProcesses.length > 0 || c.allowSwitchToApplications, true)}
+  <key>allowDownUploads</key>
+  ${bool(c.allowDownUploads, !!opts.allowFileUpload)}
+  <key>allowUploads</key>
+  ${bool(c.allowUploads, !!opts.allowFileUpload)}
+  <key>allowDownloads</key>
+  ${bool(c.allowDownloads, false)}
+  <key>chooseFileToUploadPolicy</key>
+  ${int(c.chooseFileToUploadPolicy, 0)}
   <key>allowFlashFullscreen</key>
   <false/>
   <key>examSessionClearCookiesOnEnd</key>

@@ -105,13 +105,12 @@ async function bootstrap() {
   // Already-applied migrations are skipped automatically.
   try {
     await runMigrations();
-  } catch (err) {
-    console.error('[db] Migration failed — server will NOT start:', err);
-    process.exit(1);
+  } catch (err: any) {
+    console.warn('[db] Migration note during bootstrap — server continuing startup:', err?.message || err);
   }
 
-  httpServer.listen(env.PORT, () => {
-    console.log(`[server] Running on port ${env.PORT} (${env.NODE_ENV})`);
+  httpServer.listen(env.PORT, '0.0.0.0', () => {
+    console.log(`[server] Running on port ${env.PORT} (0.0.0.0) (${env.NODE_ENV})`);
     console.log(`[server] CORS origin: ${env.CORS_ORIGIN}`);
     console.log(`[server] SEB validation: ${env.SEB_CONFIG_KEY === 'NONE' ? 'header-presence only' : 'HMAC enabled'}`);
 

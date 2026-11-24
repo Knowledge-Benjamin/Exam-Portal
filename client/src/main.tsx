@@ -1,9 +1,7 @@
-import { StrictMode } from 'react';
+import { StrictMode, lazy, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider, Navigate, useRouteError, isRouteErrorResponse, Link } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
 import { DashboardLayout } from './components/layout/DashboardLayout';
-import { Footer } from './components/layout/Footer';
 
 // Lazy loaded pages
 const DashboardHome = lazy(() => import('./pages/admin/DashboardHome').then(module => ({ default: module.DashboardHome })));
@@ -124,11 +122,6 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1">
-        <RouterProvider router={router} />
-      </div>
-      <Footer />
-    </div>
+    <RouterProvider router={router} />
   </StrictMode>
 );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, Navigate, useLocation, Link } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
+import { IconExternal } from '../ui/Icons';
 
 export function DashboardLayout() {
   const { user, isAuthenticated, isLoading, checkAuth, logout } = useAuthStore();
@@ -66,7 +67,6 @@ export function DashboardLayout() {
     : 'https://portal.multitech.ac.ug';
 
   const userInitial = user?.fullName?.trim()?.charAt(0)?.toUpperCase() || 'A';
-  const userFirstName = user?.fullName?.split(' ')[0] || 'User';
   const roleLabel = user?.role === 'admin' ? 'Administrator' : 'Lecturer';
 
   return (
@@ -256,13 +256,9 @@ export function DashboardLayout() {
         {/* Topbar */}
         <header className="topbar">
           <div className="topbar-left">
-            <span className="topbar-institution-tag">
-              Multitech Business School
-            </span>
-            <span className="topbar-tag-sep">&bull;</span>
-            <span className="topbar-system-name">
-              Safe Exam Browser Portal
-            </span>
+            <span className="topbar-institution-tag">Multitech Business School</span>
+            <span className="topbar-tag-sep">/</span>
+            <span className="topbar-system-name">Examination Portal</span>
           </div>
 
           <div className="topbar-actions">
@@ -273,18 +269,9 @@ export function DashboardLayout() {
               className="topbar-erp-pill"
               title="Open Multitech Web System"
             >
-              <span>🏛️ Multitech Web System</span>
-              <span style={{ fontSize: '0.85rem' }}>↗</span>
+              <span>Multitech ERP</span>
+              <IconExternal size={13} />
             </a>
-
-            <div className="topbar-user-badge">
-              <div className="topbar-avatar-small">
-                {userInitial}
-              </div>
-              <span className="topbar-username">
-                {userFirstName}
-              </span>
-            </div>
           </div>
         </header>
 

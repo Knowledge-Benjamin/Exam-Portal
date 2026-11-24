@@ -316,7 +316,11 @@ router.post(
         fileName: req.file.originalname,
       });
 
-      res.json({ submission: updated });
+      res.json({
+        submission: updated,
+        fileId: updated.submissionFileId,
+        fileName: updated.submissionFileName,
+      });
     } catch (err: any) {
       console.error('[seb submission file upload] error', err);
       if (err.message?.includes('not allowed')) {

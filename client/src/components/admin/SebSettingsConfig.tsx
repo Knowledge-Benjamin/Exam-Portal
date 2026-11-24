@@ -1,61 +1,94 @@
 import React, { useState } from 'react';
 import type { SebSettings, PermittedProcess } from '../../types';
+import {
+  IconAlert,
+  IconCalculator,
+  IconCheck,
+  IconCode,
+  IconFileText,
+  IconLock,
+  IconMonitor,
+  IconPlus,
+  IconTable,
+  IconTerminal,
+  IconX,
+} from '../ui/Icons';
+
+type AppIconKey = 'code' | 'doc' | 'sheet' | 'ide' | 'python' | 'notes' | 'calc';
+
+function renderPresetIcon(iconKey: AppIconKey) {
+  switch (iconKey) {
+    case 'code':
+      return <IconCode size={16} />;
+    case 'doc':
+      return <IconFileText size={16} />;
+    case 'sheet':
+      return <IconTable size={16} />;
+    case 'ide':
+    case 'python':
+      return <IconTerminal size={16} />;
+    case 'notes':
+      return <IconFileText size={16} />;
+    case 'calc':
+      return <IconCalculator size={16} />;
+  }
+}
 
 export const APP_PRESETS: Array<{
   title: string;
   executable: string;
   path: string;
   category: string;
-  icon: string;
+  iconKey: AppIconKey;
 }> = [
   {
     title: 'VS Code',
     executable: 'Code.exe',
     path: '%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\',
     category: 'Development',
-    icon: '💻',
+    iconKey: 'code',
   },
   {
     title: 'Word',
     executable: 'WINWORD.EXE',
     path: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\',
     category: 'Office',
-    icon: '📝',
+    iconKey: 'doc',
   },
   {
     title: 'Excel',
     executable: 'EXCEL.EXE',
     path: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\',
     category: 'Office',
-    icon: '📊',
+    iconKey: 'sheet',
   },
   {
-    title: 'IntelliJ',
+    title: 'IntelliJ IDEA',
     executable: 'idea64.exe',
     path: 'C:\\Program Files\\JetBrains\\IntelliJ IDEA\\bin\\',
     category: 'Development',
-    icon: '☕',
+    iconKey: 'ide',
   },
   {
     title: 'PyCharm',
     executable: 'pycharm64.exe',
     path: 'C:\\Program Files\\JetBrains\\PyCharm\\bin\\',
     category: 'Development',
-    icon: '🐍',
+    iconKey: 'python',
   },
   {
     title: 'Notepad',
     executable: 'notepad.exe',
     path: 'C:\\Windows\\System32\\',
     category: 'Utilities',
-    icon: '📄',
+    iconKey: 'notes',
   },
   {
     title: 'Calculator',
     executable: 'calc.exe',
     path: 'C:\\Windows\\System32\\',
     category: 'Utilities',
-    icon: '🧮',
+    iconKey: 'calc',
   },
 ];
 
@@ -88,14 +121,14 @@ export function SebSettingsConfig({
   const isPresetActive = (exe: string) =>
     permitted.some((p) => p.executable.toLowerCase() === exe.toLowerCase());
 
-  const togglePreset = (preset: typeof APP_PRESETS[0]) => {
+  const togglePreset = (preset: (typeof APP_PRESETS)[0]) => {
     if (disabled) return;
     const exists = isPresetActive(preset.executable);
     let next: PermittedProcess[];
 
     if (exists) {
       next = permitted.filter(
-        (p) => p.executable.toLowerCase() !== preset.executable.toLowerCase()
+        (p) => p.executable.toLowerCase() !== preset.executable.toLowerCase(),
       );
     } else {
       next = [
@@ -122,7 +155,7 @@ export function SebSettingsConfig({
   const removeProcess = (executable: string) => {
     if (disabled) return;
     const next = permitted.filter(
-      (p) => p.executable.toLowerCase() !== executable.toLowerCase()
+      (p) => p.executable.toLowerCase() !== executable.toLowerCase(),
     );
     onChangeSettings({
       ...sebSettings,
@@ -133,7 +166,9 @@ export function SebSettingsConfig({
   const updateProcessPath = (executable: string, newPath: string) => {
     if (disabled) return;
     const next = permitted.map((p) =>
-      p.executable.toLowerCase() === executable.toLowerCase() ? { ...p, path: newPath } : p
+      p.executable.toLowerCase() === executable.toLowerCase()
+        ? { ...p, path: newPath }
+        : p,
     );
     onChangeSettings({
       ...sebSettings,
@@ -172,7 +207,7 @@ export function SebSettingsConfig({
         title: cleanTitle || cleanExe,
         allowUserToChooseApp: true,
         autostart: true,
-        os: 1, // 1 = Windows in Safe Exam Browser
+        os: 1,
       },
     ];
 
@@ -200,34 +235,24 @@ export function SebSettingsConfig({
   };
 
   return (
-    <div style={{ display: 'grid', gap: '1.25rem' }}>
-      {/* ── 1. External Applications ── */}
-      <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+    <div className="seb-config-stack">
+      {/* 1. External Applications */}
+      <div className="seb-config-group">
+        <div className="seb-group-header">
           <div>
-            <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-navy)', fontWeight: 700 }}>
-              Permitted External Applications
-            </h4>
-            <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-              Enable applications students can run alongside Safe Exam Browser.
+            <h4 className="seb-group-title">Permitted Applications</h4>
+            <p className="seb-group-desc">
+              Select local applications students may launch alongside Safe Exam Browser.
             </p>
           </div>
           {permitted.length > 0 && (
-            <span className="status-pill status-pill--highlight" style={{ whiteSpace: 'nowrap' }}>
-              {permitted.length} Active
+            <span className="status-pill status-pill--highlight">
+              {permitted.length} Selected
             </span>
           )}
         </div>
 
-        {/* Presets Grid */}
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-            gap: '0.5rem',
-            marginTop: '0.5rem',
-          }}
-        >
+        <div className="seb-presets-grid">
           {APP_PRESETS.map((preset) => {
             const active = isPresetActive(preset.executable);
             return (
@@ -236,68 +261,33 @@ export function SebSettingsConfig({
                 type="button"
                 disabled={disabled}
                 onClick={() => togglePreset(preset)}
-                style={{
-                  textAlign: 'left',
-                  padding: '0.75rem',
-                  borderRadius: '10px',
-                  border: active ? '1.5px solid var(--color-blue)' : '1px solid var(--color-border)',
-                  background: active ? 'rgba(37, 99, 235, 0.06)' : 'var(--color-surface)',
-                  color: 'var(--color-text)',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.65rem',
-                  transition: 'all 0.15s ease',
-                  boxShadow: active ? '0 0 0 1px rgba(37,99,235,0.1)' : 'var(--shadow-xs)',
-                }}
+                className={`seb-preset-tile ${active ? 'is-selected' : ''}`}
               >
-                <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{preset.icon}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: active ? 'var(--color-blue)' : 'var(--color-navy)' }}>
-                      {preset.title}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: '0.68rem',
-                        fontWeight: 600,
-                        padding: '1px 6px',
-                        borderRadius: '4px',
-                        background: active ? 'var(--color-blue)' : 'var(--color-bg-alt)',
-                        color: active ? '#fff' : 'var(--color-text-muted)',
-                      }}
-                    >
-                      {active ? '✓' : '+'}
-                    </span>
-                  </div>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '1px' }}>
-                    {preset.executable}
-                  </span>
+                <span className={`seb-preset-icon ${active ? 'is-selected' : ''}`}>
+                  {renderPresetIcon(preset.iconKey)}
+                </span>
+                <div className="seb-preset-meta">
+                  <span className="seb-preset-name">{preset.title}</span>
+                  <span className="seb-preset-exe">{preset.executable}</span>
                 </div>
+                <span className={`seb-preset-check ${active ? 'is-selected' : ''}`}>
+                  {active ? <IconCheck size={12} /> : <IconPlus size={12} />}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Custom Application Form */}
-        <div
-          style={{
-            marginTop: '0.75rem',
-            padding: '0.85rem 1rem',
-            borderRadius: '10px',
-            background: 'var(--color-bg)',
-            border: '1px dashed var(--color-border)',
-          }}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr auto', gap: '0.5rem', alignItems: 'center' }}>
+        {/* Custom Application Entry */}
+        <div className="seb-custom-box">
+          <div className="seb-custom-row">
             <input
               type="text"
-              placeholder="Title (e.g. Dev-C++)"
+              placeholder="Display title (e.g. Dev-C++)"
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
               disabled={disabled}
-              className="form-input"
-              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+              className="form-input seb-custom-input"
             />
             <input
               type="text"
@@ -305,84 +295,57 @@ export function SebSettingsConfig({
               value={customExe}
               onChange={(e) => setCustomExe(e.target.value)}
               disabled={disabled}
-              className="form-input"
-              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+              className="form-input seb-custom-input"
             />
             <input
               type="text"
-              placeholder="Path (e.g. C:\Program Files\Dev-Cpp\)"
+              placeholder="Install path (optional)"
               value={customPath}
               onChange={(e) => setCustomPath(e.target.value)}
               disabled={disabled}
-              className="form-input"
-              style={{ fontSize: '0.82rem', padding: '0.45rem 0.75rem' }}
+              className="form-input seb-custom-input"
             />
             <button
               type="button"
               disabled={disabled || !customExe.trim()}
               onClick={addCustomProcess}
-              className="button button--secondary"
-              style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+              className="button button--secondary button--sm"
             >
-              + Add
+              <IconPlus size={14} />
+              <span>Add</span>
             </button>
           </div>
           {customError && (
-            <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: 'var(--color-danger)' }}>
-              ⚠ {customError}
+            <p className="seb-error-inline">
+              <IconAlert size={13} />
+              <span>{customError}</span>
             </p>
           )}
         </div>
 
-        {/* Configured App List */}
+        {/* Active process overrides */}
         {permitted.length > 0 && (
-          <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <div className="seb-active-list">
             {permitted.map((p) => (
-              <div
-                key={p.executable}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '8px',
-                  background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  fontSize: '0.82rem',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
-                  <span style={{ fontWeight: 700, color: 'var(--color-navy)' }}>{p.title || p.executable}</span>
-                  <code style={{ fontSize: '0.75rem', padding: '1px 5px', borderRadius: '4px', background: 'var(--color-bg-alt)', color: 'var(--color-blue)' }}>
-                    {p.executable}
-                  </code>
-                  <input
-                    type="text"
-                    value={p.path ?? ''}
-                    disabled={disabled}
-                    placeholder="Path..."
-                    onChange={(e) => updateProcessPath(p.executable, e.target.value)}
-                    style={{
-                      fontSize: '0.75rem',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      border: '1px solid var(--color-border)',
-                      background: 'var(--color-bg)',
-                      color: 'var(--color-text)',
-                      flex: 1,
-                      minWidth: '120px',
-                    }}
-                  />
-                </div>
+              <div key={p.executable} className="seb-active-row">
+                <span className="seb-active-title">{p.title || p.executable}</span>
+                <code className="seb-active-code">{p.executable}</code>
+                <input
+                  type="text"
+                  value={p.path ?? ''}
+                  disabled={disabled}
+                  placeholder="Executable folder path..."
+                  onChange={(e) => updateProcessPath(p.executable, e.target.value)}
+                  className="seb-active-path"
+                />
                 {!disabled && (
                   <button
                     type="button"
                     onClick={() => removeProcess(p.executable)}
-                    className="button button--ghost"
-                    style={{ padding: '2px 8px', fontSize: '0.75rem', color: 'var(--color-danger)' }}
+                    className="seb-remove-btn"
+                    title="Remove application"
                   >
-                    Remove
+                    <IconX size={14} />
                   </button>
                 )}
               </div>
@@ -391,45 +354,37 @@ export function SebSettingsConfig({
         )}
       </div>
 
-      {/* ── 2. File Upload Checkbox ── */}
-      <div
-        style={{
-          padding: '0.9rem 1rem',
-          borderRadius: '10px',
-          background: allowFileUpload ? 'rgba(37,99,235,0.05)' : 'var(--color-surface)',
-          border: allowFileUpload ? '1.5px solid var(--color-blue)' : '1px solid var(--color-border)',
-        }}
-      >
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: disabled ? 'not-allowed' : 'pointer' }}>
+      {/* 2. File Upload Permission */}
+      <label className={`seb-toggle-card ${allowFileUpload ? 'is-selected' : ''}`}>
+        <div className="seb-toggle-text">
+          <span className="seb-toggle-title">Allow Student File Uploads</span>
+          <span className="seb-toggle-desc">
+            Permits examinees to browse and attach project files, documents, or archives (.py, .docx, .xlsx, .zip) inside Safe Exam Browser.
+          </span>
+        </div>
+        <span className="apple-switch">
           <input
             type="checkbox"
             checked={allowFileUpload}
             disabled={disabled}
             onChange={(e) => onChangeFileUpload(e.target.checked)}
-            style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--color-blue)' }}
           />
-          <div style={{ flex: 1 }}>
-            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-navy)' }}>
-              Allow Student File Uploads
-            </span>
-            <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
-              Students can attach project files, documents, or spreadsheets (.py, .docx, .xlsx, .zip) to their submission.
-            </span>
-          </div>
-        </label>
-      </div>
+          <span className="apple-switch-track" />
+        </span>
+      </label>
 
-      {/* ── 3. Screen Policy ── */}
-      <div>
-        <h4 style={{ margin: '0 0 0.4rem', fontSize: '0.9rem', color: 'var(--color-navy)', fontWeight: 700 }}>
-          Screen Security Policy
+      {/* 3. Screen Policy */}
+      <div className="seb-config-group">
+        <h4 className="seb-group-title" style={{ marginBottom: '0.5rem' }}>
+          Display Policy
         </h4>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
+        <div className="seb-two-col">
           <label
-            className={`option-card ${allowedDisplays === 1 && internalDisplayOnly ? 'option-card-selected' : ''}`}
-            style={{ cursor: disabled ? 'not-allowed' : 'pointer', padding: '0.75rem' }}
+            className={`option-card ${
+              allowedDisplays === 1 && internalDisplayOnly ? 'option-card-selected' : ''
+            }`}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="option-card-top">
               <input
                 type="radio"
                 name="displayPolicy"
@@ -437,20 +392,20 @@ export function SebSettingsConfig({
                 checked={allowedDisplays === 1 && internalDisplayOnly}
                 onChange={() => setDisplayPolicy(true)}
               />
-              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--color-navy)' }}>
-                🔒 Single Screen (Strict)
-              </span>
+              <IconLock size={15} className="option-card-icon" />
+              <span className="option-card-label">Single Screen</span>
             </div>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-              Blocks external displays and duplicate monitors.
+            <p className="option-card-desc">
+              Restricts session to the built-in display and blocks external monitors.
             </p>
           </label>
 
           <label
-            className={`option-card ${allowedDisplays > 1 || !internalDisplayOnly ? 'option-card-selected' : ''}`}
-            style={{ cursor: disabled ? 'not-allowed' : 'pointer', padding: '0.75rem' }}
+            className={`option-card ${
+              allowedDisplays > 1 || !internalDisplayOnly ? 'option-card-selected' : ''
+            }`}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="option-card-top">
               <input
                 type="radio"
                 name="displayPolicy"
@@ -458,42 +413,49 @@ export function SebSettingsConfig({
                 checked={allowedDisplays > 1 || !internalDisplayOnly}
                 onChange={() => setDisplayPolicy(false)}
               />
-              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--color-navy)' }}>
-                🖥️ Allow Dual Monitors
-              </span>
+              <IconMonitor size={15} className="option-card-icon" />
+              <span className="option-card-label">Dual Monitors</span>
             </div>
-            <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-              Permits secondary screen for code or document viewing.
+            <p className="option-card-desc">
+              Allows a secondary display for reference code or documentation viewing.
             </p>
           </label>
         </div>
       </div>
 
-      {/* ── 4. Language & Assistance Tools ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', cursor: disabled ? 'not-allowed' : 'pointer' }}>
-          <input
-            type="checkbox"
-            disabled={disabled}
-            checked={allowSpellCheck}
-            onChange={(e) => onChangeSettings({ ...sebSettings, allowSpellCheck: e.target.checked })}
-            style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-blue)' }}
-          />
-          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>
+      {/* 4. Assistance Tools */}
+      <div className="seb-two-col">
+        <label className={`seb-toggle-card ${allowSpellCheck ? 'is-selected' : ''}`}>
+          <span className="seb-toggle-title" style={{ fontSize: '0.84rem' }}>
             Spell Check in Essays
+          </span>
+          <span className="apple-switch">
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={allowSpellCheck}
+              onChange={(e) =>
+                onChangeSettings({ ...sebSettings, allowSpellCheck: e.target.checked })
+              }
+            />
+            <span className="apple-switch-track" />
           </span>
         </label>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', cursor: disabled ? 'not-allowed' : 'pointer' }}>
-          <input
-            type="checkbox"
-            disabled={disabled}
-            checked={allowDictionaryLookup}
-            onChange={(e) => onChangeSettings({ ...sebSettings, allowDictionaryLookup: e.target.checked })}
-            style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-blue)' }}
-          />
-          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>
+        <label className={`seb-toggle-card ${allowDictionaryLookup ? 'is-selected' : ''}`}>
+          <span className="seb-toggle-title" style={{ fontSize: '0.84rem' }}>
             Dictionary Lookup
+          </span>
+          <span className="apple-switch">
+            <input
+              type="checkbox"
+              disabled={disabled}
+              checked={allowDictionaryLookup}
+              onChange={(e) =>
+                onChangeSettings({ ...sebSettings, allowDictionaryLookup: e.target.checked })
+              }
+            />
+            <span className="apple-switch-track" />
           </span>
         </label>
       </div>

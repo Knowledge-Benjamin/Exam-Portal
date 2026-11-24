@@ -7,6 +7,7 @@ import { useAntiCheat } from '../../hooks/useAntiCheat';
 import { ExamEditor } from '../../components/editor/ExamEditor';
 import { QuestionAnswer } from '../../components/editor/QuestionAnswer';
 import { formatCountdown } from '../../utils/formatters';
+import { IconCheck } from '../../components/ui/Icons';
 
 type Answers = Record<string, string>;
 
@@ -89,15 +90,15 @@ export function ExamRoom() {
     allowExternalApps,
     onViolation: (type) => {
       const msgs: Record<string, string> = {
-        tab_switch: '⚠ Tab switch detected and recorded.',
-        window_blur: '⚠ Please stay in the exam window.',
-        copy: '⚠ Copying is disabled.',
-        paste: '⚠ Pasting is disabled.',
-        devtools: '⚠ Developer tools are disabled.',
-        print: '⚠ Printing is disabled.',
-        fullscreen_exit: '⚠ Please remain in fullscreen mode.',
+        tab_switch: 'Tab switch detected and recorded.',
+        window_blur: 'Please stay in the exam window.',
+        copy: 'Copying is disabled.',
+        paste: 'Pasting is disabled.',
+        devtools: 'Developer tools are disabled.',
+        print: 'Printing is disabled.',
+        fullscreen_exit: 'Please remain in fullscreen mode.',
       };
-      setViolationMsg(msgs[type] ?? '⚠ Prohibited action detected.');
+      setViolationMsg(msgs[type] ?? 'Prohibited action detected.');
       setTimeout(() => setViolationMsg(''), 4000);
     },
   });
@@ -333,11 +334,13 @@ export function ExamRoom() {
         withCredentials: true,
       });
 
-      setUploadSuccess(`Uploaded ${response.data.fileName}`);
+      const uploadedName = response.data.fileName || response.data.submission?.submissionFileName || selectedFile.name;
+      const uploadedId = response.data.fileId || response.data.submission?.submissionFileId;
+      setUploadSuccess(`Uploaded ${uploadedName}`);
       setSubmission((prev) => prev ? {
         ...prev,
-        submissionFileId: response.data.fileId,
-        submissionFileName: response.data.fileName,
+        submissionFileId: uploadedId,
+        submissionFileName: uploadedName,
       } : null);
       setSelectedFile(null);
     } catch (err: any) {
@@ -362,8 +365,12 @@ export function ExamRoom() {
     return (
       <div className="exam-room-shell" style={{ display: 'grid', placeItems: 'center', padding: '2rem' }}>
         <div className="card" style={{ maxWidth: '28rem', width: '100%', textAlign: 'center', padding: '2.5rem' }}>
-          <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', display: 'grid', placeItems: 'center', margin: '0 auto 1rem', color: 'var(--color-danger)', fontSize: '1.25rem' }}>
-            {submission?.isFinal ? '✓' : '⚠'}
+          <div style={{ width: '3.25rem', height: '3.25rem', borderRadius: '50%', background: submission?.isFinal ? 'var(--color-success-bg)' : 'var(--color-danger-bg)', border: `1px solid ${submission?.isFinal ? 'var(--color-success-border)' : 'var(--color-danger-border)'}`, display: 'grid', placeItems: 'center', margin: '0 auto 1rem', color: submission?.isFinal ? 'var(--color-success)' : 'var(--color-danger)' }}>
+            {submission?.isFinal ? (
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+            ) : (
+              <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="12" cy="12" r="9" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01" /></svg>
+            )}
           </div>
           <h2 style={{ color: 'var(--color-navy)', fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>
             {submission?.isFinal ? 'Examination Completed' : 'Access Restricted'}
@@ -484,12 +491,17 @@ export function ExamRoom() {
               borderRadius: '6px', padding: '0.2rem 0.55rem',
               fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-navy)',
             }}>
-              <span style={{ fontSize: '0.7rem' }}>💻</span>
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} style={{ color: 'var(--color-blue)', flexShrink: 0 }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
               {proc.title || proc.executable}
             </span>
           ))}
-          <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            <span>ℹ</span> Launch or switch using the Safe Exam Browser taskbar below
+          <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} style={{ flexShrink: 0 }}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Launch or switch using the Safe Exam Browser taskbar below
           </span>
         </div>
       )}
@@ -564,7 +576,7 @@ export function ExamRoom() {
                         className={`exam-room-question-button ${isActive ? 'exam-room-question-button--active' : ''} ${answered ? 'exam-room-question-button--answered' : ''}`}
                       >
                         <span className="exam-room-question-badge">
-                          {answered ? '✓' : i + 1}
+                          {answered ? <IconCheck size={12} strokeWidth={2.5} /> : i + 1}
                         </span>
                         <div style={{ minWidth: 0, flex: 1 }}>
                           <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

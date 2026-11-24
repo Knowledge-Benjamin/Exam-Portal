@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import DOMPurify from 'dompurify';
 import { api } from '../../api';
 import type { Exam, Submission, Question } from '../../types';
 import { formatDate } from '../../utils/formatters';
 import { useSubmissionStatus } from '../../hooks/useSubmissionStatus';
+import { ExamWorkspaceNav } from '../../components/admin/ExamWorkspaceNav';
 
 // `stripHtml` was removed in favor of rendering sanitized HTML with DOMPurify
 // kept previous logic in git history if plain-text conversion is required later
@@ -28,7 +29,6 @@ const sanitizeHtml = (html: string): string => {
 
 export function SubmissionsList() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -190,24 +190,20 @@ export function SubmissionsList() {
   };
 
   return (
-    <div className="page-content page-animate">
-      <div className="page-header page-header-row">
-        <div>
-          <button
-            onClick={() => navigate(`/dashboard/exams/${id}`)}
-            className="button button--ghost button--sm"
-          >
-            ← Back to Exam
-          </button>
-          <h2 className="panel-title">Submissions</h2>
-          <p className="panel-subtitle">{exam.title}</p>
-        </div>
-
-        <div className="panel-card panel-card--accent" style={{ minWidth: '14rem' }}>
-          <p className="status-label">Total Marks</p>
-          <p className="panel-title" style={{ marginTop: '0.75rem' }}>{totalPossibleMarks}</p>
-        </div>
-      </div>
+    <div className="settings-page page-animate">
+      <ExamWorkspaceNav
+        examId={exam.id}
+        title={exam.title}
+        courseCode={exam.erpCourseCode || 'General'}
+        status={exam.status}
+        assessmentType={exam.assessmentType}
+        submittedCount={submissions.filter((s) => s.isFinal).length}
+        actions={
+          <div className="dash-assessment-pill" style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}>
+            Total Marks: <strong style={{ marginLeft: '4px', color: 'var(--color-navy)' }}>{totalPossibleMarks}</strong>
+          </div>
+        }
+      />
 
       {error && (
         <div className="panel-card panel-card--danger">

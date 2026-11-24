@@ -4,6 +4,16 @@ import { api } from '../../api';
 import type { ExamWithGateUrl, SebSettings } from '../../types';
 import { formatDate, formatDuration } from '../../utils/formatters';
 import { SebSettingsConfig } from '../../components/admin/SebSettingsConfig';
+import { ExamWorkspaceNav } from '../../components/admin/ExamWorkspaceNav';
+import {
+  IconCheck,
+  IconChevronDown,
+  IconChevronUp,
+  IconDownload,
+  IconLock,
+  IconMonitor,
+  IconRefresh,
+} from '../../components/ui/Icons';
 
 export function ExamDetail() {
   const { id } = useParams<{ id: string }>();
@@ -58,7 +68,7 @@ export function ExamDetail() {
     if (!window.confirm('Publish this exam to the Multitech Student Portal?')) {
       return;
     }
-    
+
     setIsPublishing(true);
     try {
       const { data } = await api.post(`/exams/${id}/publish`);
@@ -133,11 +143,18 @@ export function ExamDetail() {
   };
 
   const handleRegenerateToken = async () => {
-    if (!window.confirm('Regenerate SEB security token? Students must re-download their .seb configuration file.')) return;
+    if (
+      !window.confirm(
+        'Regenerate SEB security token? Students must re-download their .seb configuration file.',
+      )
+    )
+      return;
     setIsRegenerating(true);
     try {
       const { data } = await api.post(`/exams/${id}/regenerate-token`);
-      setExam((prev) => (prev ? { ...prev, sebGateUrl: data.sebGateUrl, sebExamToken: data.sebExamToken } : prev));
+      setExam((prev) =>
+        prev ? { ...prev, sebGateUrl: data.sebGateUrl, sebExamToken: data.sebExamToken } : prev,
+      );
       alert('Token regenerated successfully.');
     } catch (err: any) {
       alert(err.error || 'Failed to regenerate token');
@@ -155,7 +172,13 @@ export function ExamDetail() {
       });
       setExam((prev) => (prev ? { ...prev, ...res.data.exam } : prev));
       setEditingSebSettings(false);
-      alert('SEB settings saved successfully.');
+      if (res.data.sebSynced) {
+        alert(
+          'Settings saved and .seb configuration updated. Students joining should use the newly generated .seb file.',
+        );
+      } else {
+        alert('SEB settings saved successfully.');
+      }
     } catch (err: any) {
       alert(err.error || 'Failed to save SEB settings');
     } finally {
@@ -167,7 +190,7 @@ export function ExamDetail() {
     return (
       <div className="dash-loading-container">
         <div className="spinner" />
-        <p className="dash-loading-text">Loading examination details...</p>
+        <p className="dash-loading-text">Loading assessment details...</p>
       </div>
     );
   }
@@ -176,21 +199,18 @@ export function ExamDetail() {
     return (
       <div className="settings-page">
         <div className="dash-empty-box">
-          <h3 className="dash-empty-title">Exam Not Found</h3>
-          <button type="button" className="button button--secondary" onClick={() => navigate('/dashboard')}>
-            ← Back to Dashboard
+          <h3 className="dash-empty-title">Assessment Not Found</h3>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => navigate('/dashboard')}
+          >
+            Back to Assessments
           </button>
         </div>
       </div>
     );
   }
-
-  const examStatusClass =
-    exam.status === 'active'
-      ? 'dash-status-pill status-live'
-      : exam.status === 'draft'
-      ? 'dash-status-pill status-draft'
-      : 'dash-status-pill status-closed';
 
   const canRepublish = exam.status === 'closed' && ((exam as any).remainingRepublishes ?? 1) > 0;
 
@@ -198,191 +218,121 @@ export function ExamDetail() {
     ? String(import.meta.env.VITE_API_URL).replace(/\/api\/?$/, '')
     : window.location.origin;
 
-  const sebGateUrl = exam.sebGateUrl ?? (exam.sebExamToken ? `${backendOrigin}/seb/gate/${exam.sebExamToken}` : undefined);
+  const sebGateUrl =
+    exam.sebGateUrl ??
+    (exam.sebExamToken ? `${backendOrigin}/seb/gate/${exam.sebExamToken}` : undefined);
+
+  const primaryAction = (
+    <>
+      {exam.status === 'draft' && (
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={handlePublish}
+          disabled={isPublishing}
+        >
+          {isPublishing ? 'Publishing...' : 'Publish Exam'}
+        </button>
+      )}
+      {exam.status === 'active' && (
+        <button type="button" className="button button--danger" onClick={handleClose}>
+          Close Exam
+        </button>
+      )}
+      {exam.status === 'closed' && (
+        <button
+          type="button"
+          className="button button--primary"
+          onClick={handleRepublish}
+          disabled={isRepublishing || !canRepublish}
+        >
+          {isRepublishing ? 'Republishing...' : 'Republish'}
+        </button>
+      )}
+    </>
+  );
 
   return (
     <div className="settings-page">
-      {/* Breadcrumb & Navigation */}
-      <div className="breadcrumb">
-        <button type="button" className="breadcrumb-link" onClick={() => navigate('/dashboard')}>
-          Dashboard
-        </button>
-        <span>/</span>
-        <span style={{ color: 'var(--color-blue)', fontWeight: 600 }}>{exam.erpCourseCode || 'Exam'}</span>
-      </div>
+      <ExamWorkspaceNav
+        examId={exam.id}
+        title={exam.title}
+        courseCode={exam.erpCourseCode || 'General'}
+        status={exam.status}
+        assessmentType={exam.assessmentType}
+        submittedCount={stats?.totalSubmitted}
+        actions={primaryAction}
+      />
 
-      {/* Main Header Card */}
-      <div className="card">
-        <div className="card-header">
+      {exam.description && <p className="panel-subtitle" style={{ marginTop: '-0.5rem' }}>{exam.description}</p>}
+
+      {error && <div className="dash-alert dash-alert-error">{error}</div>}
+
+      {/* Concise Live Sync Strip */}
+      {exam.status === 'active' && (
+        <div className="live-sync-strip">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-              <span className="dash-course-pill">{exam.erpCourseCode || 'General'}</span>
-              <span className="dash-assessment-pill">
-                {exam.assessmentType === 'coursework' ? 'Continuous Assessment (CAT)' : 'Final Exam'}
-              </span>
-              <span className={examStatusClass}>
-                {exam.status === 'active' && <span className="status-live-dot" />}
-                {exam.status}
-              </span>
+            <div className="live-sync-title">
+              <span className="status-live-dot" />
+              <span>Published to Multitech Student Portal</span>
             </div>
-            <h1 className="page-title" style={{ marginTop: '0.25rem' }}>{exam.title}</h1>
-            {exam.description && <p className="panel-subtitle" style={{ marginTop: '0.25rem' }}>{exam.description}</p>}
+            <p className="live-sync-desc">
+              Students can generate their 6-digit PIN from the portal or launch the .seb configuration file directly.
+            </p>
           </div>
-
-          <div className="card-actions">
-            {exam.status !== 'active' && (
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => navigate(`/dashboard/exams/${id}/builder`)}
-              >
-                ✏ Edit Questions
-              </button>
-            )}
-
+          <div className="live-sync-actions">
             <button
               type="button"
-              className="button button--secondary"
-              onClick={() => navigate(`/dashboard/exams/${id}/monitor`)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 700 }}
+              className="button button--secondary button--sm"
+              onClick={handleSyncErp}
+              disabled={isSyncingErp}
             >
-              🔴 Live Monitor
+              <IconRefresh size={14} />
+              <span>{isSyncingErp ? 'Syncing...' : 'Re-sync Portal'}</span>
             </button>
-
             <button
               type="button"
-              className="button button--secondary"
-              onClick={() => navigate(`/dashboard/exams/${id}/submissions`)}
+              className="button button--secondary button--sm"
+              onClick={handleDownloadSeb}
             >
-              📋 Submissions {stats ? `(${stats.totalSubmitted})` : ''}
+              <IconDownload size={14} />
+              <span>Download .seb</span>
             </button>
-
-            {exam.status === 'draft' && (
-              <button
-                type="button"
-                className="button button--primary"
-                onClick={handlePublish}
-                disabled={isPublishing}
-              >
-                {isPublishing ? 'Publishing...' : '🚀 Publish Exam'}
-              </button>
-            )}
-
-            {exam.status === 'active' && (
-              <button type="button" className="button button--danger" onClick={handleClose}>
-                Close Exam
-              </button>
-            )}
-
-            {exam.status === 'closed' && (
-              <button
-                type="button"
-                className="button button--primary"
-                onClick={handleRepublish}
-                disabled={isRepublishing || !canRepublish}
-              >
-                {isRepublishing ? 'Republishing...' : 'Republish'}
-              </button>
-            )}
           </div>
         </div>
-
-        {/* Live Status Banner */}
-        {exam.status === 'active' && (
-          <div
-            style={{
-              marginTop: '1.25rem',
-              padding: '1rem 1.25rem',
-              borderRadius: '10px',
-              background: 'var(--color-success-bg)',
-              border: '1px solid var(--color-success-border)',
-              display: 'flex',
-              flexWrap: 'wrap',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '1rem',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span className="status-live-dot" />
-                <strong style={{ color: 'var(--color-success)', fontSize: '0.88rem' }}>Live on Multitech Student Portal</strong>
-              </div>
-              <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                Registered students can generate their 6-digit PIN and join via Safe Exam Browser.
-              </p>
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button
-                type="button"
-                className="button button--primary"
-                onClick={() => navigate(`/dashboard/exams/${id}/monitor`)}
-                style={{
-                  background: '#059669',
-                  borderColor: '#047857',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '0.45rem 0.9rem',
-                }}
-              >
-                🔴 Open Live Room Monitor
-              </button>
-              <button
-                type="button"
-                className="btn-card-secondary"
-                onClick={handleSyncErp}
-                disabled={isSyncingErp}
-              >
-                {isSyncingErp ? 'Syncing...' : '⚡ Re-sync to Portal'}
-              </button>
-              <button
-                type="button"
-                className="btn-card-secondary"
-                onClick={handleDownloadSeb}
-              >
-                📥 Test .seb File
-              </button>
-            </div>
-          </div>
-        )}
-
-        {error && <div className="form-error" style={{ marginTop: '1rem' }}>{error}</div>}
-      </div>
+      )}
 
       {/* Overview Stat Grid */}
       <div className="dash-stats-grid">
         <div className="dash-stat-tile">
           <span className="dash-stat-label">Schedule</span>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-navy)', marginTop: '0.35rem' }}>
-            {formatDate(exam.startTime)}
-          </div>
+          <div className="detail-metric-text">{formatDate(exam.startTime)}</div>
           <span className="dash-stat-hint">Duration: {formatDuration(exam.durationMinutes)}</span>
         </div>
 
         <div className="dash-stat-tile">
           <span className="dash-stat-label">Format</span>
-          <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-navy)', marginTop: '0.35rem' }}>
+          <div className="detail-metric-text">
             {exam.questionSource === 'pdf' ? 'PDF Question Paper' : 'Question Builder'}
           </div>
-          <span className="dash-stat-hint">{exam.allowFileUpload ? 'File Uploads Enabled' : 'No File Attachments'}</span>
+          <span className="dash-stat-hint">
+            {exam.allowFileUpload ? 'File Uploads Enabled' : 'No File Attachments'}
+          </span>
         </div>
 
         <div className="dash-stat-tile">
           <span className="dash-stat-label">Grading Weight</span>
-          <div className="dash-stat-number text-blue" style={{ fontSize: '2rem' }}>
+          <div className="dash-stat-number text-blue">
             {exam.weightPercentage ?? (exam.assessmentType === 'coursework' ? 40 : 60)}%
           </div>
-          <span className="dash-stat-hint">{exam.assessmentType === 'coursework' ? 'Coursework Score' : 'Final Exam Score'}</span>
+          <span className="dash-stat-hint">
+            {exam.assessmentType === 'coursework' ? 'Coursework Score' : 'Final Exam Score'}
+          </span>
         </div>
 
         <div className="dash-stat-tile">
           <span className="dash-stat-label">Submissions</span>
-          <div className="dash-stat-number" style={{ fontSize: '2rem' }}>
-            {stats?.totalSubmitted ?? 0}
-          </div>
+          <div className="dash-stat-number">{stats?.totalSubmitted ?? 0}</div>
           <span className="dash-stat-hint">{stats?.totalJoined ?? 0} students joined</span>
         </div>
       </div>
@@ -391,8 +341,10 @@ export function ExamDetail() {
       <div className="card">
         <div className="card-header">
           <div>
-            <h3 className="section-panel__title" style={{ margin: 0 }}>Security & Environment Settings</h3>
-            <p className="panel-subtitle">Permitted applications, screen restriction, and Safe Exam Browser key.</p>
+            <h3 className="card-title">Security &amp; Environment Settings</h3>
+            <p className="panel-subtitle">
+              Permitted local applications, file upload policy, and screen restrictions.
+            </p>
           </div>
           {!editingSebSettings && exam.status !== 'closed' && (
             <button
@@ -405,74 +357,102 @@ export function ExamDetail() {
           )}
         </div>
 
-        {editingSebSettings ? (
-          <div style={{ marginTop: '1rem' }}>
-            <SebSettingsConfig
-              sebSettings={sebSettingsInput}
-              allowFileUpload={fileUploadInput}
-              onChangeSettings={setSebSettingsInput}
-              onChangeFileUpload={setFileUploadInput}
-            />
-            <div className="form-actions" style={{ marginTop: '1.25rem' }}>
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => setEditingSebSettings(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="button button--primary"
-                onClick={handleSaveSebSettings}
-                disabled={isSavingSebSettings}
-              >
-                {isSavingSebSettings ? 'Saving...' : 'Save Settings'}
-              </button>
+        <div className="card-body">
+          {editingSebSettings ? (
+            <div>
+              <SebSettingsConfig
+                sebSettings={sebSettingsInput}
+                allowFileUpload={fileUploadInput}
+                onChangeSettings={setSebSettingsInput}
+                onChangeFileUpload={setFileUploadInput}
+              />
+              <div className="form-actions" style={{ marginTop: '1.25rem' }}>
+                <button
+                  type="button"
+                  className="button button--secondary"
+                  onClick={() => setEditingSebSettings(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="button button--primary"
+                  onClick={handleSaveSebSettings}
+                  disabled={isSavingSebSettings}
+                >
+                  {isSavingSebSettings ? 'Saving...' : 'Save Settings'}
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>Whitelisted Apps:</span>
-              {(exam.sebSettings?.permittedProcesses?.length ?? 0) > 0 ? (
-                exam.sebSettings?.permittedProcesses?.map((p) => (
-                  <span key={p.executable} className="dash-course-pill" style={{ fontSize: '0.75rem' }}>
-                    {p.title || p.executable}
-                  </span>
-                ))
-              ) : (
-                <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>None (Browser Only)</span>
-              )}
-            </div>
+          ) : (
+            <div className="detail-settings-list">
+              <div className="detail-setting-row">
+                <span className="detail-setting-key">Whitelisted Apps</span>
+                <div className="detail-setting-val">
+                  {(exam.sebSettings?.permittedProcesses?.length ?? 0) > 0 ? (
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      {exam.sebSettings?.permittedProcesses?.map((p) => (
+                        <span key={p.executable} className="dash-course-pill">
+                          {p.title || p.executable}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-muted">None (Browser Only)</span>
+                  )}
+                </div>
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>Display Policy:</span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-                {exam.sebSettings?.allowedDisplays === 1 && exam.sebSettings?.internalDisplayOnly
-                  ? '🔒 Single Internal Screen (Strict Anti-Cheat)'
-                  : '🖥️ External / Dual Monitors Permitted'}
-              </span>
-            </div>
+              <div className="detail-setting-row">
+                <span className="detail-setting-key">Display Policy</span>
+                <span className="detail-setting-val detail-setting-icon-val">
+                  {exam.sebSettings?.allowedDisplays === 1 && exam.sebSettings?.internalDisplayOnly ? (
+                    <>
+                      <IconLock size={14} />
+                      <span>Single Internal Screen (Strict)</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconMonitor size={14} />
+                      <span>External / Dual Monitors Permitted</span>
+                    </>
+                  )}
+                </span>
+              </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>Student File Uploads:</span>
-              <span style={{ fontSize: '0.82rem', color: exam.allowFileUpload ? 'var(--color-success)' : 'var(--color-text-muted)', fontWeight: 600 }}>
-                {exam.allowFileUpload ? '✓ Enabled' : 'Disabled'}
-              </span>
+              <div className="detail-setting-row">
+                <span className="detail-setting-key">Student File Uploads</span>
+                <span
+                  className="detail-setting-val detail-setting-icon-val"
+                  style={{
+                    color: exam.allowFileUpload ? 'var(--color-success)' : 'var(--color-text-muted)',
+                    fontWeight: 600,
+                  }}
+                >
+                  {exam.allowFileUpload ? (
+                    <>
+                      <IconCheck size={14} />
+                      <span>Enabled</span>
+                    </>
+                  ) : (
+                    <span>Disabled</span>
+                  )}
+                </span>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Advanced SEB Gateway URL Section */}
-      <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+      <div>
         <button
           type="button"
           onClick={() => setShowAdvancedSeb(!showAdvancedSeb)}
           className="button button--ghost button--sm"
         >
-          {showAdvancedSeb ? '▲ Hide Advanced Connection Details' : '▼ Advanced SEB Gateway Details'}
+          {showAdvancedSeb ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+          <span>{showAdvancedSeb ? 'Hide Gateway Details' : 'SEB Gateway Details'}</span>
         </button>
       </div>
 
@@ -480,13 +460,11 @@ export function ExamDetail() {
         <div className="card">
           <div className="card-header">
             <div>
-              <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--color-navy)' }}>
-                SEB Gateway Connection URL
-              </h4>
-              <p className="panel-subtitle">This URL is embedded in student .seb launch files.</p>
+              <h4 className="card-title">SEB Gateway Connection URL</h4>
+              <p className="panel-subtitle">Embedded inside student .seb launch configurations.</p>
             </div>
           </div>
-          <div style={{ marginTop: '0.75rem' }}>
+          <div className="card-body">
             <code className="code-box">{sebGateUrl}</code>
             <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
               <button

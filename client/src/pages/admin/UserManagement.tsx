@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api';
+import { IconAlert, IconX } from '../../components/ui/Icons';
 
 interface User {
   id: string;
@@ -85,7 +86,7 @@ export function UserManagement() {
 
       {error && (
         <div className="dash-alert dash-alert-error">
-          <span>✕</span>
+          <IconAlert size={16} />
           <span>{error}</span>
         </div>
       )}
@@ -177,8 +178,9 @@ export function UserManagement() {
                 cursor: 'pointer',
                 fontSize: '1.25rem',
               }}
+              aria-label="Close"
             >
-              ✕
+              <IconX size={16} />
             </button>
 
             <h2 className="page-title" style={{ fontSize: '1.25rem', marginBottom: '1.25rem' }}>Add User</h2>
@@ -236,7 +238,7 @@ export function UserManagement() {
 
               {formError && (
                 <div className="dash-alert dash-alert-error" style={{ fontSize: '0.82rem', padding: '0.65rem 0.9rem' }}>
-                  <span>✕</span>
+                  <IconAlert size={15} />
                   <span>{formError}</span>
                 </div>
               )}

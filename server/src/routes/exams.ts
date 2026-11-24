@@ -239,8 +239,23 @@ router.patch(
   async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
     try {
       const data = updateExamSchema.parse(req.body);
-      const exam = await updateExam(req.params.id, req.user!.sub, data, req.user!.role);
-      res.json({ exam });
+      let exam = await updateExam(req.params.id, req.user!.sub, data, req.user!.role);
+      let sebSynced = false;
+
+      if (
+        exam.status === 'active' &&
+        (data.allowFileUpload !== undefined || data.sebSettings !== undefined)
+      ) {
+        try {
+          await generateAndPushSEBFile(exam.id);
+          exam = await assertExamOwner(exam.id, req.user!.sub, req.user!.role);
+          sebSynced = true;
+        } catch (syncErr: any) {
+          console.warn('[patch exam] auto SEB sync warning:', syncErr?.message || syncErr);
+        }
+      }
+
+      res.json({ exam, sebSynced });
     } catch (err) {
       next(err);
     }

@@ -16,9 +16,12 @@ COPY package*.json ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
-# If drizzle needs to run migrations, we might need drizzle-kit or just the migrations folder.
-# Copy drizzle folder just in case if it exists, though it's typically managed separately.
-# For now, we only need what's necessary to start the app.
+# Copy Drizzle migrations and journal so runtime can locate them
+COPY --from=builder /app/src/db/migrations ./src/db/migrations
+COPY --from=builder /app/src/db/migrations ./dist/db/migrations
+
+# Ensure uploads directory exists
+RUN mkdir -p uploads
 
 ENV NODE_ENV=production
 ENV PORT=5000

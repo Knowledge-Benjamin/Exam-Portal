@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { api } from '../../api';
 import type { Question, QuestionType, Exam } from '../../types';
 import { QUESTION_TYPE_LABELS } from '../../utils/constants';
+import { ExamWorkspaceNav } from '../../components/admin/ExamWorkspaceNav';
 
 export function ExamBuilder() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [exam, setExam] = useState<Exam | null>(null);
@@ -130,26 +130,17 @@ export function ExamBuilder() {
 
   return (
     <div className="settings-page">
-      <div className="page-header">
-        <button type="button" onClick={() => navigate(`/dashboard/exams/${id}`)} className="button button--link">
-          ← Back to Exam
-        </button>
-
-        <div className="page-title-row">
-          <div>
-            <h1 className="page-title">Content Builder</h1>
-            <p className="section-copy">{exam.title}</p>
-          </div>
-        </div>
-      </div>
+      <ExamWorkspaceNav
+        examId={exam.id}
+        title={exam.title}
+        courseCode={exam.erpCourseCode || 'General'}
+        status={exam.status}
+        assessmentType={exam.assessmentType}
+      />
 
       {isExamClosed && (
-        <div className="card card-compact">
-          <div className="card-body">
-            <p className="text-warning">
-              This exam is closed. You cannot modify its content.
-            </p>
-          </div>
+        <div className="dash-alert dash-alert-error">
+          <span>This exam is closed. Content modifications are disabled.</span>
         </div>
       )}
 
