@@ -43,6 +43,25 @@ const examRoomLogs = new Map<string, RoomEvent[]>();
 const MAX_ROOM_LOGS = 100;
 
 const teacherRoomName = (examId: string) => `exam:${examId}:teachers`;
+let ioInstance: Server | null = null;
+
+export function notifyStudentSubmitted(
+  examId: string,
+  submissionId: string,
+  studentName: string,
+  studentRegNumber: string,
+): void {
+  if (!ioInstance) return;
+  const now = new Date();
+  pushRoomEvent(ioInstance, examId, {
+    type: 'reconnected',
+    submissionId,
+    studentName,
+    studentRegNumber,
+    timestamp: now.toISOString(),
+    message: `${studentName} (${studentRegNumber}) submitted their exam answers`,
+  });
+}
 
 export function cleanupExamRoomData(examId: string): void {
   const timer = activeTimers.get(examId);
@@ -148,6 +167,7 @@ async function loadPersistedRoomLogs(examId: string) {
 }
 
 export function registerSocketHandlers(io: Server): void {
+  ioInstance = io;
   io.use(async (socket, next) => {
     const rawCookieHeader = String(socket.handshake.headers.cookie ?? '');
     const cookieHeaderPresent = rawCookieHeader.length > 0;
@@ -180,14 +200,16 @@ export function registerSocketHandlers(io: Server): void {
       }
     }
 
-    // Teacher/admin auth via access_token cookie
-    let accessToken: string | undefined;
-    let accessTokenSource: string | undefined;
+    // Teacher/admin auth via access_token cookie or handshake auth token
+    let accessToken: string | undefined = socket.handshake.auth?.token as string | undefined;
+    let accessTokenSource: string | undefined = accessToken ? 'auth.token' : undefined;
 
-    const match = rawCookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
-    if (match) {
-      accessToken = decodeURIComponent(match[1]);
-      accessTokenSource = 'cookie';
+    if (!accessToken) {
+      const match = rawCookieHeader.match(/(?:^|;\s*)access_token=([^;]+)/);
+      if (match) {
+        accessToken = decodeURIComponent(match[1]);
+        accessTokenSource = 'cookie';
+      }
     }
 
     const requestedExamId = socket.handshake.auth?.watchExamId as string | undefined;

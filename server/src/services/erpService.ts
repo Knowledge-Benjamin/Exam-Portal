@@ -182,7 +182,7 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
       active: true,
       allowManualStart: true,
       allowUserToChooseApp: p.allowUserToChooseApp !== false,
-      autostart: !!p.autostart,
+      autostart: p.autostart !== false,
       executable: p.executable,
       iconInTaskbar: true,
       identifier,
@@ -333,8 +333,10 @@ ${permittedProcesses.map((p) => `    <dict>
       <true/>
       <key>allowUserToChooseApp</key>
       ${p.allowUserToChooseApp !== false ? '<true/>' : '<false/>'}
+      <key>arguments</key>
+      <array/>
       <key>autostart</key>
-      ${p.autostart ? '<true/>' : '<false/>'}
+      ${p.autostart !== false ? '<true/>' : '<false/>'}
       <key>executable</key>
       <string>${escapeXml(p.executable)}</string>
       <key>iconInTaskbar</key>
@@ -410,8 +412,10 @@ ${permittedProcesses.map((p) => `    <dict>
   ${bool(c.showTime, true)}
   <key>showInputLanguage</key>
   ${bool(c.showInputLanguage, true)}
+  <key>monitorProcesses</key>
+  <true/>
   <key>allowSwitchToApplications</key>
-  ${bool(c.allowSwitchToApplications, false)}
+  ${bool(permittedProcesses.length > 0 || c.allowSwitchToApplications, true)}
   <key>allowFlashFullscreen</key>
   <false/>
   <key>examSessionClearCookiesOnEnd</key>

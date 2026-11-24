@@ -151,12 +151,44 @@ router.get(
 );
 
 /**
- * GET /seb/exam/:examId/pdf-blob or /seb/exam/:examId/pdf
+ * GET /seb/exam/:examId/pdf-blob
+ * GET /seb/exam/:examId/pdf
  *
  * Student-facing PDF streaming endpoint — requires only the exam_token.
  */
 router.get(
-  ['/exam/:examId/pdf-blob', '/exam/:examId/pdf'],
+  '/exam/:examId/pdf-blob',
+  requireExamAuth,
+  sebGuard,
+  async (req: Request<{ examId: string }>, res: Response, next: NextFunction) => {
+    try {
+      if (req.examSession!.examId !== req.params.examId) {
+        res.status(403).json({ error: 'Token does not match this exam' });
+        return;
+      }
+      const exam = await getExamById(req.params.examId);
+      if (!exam || !exam.pdfPath) {
+        res.status(404).json({ error: 'Exam or PDF not found' });
+        return;
+      }
+      const teacher = await getUserProfile(exam.teacherId);
+      const creds = getDriveCredentialsFromUser(teacher);
+      if (!teacher || !creds) {
+        res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
+        return;
+      }
+      const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="exam.pdf"');
+      stream.pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+router.get(
+  '/exam/:examId/pdf',
   requireExamAuth,
   sebGuard,
   async (req: Request<{ examId: string }>, res: Response, next: NextFunction) => {
@@ -329,6 +361,20 @@ router.post(
     try {
       const { answers } = saveAnswersSchema.parse(req.body);
       const sub = await finalSubmit(req.examSession!.submissionId, answers, 'rest-submit');
+
+      // Notify live teacher room monitor
+      try {
+        const { notifyStudentSubmitted } = await import('../socket/handlers');
+        notifyStudentSubmitted(
+          sub.examId,
+          sub.id,
+          sub.studentName ?? 'Student',
+          sub.studentRegNumber ?? '',
+        );
+      } catch (notifyErr) {
+        console.warn('[seb submit] failed to notify monitor:', notifyErr);
+      }
+
       res.json({ submission: sub });
     } catch (err) {
       next(err);

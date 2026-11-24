@@ -388,110 +388,115 @@ router.post(
   },
 );
 
-// GET /api/exams/:id/pdf/download
-router.get(
-  '/:id/pdf/download',
-  async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
-    try {
-      const examId = req.params.id;
-      const rawCookies = String(req.headers.cookie ?? '');
-      const accessToken = req.cookies?.access_token as string | undefined;
+// GET /api/exams/:id/pdf/download, /:id/pdf-blob, /:id/pdf
+const handlePdfDownload = async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const examId = req.params.id;
+    const rawCookies = String(req.headers.cookie ?? '');
+    const accessToken = req.cookies?.access_token as string | undefined;
 
-      console.info('[pdf download] request', {
-        examId,
-        origin: req.get('origin'),
-        host: req.get('host'),
-        cookieHeaderPresent: rawCookies.length > 0,
-        hasAccessToken: !!accessToken,
-        hasExamToken: !!req.cookies?.exam_token,
-        path: req.originalUrl,
-      });
+    console.info('[pdf download] request', {
+      examId,
+      origin: req.get('origin'),
+      host: req.get('host'),
+      cookieHeaderPresent: rawCookies.length > 0,
+      hasAccessToken: !!accessToken,
+      hasExamToken: !!req.cookies?.exam_token,
+      path: req.originalUrl,
+    });
 
-      let isAuthorized = false;
-      let teacherIdFromToken: string | null = null;
+    let isAuthorized = false;
+    let teacherIdFromToken: string | null = null;
 
-      // 1. Check teacher auth
-      if (accessToken) {
-        const { verifyAccessToken } = await import('../utils/token');
+    // 1. Check teacher auth
+    if (accessToken) {
+      const { verifyAccessToken } = await import('../utils/token');
+      try {
+        const user = verifyAccessToken(accessToken);
+        if (user.role === 'admin' || user.role === 'teacher') {
+          isAuthorized = true;
+          teacherIdFromToken = user.sub;
+          console.info('[pdf download] authorized via teacher access token', { examId, teacherIdFromToken });
+        }
+      } catch (err) {
+        console.warn('[pdf download] access token invalid or expired', { examId, message: err instanceof Error ? err.message : String(err) });
+      }
+    }
+
+    // 2. Check student exam session via cookie, Bearer header, or x-exam-token
+    if (!isAuthorized) {
+      const authHeader = req.headers.authorization;
+      const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+      const headerToken = (req.headers['x-exam-token'] as string | undefined)?.trim();
+      const examToken = (req.cookies?.exam_token as string | undefined) || bearerToken || headerToken;
+
+      if (examToken) {
+        const { verifyExamToken } = await import('../utils/token');
         try {
-          const user = verifyAccessToken(accessToken);
-          if (user.role === 'admin' || user.role === 'teacher') {
+          const session = verifyExamToken(examToken);
+          if (session.examId === examId) {
             isAuthorized = true;
-            teacherIdFromToken = user.sub;
-            console.info('[pdf download] authorized via teacher access token', { examId, teacherIdFromToken });
+            console.info('[pdf download] authorized via exam token', { examId });
+          } else {
+            console.warn('[pdf download] exam token mismatch', { examId, tokenExamId: session.examId });
           }
         } catch (err) {
-          console.warn('[pdf download] access token invalid or expired', { examId, message: err instanceof Error ? err.message : String(err) });
+          console.warn('[pdf download] exam token verification failed', { examId, message: err instanceof Error ? err.message : String(err) });
         }
-      }
-
-      // 2. Check student exam session
-      if (!isAuthorized) {
-        const examToken = req.cookies?.exam_token as string | undefined;
-        if (examToken) {
-          const { verifyExamToken } = await import('../utils/token');
-          try {
-            const session = verifyExamToken(examToken);
-            if (session.examId === examId) {
-              isAuthorized = true;
-              console.info('[pdf download] authorized via exam token', { examId });
-            } else {
-              console.warn('[pdf download] exam token mismatch', { examId, tokenExamId: session.examId });
-            }
-          } catch (err) {
-            console.warn('[pdf download] exam token verification failed', { examId, message: err instanceof Error ? err.message : String(err) });
-          }
-        } else {
-          console.warn('[pdf download] no exam_token found in cookies', {
-            cookieHeaderPresent: rawCookies.length > 0,
-            examId,
-            hasAccessToken: !!accessToken,
-          });
-        }
-      }
-
-      if (!isAuthorized) {
-        console.warn('[pdf download] unauthorized pdf access attempt', {
+      } else {
+        console.warn('[pdf download] no exam_token found in cookies or headers', {
+          cookieHeaderPresent: rawCookies.length > 0,
           examId,
           hasAccessToken: !!accessToken,
-          hasExamToken: !!req.cookies?.exam_token,
         });
-        res.status(401).json({ error: 'Not authorized to view this PDF' });
-        return;
       }
-
-      const exam = await getExamById(examId);
-      if (!exam || !exam.pdfPath) {
-        console.warn('[pdf download] exam or pdf not found', { examId, hasExam: !!exam, pdfPath: exam?.pdfPath });
-        res.status(404).json({ error: 'Exam or PDF not found' });
-        return;
-      }
-
-      if (teacherIdFromToken && exam.teacherId !== teacherIdFromToken) {
-        console.warn('[pdf download] teacher token mismatch', { examId, ownerId: exam.teacherId, tokenOwnerId: teacherIdFromToken });
-        res.status(403).json({ error: 'You do not own this exam' });
-        return;
-      }
-
-      const teacher = await getUserProfile(exam.teacherId);
-      const creds = getDriveCredentialsFromUser(teacher);
-      if (!teacher || !creds) {
-        console.error('[pdf download] missing drive credentials for exam owner', { examId, teacherId: exam.teacherId });
-        res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
-        return;
-      }
-
-      console.info('[pdf download] streaming pdf from drive', { examId, fileId: exam.pdfPath, teacherId: exam.teacherId });
-      const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', 'inline; filename="exam.pdf"');
-      stream.pipe(res);
-    } catch (err) {
-      console.error('[pdf download] error', err);
-      next(err);
     }
-  },
-);
+
+    if (!isAuthorized) {
+      console.warn('[pdf download] unauthorized pdf access attempt', {
+        examId,
+        hasAccessToken: !!accessToken,
+        hasExamToken: !!req.cookies?.exam_token,
+      });
+      res.status(401).json({ error: 'Not authorized to view this PDF' });
+      return;
+    }
+
+    const exam = await getExamById(examId);
+    if (!exam || !exam.pdfPath) {
+      console.warn('[pdf download] exam or pdf not found', { examId, hasExam: !!exam, pdfPath: exam?.pdfPath });
+      res.status(404).json({ error: 'Exam or PDF not found' });
+      return;
+    }
+
+    if (teacherIdFromToken && exam.teacherId !== teacherIdFromToken && req.user?.role !== 'admin') {
+      console.warn('[pdf download] teacher token mismatch', { examId, ownerId: exam.teacherId, tokenOwnerId: teacherIdFromToken });
+      res.status(403).json({ error: 'You do not own this exam' });
+      return;
+    }
+
+    const teacher = await getUserProfile(exam.teacherId);
+    const creds = getDriveCredentialsFromUser(teacher);
+    if (!teacher || !creds) {
+      console.error('[pdf download] missing drive credentials for exam owner', { examId, teacherId: exam.teacherId });
+      res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
+      return;
+    }
+
+    console.info('[pdf download] streaming pdf from drive', { examId, fileId: exam.pdfPath, teacherId: exam.teacherId });
+    const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="exam.pdf"');
+    stream.pipe(res);
+  } catch (err) {
+    console.error('[pdf download] error', err);
+    next(err);
+  }
+};
+
+router.get('/:id/pdf/download', handlePdfDownload);
+router.get('/:id/pdf-blob', handlePdfDownload);
+router.get('/:id/pdf', handlePdfDownload);
 
 import { generateAndPushSEBFile } from '../services/erpService';
 

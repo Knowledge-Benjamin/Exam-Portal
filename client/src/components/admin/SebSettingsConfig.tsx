@@ -105,6 +105,7 @@ export function SebSettingsConfig({
           path: preset.path,
           title: preset.title,
           allowUserToChooseApp: true,
+          autostart: true,
           os: 1, // 1 = Windows in Safe Exam Browser
         },
       ];
@@ -170,6 +171,7 @@ export function SebSettingsConfig({
         path: cleanPath || undefined,
         title: cleanTitle || cleanExe,
         allowUserToChooseApp: true,
+        autostart: true,
         os: 1, // 1 = Windows in Safe Exam Browser
       },
     ];

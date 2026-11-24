@@ -9,6 +9,7 @@ import { Footer } from './components/layout/Footer';
 const DashboardHome = lazy(() => import('./pages/admin/DashboardHome').then(module => ({ default: module.DashboardHome })));
 const CreateExam = lazy(() => import('./pages/admin/CreateExam').then(module => ({ default: module.CreateExam })));
 const ExamDetail = lazy(() => import('./pages/admin/ExamDetail').then(module => ({ default: module.ExamDetail })));
+const ExamMonitor = lazy(() => import('./pages/admin/ExamMonitor').then(module => ({ default: module.ExamMonitor })));
 const ExamBuilder = lazy(() => import('./pages/admin/ExamBuilder').then(module => ({ default: module.ExamBuilder })));
 const SubmissionsList = lazy(() => import('./pages/admin/SubmissionsList').then(module => ({ default: module.SubmissionsList })));
 const Settings = lazy(() => import('./pages/admin/Settings').then(module => ({ default: module.Settings })));
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
         element: <Suspense fallback={<LoadingFallback />}><ExamDetail /></Suspense>,
       },
       {
+        path: 'exams/:id/monitor',
+        element: <Suspense fallback={<LoadingFallback />}><ExamMonitor /></Suspense>,
+      },
+      {
         path: 'exams/:id/builder',
         element: <Suspense fallback={<LoadingFallback />}><ExamBuilder /></Suspense>,
       },
@@ -127,5 +132,3 @@ createRoot(document.getElementById('root')!).render(
     </div>
   </StrictMode>
 );
-
-

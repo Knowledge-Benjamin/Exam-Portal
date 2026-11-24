@@ -105,11 +105,21 @@ export function ExamRoom() {
     setIsPdfLoading(true);
     setPdfError(null);
     try {
-      const response = await axios.get(`/seb/exam/${id}/pdf-blob`, {
-        responseType: 'blob',
-        withCredentials: true,
-        headers: authHeaders,
-      });
+      let response;
+      try {
+        response = await axios.get(`/seb/exam/${id}/pdf-blob`, {
+          responseType: 'blob',
+          withCredentials: true,
+          headers: authHeaders,
+        });
+      } catch (sebErr: any) {
+        // Fallback to /api/exams/:id/pdf/download
+        response = await axios.get(`/api/exams/${id}/pdf/download`, {
+          responseType: 'blob',
+          withCredentials: true,
+          headers: authHeaders,
+        });
+      }
 
       const contentType = String(response.headers['content-type'] || '');
       if (contentType && !contentType.includes('application/pdf')) {
@@ -125,7 +135,7 @@ export function ExamRoom() {
 
       setPdfBlob(response.data);
     } catch (err: any) {
-      let errMsg = 'Failed to load PDF.';
+      let errMsg = 'Failed to load question paper PDF.';
       let details: string | undefined;
 
       if (err.response?.data instanceof Blob) {
@@ -423,26 +433,26 @@ export function ExamRoom() {
           padding: '0.5rem 1.25rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem',
+          gap: '0.65rem',
           flexWrap: 'wrap',
         }}>
           <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-blue)', whiteSpace: 'nowrap' }}>
-            Permitted Apps
+            Permitted Applications
           </span>
           {exam.sebSettings.permittedProcesses.map((proc: any, i: number) => (
             <span key={i} style={{
-              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
               background: '#fff', border: '1px solid #cce0ff',
-              borderRadius: '6px', padding: '0.2rem 0.6rem',
+              borderRadius: '6px', padding: '0.2rem 0.55rem',
               fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-navy)',
             }}>
-              <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>⬛</span>
+              <span style={{ fontSize: '0.7rem' }}>💻</span>
               {proc.title || proc.executable}
-              {proc.allowUserToChooseApp && (
-                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontWeight: 400 }}>· choose path</span>
-              )}
             </span>
           ))}
+          <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>ℹ</span> Launch or switch using the Safe Exam Browser taskbar below
+          </span>
         </div>
       )}
 

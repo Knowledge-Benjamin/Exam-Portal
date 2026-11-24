@@ -52,7 +52,15 @@ app.use(
     origin: env.CORS_ORIGIN,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'x-safeexambrowser-requesthash', 'x-safeexambrowser-configkeyhash'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'x-exam-token',
+      'x-safeexambrowser-requesthash',
+      'x-safeexambrowser-configkeyhash',
+      'x-requested-with',
+      'Accept',
+    ],
   }),
 );
 

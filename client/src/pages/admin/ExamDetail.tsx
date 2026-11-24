@@ -243,6 +243,15 @@ export function ExamDetail() {
             <button
               type="button"
               className="button button--secondary"
+              onClick={() => navigate(`/dashboard/exams/${id}/monitor`)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 700 }}
+            >
+              🔴 Live Monitor
+            </button>
+
+            <button
+              type="button"
+              className="button button--secondary"
               onClick={() => navigate(`/dashboard/exams/${id}/submissions`)}
             >
               📋 Submissions {stats ? `(${stats.totalSubmitted})` : ''}
@@ -303,7 +312,24 @@ export function ExamDetail() {
                 Registered students can generate their 6-digit PIN and join via Safe Exam Browser.
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                type="button"
+                className="button button--primary"
+                onClick={() => navigate(`/dashboard/exams/${id}/monitor`)}
+                style={{
+                  background: '#059669',
+                  borderColor: '#047857',
+                  color: '#ffffff',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '0.45rem 0.9rem',
+                }}
+              >
+                🔴 Open Live Room Monitor
+              </button>
               <button
                 type="button"
                 className="btn-card-secondary"
