@@ -31,7 +31,7 @@ export function ExamEditor({ content, onChange, readOnly = false }: ExamEditorPr
     },
     editorProps: {
       attributes: {
-        class: 'exam-prose focus:outline-none min-h-[calc(100vh-260px)] px-[64px] py-[48px] text-[#1a2654] text-base leading-[1.8]',
+        class: 'exam-prose focus:outline-none min-h-[1000px] px-[64px] py-[48px] text-[#1a2654] text-base leading-[1.8]',
         spellcheck: 'true',
       },
     },
@@ -52,7 +52,7 @@ export function ExamEditor({ content, onChange, readOnly = false }: ExamEditorPr
       <div className="flex-1 overflow-y-auto bg-[#eef2f7] py-6 px-4 custom-scrollbar">
         <div
           className="bg-white mx-auto shadow-[0_2px_16px_rgba(0,0,0,0.06)] border border-[#e2e8f0] relative rounded-sm"
-          style={{ width: '794px', minHeight: '1123px' }}
+          style={{ width: 'min(794px, 100%)', minHeight: '1123px' }}
         >
           <EditorContent editor={editor} />
         </div>

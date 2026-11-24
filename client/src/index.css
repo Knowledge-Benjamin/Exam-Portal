@@ -1049,7 +1049,8 @@ tbody tr:hover td { background: #f8faff; }
 .exam-room-body { display: flex; flex: 1; min-height: 0; }
 
 .exam-room-sidebar {
-  width: 320px; min-width: 320px; max-width: 360px;
+  /* width is now controlled via inline style (splitPct %) */
+  min-width: 0; max-width: none;
   background: var(--color-surface); border-right: 1px solid var(--color-border);
   display: flex; flex-direction: column; overflow-y: auto;
 }
@@ -1092,8 +1093,38 @@ tbody tr:hover td { background: #f8faff; }
 
 .exam-room-autosave { font-size: 0.75rem; color: var(--color-text-muted); display: flex; align-items: center; gap: 0.4rem; margin-top: auto; padding: 0 0.35rem; }
 
-.exam-room-content { flex: 1; min-width: 0; padding: clamp(1rem, 2.5vw, 2rem); overflow-y: auto; }
-.exam-room-content-inner { max-width: 860px; margin: 0 auto; }
+.exam-room-content { flex: 1; min-width: 0; padding: clamp(0.75rem, 1.5vw, 1.5rem); overflow-y: auto; display: flex; flex-direction: column; }
+.exam-room-content-inner { flex: 1; display: flex; flex-direction: column; }
+.exam-room-content-inner > div { flex: 1; }
+
+/* ── Resizable split-pane divider ───────────────────────────────────── */
+.exam-room-divider {
+  width: 6px;
+  flex-shrink: 0;
+  background: var(--color-border);
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+  position: relative;
+  z-index: 10;
+}
+.exam-room-divider:hover,
+.exam-room-divider:active {
+  background: var(--color-primary);
+}
+.exam-room-divider-grip {
+  width: 2px;
+  height: 40px;
+  border-radius: 9999px;
+  background: rgba(0,0,0,0.15);
+  pointer-events: none;
+}
+.exam-room-divider:hover .exam-room-divider-grip,
+.exam-room-divider:active .exam-room-divider-grip {
+  background: rgba(255,255,255,0.6);
+}
 
 .exam-q-card {
   background: var(--color-surface); border: 1px solid var(--color-border);

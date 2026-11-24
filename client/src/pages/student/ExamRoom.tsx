@@ -10,6 +10,11 @@ import { formatCountdown } from '../../utils/formatters';
 
 type Answers = Record<string, string>;
 
+/** Clamp a number between min and max */
+function clamp(val: number, min: number, max: number) {
+  return Math.min(Math.max(val, min), max);
+}
+
 export function ExamRoom() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -40,6 +45,39 @@ export function ExamRoom() {
   const [isUploadingFile, setIsUploadingFile] = useState(false);
   const [fileUploadError, setFileUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+
+  // ── Split-pane resize state ──────────────────────────────────────────────
+  const [splitPct, setSplitPct] = useState(50); // percentage for left pane
+  const isDragging = useRef(false);
+  const splitContainerRef = useRef<HTMLElement>(null);
+
+  const onDividerMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+  };
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDragging.current || !splitContainerRef.current) return;
+      const rect = splitContainerRef.current.getBoundingClientRect();
+      const newPct = ((e.clientX - rect.left) / rect.width) * 100;
+      setSplitPct(clamp(newPct, 20, 80));
+    };
+    const onMouseUp = () => {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
 
   const examActive = !isLoading && !!exam && !submission?.isFinal;
   const allowExternalApps = Boolean(
@@ -456,11 +494,12 @@ export function ExamRoom() {
         </div>
       )}
 
-      {/* Main Body */}
-      <main className="exam-room-body">
+      {/* Main Body — resizable split pane */}
+      <main className="exam-room-body" ref={splitContainerRef}>
         {/* Left pane: Question List or PDF Viewer */}
         <section
           className="exam-room-sidebar"
+          style={{ width: `${splitPct}%`, minWidth: 0, maxWidth: 'none' }}
           onCopy={(e) => e.preventDefault()}
           onCut={(e) => e.preventDefault()}
           onContextMenu={(e) => e.preventDefault()}
@@ -586,8 +625,17 @@ export function ExamRoom() {
           </div>
         </section>
 
+        {/* Drag handle divider */}
+        <div
+          className="exam-room-divider"
+          onMouseDown={onDividerMouseDown}
+          title="Drag to resize panels"
+        >
+          <div className="exam-room-divider-grip" />
+        </div>
+
         {/* Right pane: Answer Form or Document Editor */}
-        <section className="exam-room-content">
+        <section className="exam-room-content" style={{ flex: 1, minWidth: 0 }}>
           <div className="exam-room-content-inner">
             {isPdf ? (
               <ExamEditor content={answers.freeform ?? ''} onChange={handleFreeformChange} />
