@@ -14,7 +14,14 @@ export function ExamRoom() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const examToken = (location.state as any)?.examToken || '';
+  const examToken = (location.state as any)?.examToken ||
+    (id ? sessionStorage.getItem(`exam_token_${id}`) : null) ||
+    sessionStorage.getItem('current_exam_token') ||
+    '';
+
+  const authHeaders = examToken
+    ? { Authorization: `Bearer ${examToken}`, 'x-exam-token': examToken }
+    : {};
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -82,7 +89,7 @@ export function ExamRoom() {
 
   useEffect(() => {
     if (forceSubmitMsg) {
-      axios.post('/seb/submission/submit', { answers: answersRef.current }, { withCredentials: true }).catch(() => {});
+      axios.post('/seb/submission/submit', { answers: answersRef.current }, { withCredentials: true, headers: authHeaders }).catch(() => {});
       if (id) {
         try {
           localStorage.removeItem(`exam_draft_answers_${id}`);
@@ -101,6 +108,7 @@ export function ExamRoom() {
       const response = await axios.get(`/seb/exam/${id}/pdf-blob`, {
         responseType: 'blob',
         withCredentials: true,
+        headers: authHeaders,
       });
 
       const contentType = String(response.headers['content-type'] || '');
@@ -141,9 +149,9 @@ export function ExamRoom() {
   const fetchExamData = async () => {
     try {
       const [examRes, questionsRes, subRes] = await Promise.all([
-        axios.get(`/seb/exam/${id}`, { withCredentials: true }),
-        axios.get(`/seb/exam/${id}/questions`, { withCredentials: true }),
-        axios.get(`/seb/submission/${id}`, { withCredentials: true }),
+        axios.get(`/seb/exam/${id}`, { withCredentials: true, headers: authHeaders }),
+        axios.get(`/seb/exam/${id}/questions`, { withCredentials: true, headers: authHeaders }),
+        axios.get('/seb/submission', { withCredentials: true, headers: authHeaders }),
       ]);
 
       setExam(examRes.data.exam);
@@ -210,7 +218,7 @@ export function ExamRoom() {
       await axios.post(
         '/seb/submission/submit',
         { answers },
-        { withCredentials: true }
+        { withCredentials: true, headers: authHeaders }
       );
 
       if (id) {
@@ -272,8 +280,8 @@ export function ExamRoom() {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('/seb/submission/upload-file', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await axios.post('/seb/submission/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data', ...authHeaders },
         withCredentials: true,
       });
 
@@ -406,6 +414,37 @@ export function ExamRoom() {
           </button>
         </div>
       </header>
+
+      {/* Permitted Apps Info Strip */}
+      {exam.sebSettings?.permittedProcesses && exam.sebSettings.permittedProcesses.length > 0 && (
+        <div style={{
+          background: '#f0f6ff',
+          borderBottom: '1px solid #cce0ff',
+          padding: '0.5rem 1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-blue)', whiteSpace: 'nowrap' }}>
+            Permitted Apps
+          </span>
+          {exam.sebSettings.permittedProcesses.map((proc: any, i: number) => (
+            <span key={i} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              background: '#fff', border: '1px solid #cce0ff',
+              borderRadius: '6px', padding: '0.2rem 0.6rem',
+              fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-navy)',
+            }}>
+              <span style={{ fontSize: '0.65rem', opacity: 0.6 }}>⬛</span>
+              {proc.title || proc.executable}
+              {proc.allowUserToChooseApp && (
+                <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)', fontWeight: 400 }}>· choose path</span>
+              )}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Main Body */}
       <main className="exam-room-body">

@@ -105,7 +105,7 @@ export function SebSettingsConfig({
           path: preset.path,
           title: preset.title,
           allowUserToChooseApp: true,
-          os: 0,
+          os: 1, // 1 = Windows in Safe Exam Browser
         },
       ];
       if (!allowFileUpload) {
@@ -170,7 +170,7 @@ export function SebSettingsConfig({
         path: cleanPath || undefined,
         title: cleanTitle || cleanExe,
         allowUserToChooseApp: true,
-        os: 0,
+        os: 1, // 1 = Windows in Safe Exam Browser
       },
     ];
 

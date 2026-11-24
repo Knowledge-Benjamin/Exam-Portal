@@ -4,6 +4,7 @@ import { timingSafeEqual } from '../utils/crypto';
 import { getExamById } from '../services/examService';
 import { getExamByToken } from '../services/sebService';
 import { generateConfigKeyHash } from '../utils/sebKey';
+import { verifyExamToken } from '../utils/token';
 
 const SEB_BEK_HEADER = 'x-safeexambrowser-requesthash';
 const SEB_CK_HEADER  = 'x-safeexambrowser-configkeyhash';
@@ -53,13 +54,30 @@ export async function sebGuard(req: Request, res: Response, next: NextFunction):
 
   if (req.examSession?.examId) {
     examId = req.examSession.examId;
-  } else if (req.params.token) {
+  } else {
+    // Try resolving from token in cookie or header
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+    const headerToken = (req.headers['x-exam-token'] as string | undefined)?.trim();
+    const token = (req.cookies?.exam_token as string | undefined) || bearerToken || headerToken;
+    if (token) {
+      try {
+        const decoded = verifyExamToken(token);
+        if (decoded?.examId) {
+          examId = decoded.examId;
+          req.examSession = decoded;
+        }
+      } catch { /* ignore */ }
+    }
+  }
+
+  if (!examId && req.params.token) {
     try {
       const tokenStr = Array.isArray(req.params.token) ? req.params.token[0] : req.params.token;
       const exam = await getExamByToken(tokenStr as string);
       if (exam) examId = exam.id;
     } catch { /* ignore */ }
-  } else if (req.params.examId) {
+  } else if (!examId && req.params.examId) {
     examId = Array.isArray(req.params.examId) ? req.params.examId[0] : req.params.examId;
   }
 

@@ -30,7 +30,10 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
   // Fallback REST auto-save when WebSocket is unavailable or disconnected
   const saveViaRest = useCallback(async (answers: Record<string, string>) => {
     try {
-      const res = await axios.put('/seb/submission/save', { answers }, { withCredentials: true });
+      const res = await axios.put('/seb/submission/save', { answers }, {
+        withCredentials: true,
+        headers: examToken ? { Authorization: `Bearer ${examToken}`, 'x-exam-token': examToken } : {},
+      });
       if (res.data?.savedAt) {
         setLastSaved(res.data.savedAt);
         savedAnswersRef.current = answers;
@@ -38,7 +41,7 @@ export function useSocket(examId: string, initialAnswers: Record<string, string>
     } catch (err: any) {
       console.warn('[autosave] REST fallback error:', err.message);
     }
-  }, []);
+  }, [examToken]);
 
   // Smooth local countdown ticker every second so the timer never freezes on network disconnect
   useEffect(() => {

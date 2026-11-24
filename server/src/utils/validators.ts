@@ -47,7 +47,7 @@ const permittedProcessSchema = z.object({
   path: z.string().max(500).trim().optional().or(z.literal('')),
   title: z.string().max(100).trim().optional(),
   allowUserToChooseApp: z.boolean().optional(),
-  os: z.union([z.literal(0), z.literal(1)]).optional(), // 0 = Windows, 1 = macOS
+  os: z.union([z.literal(0), z.literal(1)]).optional(), // 0 = macOS, 1 = Windows (per SEB spec)
   autostart: z.boolean().optional(),
 });
 

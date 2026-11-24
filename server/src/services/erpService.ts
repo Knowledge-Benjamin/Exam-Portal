@@ -165,20 +165,36 @@ export async function generateAndPushSEBFile(examId: string): Promise<{ sebConfi
     allowUserToChooseApp?: boolean;
     os?: number;
     autostart?: boolean;
+    identifier?: string;
+    originalName?: string;
+    allowManualStart?: boolean;
+    iconInTaskbar?: boolean;
+    strongKill?: boolean;
   }>) : [];
 
   // Canonicalize permitted processes per official Safe Exam Browser spec
-  const processes = rawProcesses.map((p) => ({
-    active: true,
-    allowUserToChooseApp: p.allowUserToChooseApp !== false,
-    autostart: !!p.autostart,
-    executable: p.executable,
-    os: p.os ?? 0,
-    path: p.path ?? '',
-    runInBackground: false,
-    title: p.title ?? p.executable,
-    windowHandlingMethod: 1,
-  }));
+  // In SEB Windows enum: IntOSX = 0, IntWin = 1.
+  const processes = rawProcesses.map((p) => {
+    const isWindows = p.os === 1 || (p.os === undefined && (!p.executable || p.executable.toLowerCase().endsWith('.exe') || !p.executable.includes('/')));
+    const os = p.os !== undefined ? p.os : (isWindows ? 1 : 0);
+    const identifier = p.identifier || p.executable.replace(/\.[^/.]+$/, '');
+    return {
+      active: true,
+      allowManualStart: true,
+      allowUserToChooseApp: p.allowUserToChooseApp !== false,
+      autostart: !!p.autostart,
+      executable: p.executable,
+      iconInTaskbar: true,
+      identifier,
+      originalName: p.originalName || p.executable,
+      os,
+      path: p.path ?? '',
+      runInBackground: false,
+      strongKill: true,
+      title: p.title ?? p.executable,
+      windowHandlingMethod: 1,
+    };
+  });
 
   // Generate the official SEB Config Key per Safe Exam Browser specification
   const sebConfigKey = generateConfigKey({ ...sebConfig, permittedProcesses: processes });
@@ -289,6 +305,11 @@ function buildSEBPlist(opts: {
     autostart?: boolean;
     runInBackground?: boolean;
     windowHandlingMethod?: number;
+    identifier?: string;
+    originalName?: string;
+    allowManualStart?: boolean;
+    iconInTaskbar?: boolean;
+    strongKill?: boolean;
   }>;
 }): string {
   const { sebConfig: c, permittedProcesses = [] } = opts;
@@ -308,18 +329,28 @@ function buildSEBPlist(opts: {
 ${permittedProcesses.map((p) => `    <dict>
       <key>active</key>
       <true/>
+      <key>allowManualStart</key>
+      <true/>
       <key>allowUserToChooseApp</key>
       ${p.allowUserToChooseApp !== false ? '<true/>' : '<false/>'}
       <key>autostart</key>
       ${p.autostart ? '<true/>' : '<false/>'}
       <key>executable</key>
       <string>${escapeXml(p.executable)}</string>
+      <key>iconInTaskbar</key>
+      <true/>
+      <key>identifier</key>
+      <string>${escapeXml(p.identifier ?? p.executable.replace(/\.[^/.]+$/, ''))}</string>
+      <key>originalName</key>
+      <string>${escapeXml(p.originalName ?? p.executable)}</string>
       <key>os</key>
-      <integer>${p.os ?? 0}</integer>
+      <integer>${p.os ?? 1}</integer>
       <key>path</key>
       <string>${escapeXml(p.path ?? '')}</string>
       <key>runInBackground</key>
       <false/>
+      <key>strongKill</key>
+      <true/>
       <key>title</key>
       <string>${escapeXml(p.title ?? p.executable)}</string>
       <key>windowHandlingMethod</key>

@@ -9,7 +9,7 @@ import { examJoinSchema, saveAnswersSchema } from '../utils/validators';
 import { getExamById, getQuestions } from '../services/examService';
 import { getSubmissionById, saveAnswers, finalSubmit, saveSubmissionFile } from '../services/submissionService';
 import { getUserProfile } from '../services/authService';
-import { getDriveCredentialsFromUser, uploadPdfToDrive } from '../services/driveService';
+import { getDriveCredentialsFromUser, uploadPdfToDrive, getPdfStreamFromDrive } from '../services/driveService';
 import { isFileExtensionAllowed, isFileTypeAllowed, MAX_SUBMISSION_FILE_SIZE_MB } from '../utils/fileTypes';
 import { env } from '../config/env';
 import { getCookieOptions } from '../utils/cookieOptions';
@@ -104,8 +104,8 @@ router.post(
  */
 router.get(
   '/exam/:examId',
-  sebGuard,
   requireExamAuth,
+  sebGuard,
   async (req: Request<{ examId: string }>, res: Response, next: NextFunction) => {
     try {
       // Verify the exam_token matches the requested examId
@@ -130,12 +130,12 @@ router.get(
 /**
  * GET /seb/exam/:examId/questions
  *
- * Student-facing questions endpoint — requires only the exam_token cookie.
+ * Student-facing questions endpoint — requires only the exam_token.
  */
 router.get(
   '/exam/:examId/questions',
-  sebGuard,
   requireExamAuth,
+  sebGuard,
   async (req: Request<{ examId: string }>, res: Response, next: NextFunction) => {
     try {
       if (req.examSession!.examId !== req.params.examId) {
@@ -151,14 +151,51 @@ router.get(
 );
 
 /**
- * GET /seb/submission
+ * GET /seb/exam/:examId/pdf-blob or /seb/exam/:examId/pdf
  *
- * Student-facing submission endpoint — returns their own submission using exam_token.
+ * Student-facing PDF streaming endpoint — requires only the exam_token.
  */
 router.get(
-  '/submission',
-  sebGuard,
+  ['/exam/:examId/pdf-blob', '/exam/:examId/pdf'],
   requireExamAuth,
+  sebGuard,
+  async (req: Request<{ examId: string }>, res: Response, next: NextFunction) => {
+    try {
+      if (req.examSession!.examId !== req.params.examId) {
+        res.status(403).json({ error: 'Token does not match this exam' });
+        return;
+      }
+      const exam = await getExamById(req.params.examId);
+      if (!exam || !exam.pdfPath) {
+        res.status(404).json({ error: 'Exam or PDF not found' });
+        return;
+      }
+      const teacher = await getUserProfile(exam.teacherId);
+      const creds = getDriveCredentialsFromUser(teacher);
+      if (!teacher || !creds) {
+        res.status(500).json({ error: 'Google Drive is not configured for this exam owner.' });
+        return;
+      }
+      const stream = await getPdfStreamFromDrive(exam.pdfPath, creds);
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="exam.pdf"');
+      stream.pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  },
+);
+
+/**
+ * GET /seb/submission or /seb/submission/:id
+ *
+ * Student-facing submission endpoint — returns their own submission using exam_token.
+ * Supports both /submission and /submission/:id paths for complete frontend compatibility.
+ */
+router.get(
+  ['/submission', '/submission/:id'],
+  requireExamAuth,
+  sebGuard,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const sub = await getSubmissionById(req.examSession!.submissionId);
@@ -171,8 +208,8 @@ router.get(
 
 router.post(
   '/submission/upload',
-  sebGuard,
   requireExamAuth,
+  sebGuard,
   upload.single('file'),
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -266,8 +303,8 @@ router.post(
  */
 router.put(
   '/submission/save',
-  sebGuard,
   requireExamAuth,
+  sebGuard,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { answers } = saveAnswersSchema.parse(req.body);
@@ -286,8 +323,8 @@ router.put(
  */
 router.post(
   '/submission/submit',
-  sebGuard,
   requireExamAuth,
+  sebGuard,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { answers } = saveAnswersSchema.parse(req.body);

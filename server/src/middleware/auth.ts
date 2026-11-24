@@ -28,7 +28,12 @@ export function requireExamAuth(req: Request, res: Response, next: NextFunction)
   const rawCookieHeader = String(req.headers.cookie ?? '');
   const hasCookieHeader = rawCookieHeader.length > 0;
   const hasExamToken = /(?:^|;\s*)exam_token=/.test(rawCookieHeader);
-  const token = req.cookies?.exam_token as string | undefined;
+  
+  // Extract token from cookie, Authorization header, or x-exam-token header
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : undefined;
+  const headerToken = (req.headers['x-exam-token'] as string | undefined)?.trim();
+  const token = (req.cookies?.exam_token as string | undefined) || bearerToken || headerToken;
 
   if (!token) {
     console.warn(

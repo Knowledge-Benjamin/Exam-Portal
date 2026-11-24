@@ -78,6 +78,12 @@ export function ExamJoin() {
     try {
       const res = await axios.post(`/seb/join-with-pin/${token}`, { pin }, { withCredentials: true });
       if (res.data.ok) {
+        if (res.data.examToken) {
+          try {
+            sessionStorage.setItem(`exam_token_${res.data.examId}`, res.data.examToken);
+            sessionStorage.setItem('current_exam_token', res.data.examToken);
+          } catch {}
+        }
         setVerified({ studentName: res.data.studentName, studentRegNumber: res.data.studentRegNumber });
         setTimeout(() => { navigate(`/exam/${res.data.examId}`, { state: { examToken: res.data.examToken } }); }, 1500);
       }
@@ -107,6 +113,12 @@ export function ExamJoin() {
       }, { withCredentials: true });
 
       if (res.data.ok) {
+        if (res.data.examToken) {
+          try {
+            sessionStorage.setItem(`exam_token_${res.data.examId}`, res.data.examToken);
+            sessionStorage.setItem('current_exam_token', res.data.examToken);
+          } catch {}
+        }
         setVerified({
           studentName: res.data.studentName || studentName.trim(),
           studentRegNumber: res.data.studentRegNumber || studentRegNumber.trim(),
