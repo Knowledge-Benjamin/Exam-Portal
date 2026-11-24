@@ -87,6 +87,8 @@ router.post(
         ok: true, 
         examId: result.examId,
         examToken: result.examToken, // Also return token for socket.io handshake auth
+        studentName,
+        studentRegNumber,
       });
     } catch (err) {
       next(err);

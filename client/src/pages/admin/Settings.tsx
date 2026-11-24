@@ -246,15 +246,15 @@ export function Settings() {
 
       <section className="panel-card panel-card--accent">
         <div className="panel-card__header">
-          <p className="panel-card__subtitle">System Configuration</p>
-          <p className="panel-note">Configure your Google Drive integration for secure PDF storage and your Safe Exam Browser Config Key for exam enforcement.</p>
+          <p className="panel-card__subtitle">Cloud Storage</p>
+          <p className="panel-note">Google Drive integration for PDF exam papers and submissions.</p>
         </div>
 
         <div className="section-panel section-panel--accent">
           <div className="panel-header">
             <div>
-              <h3 className="panel-card__subtitle">OAuth Drive Connection</h3>
-              <p className="panel-note">Connect your Google account once to enable uploads directly to your Google Drive without needing a service account PEM key.</p>
+              <h3 className="panel-card__subtitle">Google Drive Authorization</h3>
+              <p className="panel-note">Direct account link for automatic exam backups.</p>
             </div>
             <div className="panel-actions">
               <span className={`badge ${user?.googleDriveOAuthConnected ? 'badge--highlight' : 'badge--danger'}`}>
@@ -280,38 +280,37 @@ export function Settings() {
         <form onSubmit={handleUpdateConfig} className="form-stack">
           <div className="form-row form-row--2">
             <div className="form-group">
-              <label className="form-label">Google Service Account Email</label>
+              <label className="form-label">Service Account Email</label>
               <input
                 type="email"
                 value={googleEmail}
                 onChange={(e) => setGoogleEmail(e.target.value)}
-                placeholder="e.g. exam-bot@project.iam.gserviceaccount.com"
+                placeholder="exam-bot@project.iam.gserviceaccount.com"
                 className="form-input"
               />
             </div>
             <div className="form-group">
-              <label className="form-label">Google Drive Folder ID</label>
+              <label className="form-label">Drive Folder ID</label>
               <input
                 type="text"
                 value={googleFolderId}
                 onChange={(e) => setGoogleFolderId(e.target.value)}
-                placeholder="e.g. 1aBcD2eF... (personal or shared drive folder ID)"
+                placeholder="Folder ID from Drive URL"
                 className="form-input"
               />
             </div>
           </div>
 
           <div className="form-group">
-            <label className="form-label">Google Private Key (Service Account)</label>
+            <label className="form-label">Service Account Private Key</label>
             <textarea
               value={googleKey}
               onChange={(e) => setGoogleKey(e.target.value)}
-              placeholder="-----BEGIN PRIVATE KEY-----
-...\n-----END PRIVATE KEY-----"
+              placeholder="-----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----"
               className="form-input"
-              rows={8}
+              rows={5}
             />
-            <p className="field-help">Optional: Provide a service account private key (PEM format) for advanced shared drive setups. If you've connected OAuth above, you can leave this blank for most use cases. Do not submit literal backslash-n sequences (\n). Use a shared drive folder ID with service account keys.</p>
+            <p className="field-help">Optional: PEM block for service account authentication.</p>
           </div>
 
           {configError && <p className="form-status form-status--error">{configError}</p>}
@@ -322,7 +321,7 @@ export function Settings() {
             disabled={isUpdatingConfig}
             className="button button--highlight button--full"
           >
-            {isUpdatingConfig ? 'Saving...' : 'Save System Configuration'}
+            {isUpdatingConfig ? 'Saving...' : 'Save Configuration'}
           </button>
         </form>
       </section>

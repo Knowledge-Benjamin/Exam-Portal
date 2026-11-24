@@ -216,7 +216,7 @@ export function SubmissionsList() {
       )}
 
       <div className="submission-layout">
-        <section className="panel-card panel-card--danger panel-card--full-height panel-card--overflow">
+        <section className="panel-card panel-card--accent panel-card--full-height panel-card--overflow">
           <div className="panel-header">
             <div>
               <p className="panel-card__subtitle">Student Submissions</p>
@@ -397,15 +397,15 @@ export function SubmissionsList() {
       </div>
       <style>{`
         .essay-content p { margin: 0.5em 0; }
-        .essay-content h1, .essay-content h2, .essay-content h3, .essay-content h4, .essay-content h5, .essay-content h6 { font-weight: 700; margin: 0.75em 0 0.5em 0; color: var(--color-text); }
-        .essay-content strong, .essay-content b { font-weight: 700; color: #e2e8f0; }
+        .essay-content h1, .essay-content h2, .essay-content h3, .essay-content h4, .essay-content h5, .essay-content h6 { font-weight: 700; margin: 0.75em 0 0.5em 0; color: var(--color-navy); }
+        .essay-content strong, .essay-content b { font-weight: 700; color: var(--color-navy); }
         .essay-content em, .essay-content i { font-style: italic; }
         .essay-content u { text-decoration: underline; }
         .essay-content ul, .essay-content ol { margin: 0.5em 0; padding-left: 2rem; }
         .essay-content li { margin: 0.25em 0; }
-        .essay-content blockquote { margin: 0.5em 0; padding-left: 1rem; border-left: 3px solid rgba(255,255,255,0.1); }
-        .essay-content code { background: rgba(0,0,0,0.2); padding: 0.2em 0.4em; border-radius: 4px; font-family: 'Courier New', monospace; }
-        .essay-content pre { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 4px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
+        .essay-content blockquote { margin: 0.5em 0; padding-left: 1rem; border-left: 3px solid var(--color-primary); color: var(--color-text-muted); }
+        .essay-content code { background: var(--color-bg); padding: 0.2em 0.4em; border-radius: 4px; font-family: monospace; color: var(--color-primary); font-size: 0.88em; }
+        .essay-content pre { background: var(--color-bg); border: 1px solid var(--color-border); padding: 1rem; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word; }
       `}</style>
     </div>
   );

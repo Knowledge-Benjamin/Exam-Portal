@@ -114,10 +114,17 @@ export function CreateExam() {
     setIsLoading(true);
 
     try {
-      const { data } = await api.post('/exams', formData);
+      const payload = {
+        ...formData,
+        startTime: new Date(formData.startTime).toISOString(),
+      };
+      const { data } = await api.post('/exams', payload);
       navigate(`/dashboard/exams/${data.exam.id}/builder`);
     } catch (err: any) {
-      setError(err?.error || 'Failed to create examination');
+      const detailsMsg = err?.response?.data?.details?.[0]
+        ? `${err.response.data.details[0].field}: ${err.response.data.details[0].message}`
+        : null;
+      setError(detailsMsg || err?.response?.data?.error || err?.error || 'Failed to create examination');
     } finally {
       setIsLoading(false);
     }

@@ -398,11 +398,11 @@ export function ExamBuilder() {
                         <span className="status-pill status-pill--muted">{QUESTION_TYPE_LABELS[q.type]}</span>
                         <span className="status-pill status-pill--info">{q.marks} mark{q.marks !== 1 ? 's' : ''}</span>
                       </div>
-                      <p className="text-light">{q.prompt}</p>
+                      <p style={{ fontWeight: 600, color: 'var(--color-navy)', fontSize: '0.95rem', margin: 0 }}>{q.prompt}</p>
                       {q.type === 'multiple_choice' && q.options && (
                         <ul style={{ display: 'grid', gap: '0.5rem', paddingLeft: 0, margin: 0, listStyle: 'none' }}>
                           {q.options.map((opt, i) => (
-                            <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#94a3b8' }}>
+                            <li key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--color-text)' }}>
                               <span className="status-pill status-pill--muted">{String.fromCharCode(65 + i)}</span>
                               <span>{opt}</span>
                             </li>

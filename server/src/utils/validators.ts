@@ -81,7 +81,13 @@ export const createExamSchema = z.object({
   erpCourseCode: z.string().min(2).max(50).trim(),
   description: z.string().max(1000).trim().optional(),
   questionSource: z.enum(['pdf', 'builder']),
-  startTime: z.string().datetime(),
+  startTime: z.preprocess((val) => {
+    if (typeof val === 'string' && val.trim()) {
+      const d = new Date(val);
+      if (!isNaN(d.getTime())) return d.toISOString();
+    }
+    return val;
+  }, z.string().datetime()),
   durationMinutes: z.number().int().min(5).max(480),
   windowBufferMinutes: z.number().int().min(0).max(30).default(5),
   allowFileUpload: z.boolean().default(false),

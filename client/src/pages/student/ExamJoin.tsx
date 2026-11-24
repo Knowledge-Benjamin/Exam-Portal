@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Button } from '../../components/ui/Button';
 
 const PIN_LENGTH = 6;
 
@@ -9,7 +8,10 @@ export function ExamJoin() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
 
+  const [joinMode, setJoinMode] = useState<'pin' | 'credentials'>('pin');
   const [digits, setDigits] = useState<string[]>(Array(PIN_LENGTH).fill(''));
+  const [studentName, setStudentName] = useState('');
+  const [studentRegNumber, setStudentRegNumber] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [verified, setVerified] = useState<{
@@ -20,8 +22,10 @@ export function ExamJoin() {
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(PIN_LENGTH).fill(null));
 
   useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+    if (joinMode === 'pin') {
+      inputRefs.current[0]?.focus();
+    }
+  }, [joinMode]);
 
   const pin = digits.join('');
   const isFull = pin.length === PIN_LENGTH && digits.every((d) => d !== '');
@@ -36,38 +40,23 @@ export function ExamJoin() {
     if (e.key === 'Backspace') {
       e.preventDefault();
       if (digits[idx] !== '') {
-        const next = [...digits];
-        next[idx] = '';
-        setDigits(next);
+        const next = [...digits]; next[idx] = ''; setDigits(next);
       } else if (idx > 0) {
-        const next = [...digits];
-        next[idx - 1] = '';
-        setDigits(next);
-        focusAt(idx - 1);
+        const next = [...digits]; next[idx - 1] = ''; setDigits(next); focusAt(idx - 1);
       }
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      focusAt(idx - 1);
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      focusAt(idx + 1);
-    } else if (e.key === 'Enter' && isFull) {
-      handleJoin();
-    }
+    } else if (e.key === 'ArrowLeft')  { e.preventDefault(); focusAt(idx - 1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); focusAt(idx + 1); }
+      else if (e.key === 'Enter' && isFull) { handleJoinPin(); }
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
     const val = e.target.value.replace(/\D/g, '');
     if (!val) return;
-
     const chars = val.split('').slice(0, PIN_LENGTH - idx);
     const next = [...digits];
-    chars.forEach((c, i) => {
-      if (idx + i < PIN_LENGTH) next[idx + i] = c;
-    });
+    chars.forEach((c, i) => { if (idx + i < PIN_LENGTH) next[idx + i] = c; });
     setDigits(next);
-    const nextFocus = Math.min(idx + chars.length, PIN_LENGTH - 1);
-    focusAt(nextFocus);
+    focusAt(Math.min(idx + chars.length, PIN_LENGTH - 1));
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, idx: number) => {
@@ -76,45 +65,24 @@ export function ExamJoin() {
     if (!pasted) return;
     const chars = pasted.split('').slice(0, PIN_LENGTH - idx);
     const next = [...digits];
-    chars.forEach((c, i) => {
-      if (idx + i < PIN_LENGTH) next[idx + i] = c;
-    });
+    chars.forEach((c, i) => { if (idx + i < PIN_LENGTH) next[idx + i] = c; });
     setDigits(next);
-    const nextFocus = Math.min(idx + chars.length, PIN_LENGTH - 1);
-    focusAt(nextFocus);
+    focusAt(Math.min(idx + chars.length, PIN_LENGTH - 1));
   };
 
-  const handleJoin = async () => {
+  const handleJoinPin = async () => {
     if (!isFull) return;
     setIsLoading(true);
     setError('');
     setVerified(null);
-
     try {
-      const res = await axios.post(
-        `/seb/join-with-pin/${token}`,
-        { pin },
-        { withCredentials: true },
-      );
-
+      const res = await axios.post(`/seb/join-with-pin/${token}`, { pin }, { withCredentials: true });
       if (res.data.ok) {
-        setVerified({
-          studentName: res.data.studentName,
-          studentRegNumber: res.data.studentRegNumber,
-        });
-
-        setTimeout(() => {
-          navigate(`/exam/${res.data.examId}`, {
-            state: { examToken: res.data.examToken },
-          });
-        }, 1500);
+        setVerified({ studentName: res.data.studentName, studentRegNumber: res.data.studentRegNumber });
+        setTimeout(() => { navigate(`/exam/${res.data.examId}`, { state: { examToken: res.data.examToken } }); }, 1500);
       }
     } catch (err: any) {
-      const msg =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
-        err.message ||
-        'Invalid PIN. Please check and try again.';
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Invalid PIN. Please check and try again.';
       setError(msg);
       setDigits(Array(PIN_LENGTH).fill(''));
       setTimeout(() => focusAt(0), 0);
@@ -123,98 +91,208 @@ export function ExamJoin() {
     }
   };
 
+  const handleJoinCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentName.trim() || !studentRegNumber.trim()) {
+      setError('Please provide your name and student registration number.');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    setVerified(null);
+    try {
+      const res = await axios.post(`/seb/join/${token}`, {
+        studentName: studentName.trim(),
+        studentRegNumber: studentRegNumber.trim(),
+      }, { withCredentials: true });
+
+      if (res.data.ok) {
+        setVerified({
+          studentName: res.data.studentName || studentName.trim(),
+          studentRegNumber: res.data.studentRegNumber || studentRegNumber.trim(),
+        });
+        setTimeout(() => { navigate(`/exam/${res.data.examId}`, { state: { examToken: res.data.examToken } }); }, 1500);
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.error || err.response?.data?.message || 'Unable to join exam session.';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="auth-page">
-      <div className="auth-content">
-        <div className="page-panel" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
-          {/* Institution Header */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
-            <img
-              src="/logo_asset.png"
-              alt="Multitech Business School"
-              style={{ width: '64px', height: '64px', objectFit: 'contain', marginBottom: '0.75rem' }}
-            />
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em', color: 'var(--color-navy)', textTransform: 'uppercase' }}>
-              Multitech Business School
-            </span>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-navy)', marginTop: '0.2rem' }}>
-              Exam Verification
-            </h1>
-          </div>
-
-          {error && (
-            <div className="alert-panel" role="alert" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
-              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{error}</span>
-            </div>
-          )}
-
-          {verified ? (
-            <div className="pin-verified-card">
-              <div className="pin-verified-check">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <p className="pin-verified-label">Verified</p>
-              <p className="pin-verified-name">{verified.studentName}</p>
-              <p className="pin-verified-reg">{verified.studentRegNumber}</p>
-              <p className="pin-verified-source">Starting your assessment now…</p>
-            </div>
-          ) : (
-            <>
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-                Enter your 6-digit PIN from the student portal
-              </p>
-
-              {/* PIN Inputs */}
-              <div className="pin-input-group" role="group" aria-label="6-digit exam PIN">
-                {digits.map((digit, idx) => (
-                  <input
-                    key={idx}
-                    ref={(el) => { inputRefs.current[idx] = el; }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={6}
-                    value={digit}
-                    aria-label={`PIN digit ${idx + 1}`}
-                    className={`pin-digit${digit ? ' pin-digit--filled' : ''}`}
-                    onChange={(e) => handleInput(e, idx)}
-                    onKeyDown={(e) => handleKeyDown(e, idx)}
-                    onPaste={(e) => handlePaste(e, idx)}
-                    onFocus={(e) => e.target.select()}
-                    disabled={isLoading}
-                    autoComplete="off"
-                  />
-                ))}
-              </div>
-
-              {/* Action Button */}
-              <div style={{ marginTop: '1.75rem' }}>
-                <Button
-                  type="button"
-                  className="button button-primary button-full"
-                  isLoading={isLoading}
-                  onClick={handleJoin}
-                  disabled={!isFull || isLoading}
-                >
-                  {isLoading ? 'Verifying…' : 'Enter Exam'}
-                </Button>
-              </div>
-
-              <div className="pin-help" style={{ marginTop: '1.5rem', textAlign: 'left' }}>
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>
-                  Log into <strong>Student Portal &rarr; Online Exams</strong> to get your PIN.
-                </span>
-              </div>
-            </>
-          )}
+    <div className="exam-join-screen">
+      <div className="exam-join-card">
+        {/* Brand */}
+        <div className="exam-join-brand">
+          <img src="/logo_asset.png" alt="Multitech Business School" className="exam-join-logo" />
+          <span className="exam-join-brand-name">Multitech<br />Business School</span>
         </div>
+
+        <h1 className="exam-join-heading">Exam Verification</h1>
+        <p className="exam-join-sub">
+          {joinMode === 'pin' ? 'Enter your 6-digit PIN from the student portal' : 'Enter your student credentials to begin'}
+        </p>
+
+        {/* Verification mode toggle */}
+        {!verified && (
+          <div style={{ display: 'flex', gap: '4px', background: 'var(--color-bg)', padding: '4px', borderRadius: '10px', margin: '0.85rem 0 1.25rem' }}>
+            <button
+              type="button"
+              onClick={() => { setJoinMode('pin'); setError(''); }}
+              style={{
+                flex: 1, padding: '0.45rem', fontSize: '0.78rem', fontWeight: 700,
+                borderRadius: '8px', border: 'none', cursor: 'pointer',
+                background: joinMode === 'pin' ? '#fff' : 'transparent',
+                color: joinMode === 'pin' ? 'var(--color-navy)' : 'var(--color-text-muted)',
+                boxShadow: joinMode === 'pin' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Portal PIN
+            </button>
+            <button
+              type="button"
+              onClick={() => { setJoinMode('credentials'); setError(''); }}
+              style={{
+                flex: 1, padding: '0.45rem', fontSize: '0.78rem', fontWeight: 700,
+                borderRadius: '8px', border: 'none', cursor: 'pointer',
+                background: joinMode === 'credentials' ? '#fff' : 'transparent',
+                color: joinMode === 'credentials' ? 'var(--color-navy)' : 'var(--color-text-muted)',
+                boxShadow: joinMode === 'credentials' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Name &amp; Reg No.
+            </button>
+          </div>
+        )}
+
+        {error && (
+          <div className="exam-auth-error" role="alert" style={{ marginBottom: '1.25rem' }}>
+            <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {verified ? (
+          <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+            <div style={{
+              width: 56, height: 56, borderRadius: '50%', background: '#dcfce7',
+              border: '2px solid #bbf7d0', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', margin: '0 auto 1rem',
+            }}>
+              <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#16a34a">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#16a34a', marginBottom: '0.4rem' }}>Verified</p>
+            <p style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-navy)', margin: '0 0 0.2rem' }}>{verified.studentName}</p>
+            <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', margin: '0 0 0.75rem' }}>{verified.studentRegNumber}</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>Starting your assessment…</p>
+          </div>
+        ) : joinMode === 'pin' ? (
+          <>
+            {/* PIN boxes */}
+            <div className="exam-pin-row" role="group" aria-label="6-digit exam PIN">
+              {digits.map((digit, idx) => (
+                <input
+                  key={idx}
+                  ref={(el) => { inputRefs.current[idx] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={digit}
+                  aria-label={`PIN digit ${idx + 1}`}
+                  className="exam-pin-box"
+                  onChange={(e) => handleInput(e, idx)}
+                  onKeyDown={(e) => handleKeyDown(e, idx)}
+                  onPaste={(e) => handlePaste(e, idx)}
+                  onFocus={(e) => e.target.select()}
+                  disabled={isLoading}
+                  autoComplete="off"
+                />
+              ))}
+            </div>
+
+            <button
+              type="button"
+              className="exam-auth-submit"
+              onClick={handleJoinPin}
+              disabled={!isFull || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="exam-auth-spinner" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Verifying…</span>
+                </>
+              ) : (
+                <span>Enter Exam</span>
+              )}
+            </button>
+
+            <p style={{ marginTop: '1.25rem', fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+              Your PIN is in <strong>Student Portal → Online Exams</strong>
+            </p>
+          </>
+        ) : (
+          <form onSubmit={handleJoinCredentials} style={{ display: 'grid', gap: '0.9rem' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-navy)', marginBottom: '4px' }}>
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                value={studentName}
+                onChange={(e) => setStudentName(e.target.value)}
+                placeholder="e.g. John Mukasa"
+                className="form-input"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-navy)', marginBottom: '4px' }}>
+                Registration Number
+              </label>
+              <input
+                type="text"
+                required
+                value={studentRegNumber}
+                onChange={(e) => setStudentRegNumber(e.target.value)}
+                placeholder="e.g. MBS/2024/014"
+                className="form-input"
+                disabled={isLoading}
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="exam-auth-submit"
+              disabled={!studentName.trim() || !studentRegNumber.trim() || isLoading}
+              style={{ marginTop: '0.5rem' }}
+            >
+              {isLoading ? (
+                <>
+                  <svg className="exam-auth-spinner" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                    <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  <span>Verifying…</span>
+                </>
+              ) : (
+                <span>Enter Exam</span>
+              )}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
