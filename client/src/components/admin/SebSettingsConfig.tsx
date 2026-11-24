@@ -7,39 +7,34 @@ export const APP_PRESETS: Array<{
   path: string;
   category: string;
   icon: string;
-  description: string;
 }> = [
   {
-    title: 'Visual Studio Code',
+    title: 'VS Code',
     executable: 'Code.exe',
     path: '%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\',
     category: 'Development',
     icon: '💻',
-    description: 'Code editor for Python, JavaScript, C++, Web, etc.',
   },
   {
-    title: 'Microsoft Word',
+    title: 'Word',
     executable: 'WINWORD.EXE',
     path: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\',
     category: 'Office',
     icon: '📝',
-    description: 'Word processor for essays, structured documents, reports',
   },
   {
-    title: 'Microsoft Excel',
+    title: 'Excel',
     executable: 'EXCEL.EXE',
     path: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\',
     category: 'Office',
     icon: '📊',
-    description: 'Spreadsheet for accounting, finance, statistics, data',
   },
   {
-    title: 'IntelliJ IDEA',
+    title: 'IntelliJ',
     executable: 'idea64.exe',
     path: 'C:\\Program Files\\JetBrains\\IntelliJ IDEA\\bin\\',
     category: 'Development',
     icon: '☕',
-    description: 'Java & Kotlin development IDE',
   },
   {
     title: 'PyCharm',
@@ -47,7 +42,6 @@ export const APP_PRESETS: Array<{
     path: 'C:\\Program Files\\JetBrains\\PyCharm\\bin\\',
     category: 'Development',
     icon: '🐍',
-    description: 'Python IDE for programming & data science',
   },
   {
     title: 'Notepad',
@@ -55,15 +49,13 @@ export const APP_PRESETS: Array<{
     path: 'C:\\Windows\\System32\\',
     category: 'Utilities',
     icon: '📄',
-    description: 'Lightweight plain text scratchpad',
   },
   {
-    title: 'Windows Calculator',
+    title: 'Calculator',
     executable: 'calc.exe',
     path: 'C:\\Windows\\System32\\',
     category: 'Utilities',
     icon: '🧮',
-    description: 'Calculator for quantitative & math questions',
   },
 ];
 
@@ -100,6 +92,7 @@ export function SebSettingsConfig({
     if (disabled) return;
     const exists = isPresetActive(preset.executable);
     let next: PermittedProcess[];
+
     if (exists) {
       next = permitted.filter(
         (p) => p.executable.toLowerCase() !== preset.executable.toLowerCase()
@@ -115,7 +108,6 @@ export function SebSettingsConfig({
           os: 0,
         },
       ];
-      // Automatically recommend file upload when an IDE or Office app is selected
       if (!allowFileUpload) {
         onChangeFileUpload(true);
       }
@@ -158,7 +150,7 @@ export function SebSettingsConfig({
     const cleanPath = customPath.trim();
 
     if (!cleanExe) {
-      setCustomError('Executable name is required (e.g., Code.exe or devcpp.exe)');
+      setCustomError('Executable name is required (e.g., Code.exe)');
       return;
     }
 
@@ -167,7 +159,7 @@ export function SebSettingsConfig({
     }
 
     if (isPresetActive(cleanExe)) {
-      setCustomError(`${cleanExe} is already in the permitted list`);
+      setCustomError(`${cleanExe} is already enabled`);
       return;
     }
 
@@ -198,37 +190,29 @@ export function SebSettingsConfig({
 
   const setDisplayPolicy = (single: boolean) => {
     if (disabled) return;
-    if (single) {
-      onChangeSettings({
-        ...sebSettings,
-        allowedDisplays: 1,
-        internalDisplayOnly: true,
-      });
-    } else {
-      onChangeSettings({
-        ...sebSettings,
-        allowedDisplays: 2,
-        internalDisplayOnly: false,
-      });
-    }
+    onChangeSettings({
+      ...sebSettings,
+      allowedDisplays: single ? 1 : 2,
+      internalDisplayOnly: single,
+    });
   };
 
   return (
-    <div style={{ display: 'grid', gap: '1.5rem' }}>
-      {/* ── 1. External Applications (VS Code, Word, Excel, IDEs) ── */}
+    <div style={{ display: 'grid', gap: '1.25rem' }}>
+      {/* ── 1. External Applications ── */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
           <div>
-            <h4 style={{ margin: 0, fontSize: '1rem', color: '#f8fafc', fontWeight: 600 }}>
-              Permitted External Applications (Whitelisted Software)
+            <h4 style={{ margin: 0, fontSize: '0.95rem', color: 'var(--color-navy)', fontWeight: 700 }}>
+              Permitted External Applications
             </h4>
-            <p className="panel-subtitle" style={{ margin: '0.25rem 0 0' }}>
-              Select external software students are permitted to use during this exam (e.g. VS Code for programming, MS Word for reports). Safe Exam Browser embeds these in the student's taskbar.
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+              Enable applications students can run alongside Safe Exam Browser.
             </p>
           </div>
           {permitted.length > 0 && (
-            <span className="status-pill status-pill--info" style={{ whiteSpace: 'nowrap' }}>
-              {permitted.length} Allowed
+            <span className="status-pill status-pill--highlight" style={{ whiteSpace: 'nowrap' }}>
+              {permitted.length} Active
             </span>
           )}
         </div>
@@ -237,9 +221,9 @@ export function SebSettingsConfig({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-            gap: '0.65rem',
-            marginTop: '0.75rem',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+            gap: '0.5rem',
+            marginTop: '0.5rem',
           }}
         >
           {APP_PRESETS.map((preset) => {
@@ -252,43 +236,41 @@ export function SebSettingsConfig({
                 onClick={() => togglePreset(preset)}
                 style={{
                   textAlign: 'left',
-                  padding: '0.75rem 0.85rem',
-                  borderRadius: '0.65rem',
-                  border: active
-                    ? '1.5px solid #38bdf8'
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                  background: active
-                    ? 'rgba(56, 189, 248, 0.12)'
-                    : 'rgba(255, 255, 255, 0.03)',
-                  color: '#fff',
+                  padding: '0.75rem',
+                  borderRadius: '10px',
+                  border: active ? '1.5px solid var(--color-blue)' : '1px solid var(--color-border)',
+                  background: active ? 'rgba(37, 99, 235, 0.06)' : 'var(--color-surface)',
+                  color: 'var(--color-text)',
                   cursor: disabled ? 'not-allowed' : 'pointer',
                   display: 'flex',
-                  alignItems: 'flex-start',
+                  alignItems: 'center',
                   gap: '0.65rem',
-                  transition: 'all 0.15s ease-in-out',
+                  transition: 'all 0.15s ease',
+                  boxShadow: active ? '0 0 0 1px rgba(37,99,235,0.1)' : 'var(--shadow-xs)',
                 }}
               >
-                <span style={{ fontSize: '1.35rem', lineHeight: 1 }}>{preset.icon}</span>
+                <span style={{ fontSize: '1.25rem', lineHeight: 1 }}>{preset.icon}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 600, color: active ? '#7dd3fc' : '#f1f5f9' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 700, color: active ? 'var(--color-blue)' : 'var(--color-navy)' }}>
                       {preset.title}
                     </span>
                     <span
                       style={{
                         fontSize: '0.68rem',
-                        padding: '1px 5px',
+                        fontWeight: 600,
+                        padding: '1px 6px',
                         borderRadius: '4px',
-                        background: active ? '#0284c7' : 'rgba(255,255,255,0.08)',
-                        color: active ? '#fff' : '#94a3b8',
+                        background: active ? 'var(--color-blue)' : 'var(--color-bg-alt)',
+                        color: active ? '#fff' : 'var(--color-text-muted)',
                       }}
                     >
-                      {active ? '✓ Enabled' : '+ Add'}
+                      {active ? '✓' : '+'}
                     </span>
                   </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.72rem', color: '#94a3b8', lineHeight: 1.3 }}>
-                    <code>{preset.executable}</code> · {preset.category}
-                  </p>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '1px' }}>
+                    {preset.executable}
+                  </span>
                 </div>
               </button>
             );
@@ -298,25 +280,17 @@ export function SebSettingsConfig({
         {/* Custom Application Form */}
         <div
           style={{
-            marginTop: '0.9rem',
-            padding: '1rem',
-            borderRadius: '0.65rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px dashed rgba(255, 255, 255, 0.15)',
+            marginTop: '0.75rem',
+            padding: '0.85rem 1rem',
+            borderRadius: '10px',
+            background: 'var(--color-bg)',
+            border: '1px dashed var(--color-border)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-            <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600 }}>
-              + Add Custom Software / Tool
-            </p>
-            <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-              Safe Exam Browser requires the executable file path / directory
-            </span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1.6fr auto', gap: '0.5rem', alignItems: 'center' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1.5fr auto', gap: '0.5rem', alignItems: 'center' }}>
             <input
               type="text"
-              placeholder="Application Title (e.g. Eclipse IDE)"
+              placeholder="Title (e.g. Dev-C++)"
               value={customTitle}
               onChange={(e) => setCustomTitle(e.target.value)}
               disabled={disabled}
@@ -325,7 +299,7 @@ export function SebSettingsConfig({
             />
             <input
               type="text"
-              placeholder="Executable (e.g. eclipse.exe)"
+              placeholder="Executable (e.g. devcpp.exe)"
               value={customExe}
               onChange={(e) => setCustomExe(e.target.value)}
               disabled={disabled}
@@ -334,7 +308,7 @@ export function SebSettingsConfig({
             />
             <input
               type="text"
-              placeholder="File Path (e.g. C:\Program Files\Eclipse\ or %LOCALAPPDATA%\...)"
+              placeholder="Path (e.g. C:\Program Files\Dev-Cpp\)"
               value={customPath}
               onChange={(e) => setCustomPath(e.target.value)}
               disabled={disabled}
@@ -346,156 +320,114 @@ export function SebSettingsConfig({
               disabled={disabled || !customExe.trim()}
               onClick={addCustomProcess}
               className="button button--secondary"
-              style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
+              style={{ padding: '0.45rem 0.85rem', fontSize: '0.82rem', whiteSpace: 'nowrap' }}
             >
-              Add App
+              + Add
             </button>
           </div>
           {customError && (
-            <p style={{ margin: '0.4rem 0 0', fontSize: '0.75rem', color: '#f87171' }}>
+            <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: 'var(--color-danger)' }}>
               ⚠ {customError}
             </p>
           )}
         </div>
 
-        {/* Current Active List */}
+        {/* Configured App List */}
         {permitted.length > 0 && (
-          <div style={{ marginTop: '0.85rem' }}>
-            <p style={{ margin: '0 0 0.4rem', fontSize: '0.78rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Configured Allowed Applications ({permitted.length})
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
-              {permitted.map((p) => (
-                <div
-                  key={p.executable}
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.65rem',
-                    padding: '0.55rem 0.85rem',
-                    borderRadius: '0.5rem',
-                    background: 'rgba(56, 189, 248, 0.08)',
-                    border: '1px solid rgba(56, 189, 248, 0.25)',
-                    fontSize: '0.82rem',
-                    color: '#e0f2fe',
-                  }}
-                >
-                  <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: '240px' }}>
-                    <span style={{ fontWeight: 600, color: '#f8fafc' }}>{p.title || p.executable}</span>
-                    <code style={{ fontSize: '0.75rem', padding: '2px 6px', borderRadius: '4px', background: 'rgba(255,255,255,0.08)', color: '#93c5fd' }}>
-                      {p.executable}
-                    </code>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flex: '1 1 200px' }}>
-                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>📂 Path:</span>
-                      <input
-                        type="text"
-                        value={p.path ?? ''}
-                        disabled={disabled}
-                        placeholder="e.g. C:\Windows\System32\ or %LOCALAPPDATA%\..."
-                        onChange={(e) => updateProcessPath(p.executable, e.target.value)}
-                        style={{
-                          fontSize: '0.75rem',
-                          padding: '2px 8px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(255,255,255,0.15)',
-                          background: 'rgba(0,0,0,0.25)',
-                          color: '#e2e8f0',
-                          flex: 1,
-                          minWidth: '150px',
-                        }}
-                      />
-                    </div>
-                    <span style={{ fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', padding: '1px 6px', borderRadius: '4px' }}>
-                      ✓ User Browse Enabled
-                    </span>
-                  </div>
-                  {!disabled && (
-                    <button
-                      type="button"
-                      onClick={() => removeProcess(p.executable)}
-                      title="Remove application"
-                      style={{
-                        background: 'rgba(239, 68, 68, 0.1)',
-                        border: '1px solid rgba(239, 68, 68, 0.3)',
-                        borderRadius: '4px',
-                        color: '#f87171',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        fontSize: '0.78rem',
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      Remove
-                    </button>
-                  )}
+          <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            {permitted.map((p) => (
+              <div
+                key={p.executable}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  padding: '0.5rem 0.75rem',
+                  borderRadius: '8px',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
+                  fontSize: '0.82rem',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, minWidth: 0 }}>
+                  <span style={{ fontWeight: 700, color: 'var(--color-navy)' }}>{p.title || p.executable}</span>
+                  <code style={{ fontSize: '0.75rem', padding: '1px 5px', borderRadius: '4px', background: 'var(--color-bg-alt)', color: 'var(--color-blue)' }}>
+                    {p.executable}
+                  </code>
+                  <input
+                    type="text"
+                    value={p.path ?? ''}
+                    disabled={disabled}
+                    placeholder="Path..."
+                    onChange={(e) => updateProcessPath(p.executable, e.target.value)}
+                    style={{
+                      fontSize: '0.75rem',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      border: '1px solid var(--color-border)',
+                      background: 'var(--color-bg)',
+                      color: 'var(--color-text)',
+                      flex: 1,
+                      minWidth: '120px',
+                    }}
+                  />
                 </div>
-              ))}
-            </div>
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={() => removeProcess(p.executable)}
+                    className="button button--ghost"
+                    style={{ padding: '2px 8px', fontSize: '0.75rem', color: 'var(--color-danger)' }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* ── 2. Student File Attachment Submissions ── */}
+      {/* ── 2. File Upload Checkbox ── */}
       <div
         style={{
-          padding: '1rem',
-          borderRadius: '0.75rem',
-          background: allowFileUpload
-            ? 'rgba(16, 185, 129, 0.08)'
-            : 'rgba(255, 255, 255, 0.02)',
-          border: allowFileUpload
-            ? '1px solid rgba(16, 185, 129, 0.3)'
-            : '1px solid rgba(255, 255, 255, 0.08)',
+          padding: '0.9rem 1rem',
+          borderRadius: '10px',
+          background: allowFileUpload ? 'rgba(37,99,235,0.05)' : 'var(--color-surface)',
+          border: allowFileUpload ? '1.5px solid var(--color-blue)' : '1px solid var(--color-border)',
         }}
       >
-        <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', cursor: disabled ? 'not-allowed' : 'pointer' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: disabled ? 'not-allowed' : 'pointer' }}>
           <input
             type="checkbox"
             checked={allowFileUpload}
             disabled={disabled}
             onChange={(e) => onChangeFileUpload(e.target.checked)}
-            style={{ marginTop: '0.2rem', width: '1.1rem', height: '1.1rem', cursor: 'pointer' }}
+            style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--color-blue)' }}
           />
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#fff' }}>
-                Allow Student File Submissions / Attachments
-              </span>
-              {allowFileUpload && (
-                <span className="status-pill status-pill--info" style={{ background: '#10b981', color: '#fff', fontSize: '0.68rem' }}>
-                  Enabled
-                </span>
-              )}
-            </div>
-            <p className="panel-subtitle" style={{ margin: '0.25rem 0 0', fontSize: '0.82rem' }}>
-              Students can attach files directly to their submission (e.g., Python code <code>.py</code>, Java <code>.java</code>, Word <code>.docx</code>, Excel <code>.xlsx</code>, or <code>.zip</code> projects from VS Code/IDE). Files are stored securely in Google Drive.
-            </p>
-            {permitted.length > 0 && !allowFileUpload && (
-              <p style={{ margin: '0.4rem 0 0', fontSize: '0.78rem', color: '#f59e0b', fontWeight: 500 }}>
-                💡 Recommendation: You have whitelisted external applications. It is recommended to enable file submissions so students can upload their work.
-              </p>
-            )}
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-navy)' }}>
+              Allow Student File Uploads
+            </span>
+            <span style={{ display: 'block', fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '2px' }}>
+              Students can attach project files, documents, or spreadsheets (.py, .docx, .xlsx, .zip) to their submission.
+            </span>
           </div>
         </label>
       </div>
 
-      {/* ── 3. Display Policy (Anti-Cheat) ── */}
+      {/* ── 3. Screen Policy ── */}
       <div>
-        <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem', color: '#f8fafc', fontWeight: 600 }}>
-          Display & Screen Security Policy
+        <h4 style={{ margin: '0 0 0.4rem', fontSize: '0.9rem', color: 'var(--color-navy)', fontWeight: 700 }}>
+          Screen Security Policy
         </h4>
-        <p className="panel-subtitle" style={{ margin: '0 0 0.75rem' }}>
-          Control multi-screen and external monitor behavior inside Safe Exam Browser.
-        </p>
-
-        <div className="settings-grid">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
           <label
             className={`option-card ${allowedDisplays === 1 && internalDisplayOnly ? 'option-card-selected' : ''}`}
-            style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+            style={{ cursor: disabled ? 'not-allowed' : 'pointer', padding: '0.75rem' }}
           >
-            <div className="option-card__header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input
                 type="radio"
                 name="displayPolicy"
@@ -503,18 +435,20 @@ export function SebSettingsConfig({
                 checked={allowedDisplays === 1 && internalDisplayOnly}
                 onChange={() => setDisplayPolicy(true)}
               />
-              <div className="option-card__title">🔒 Single Internal Screen Only (Strict Anti-Cheat)</div>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--color-navy)' }}>
+                🔒 Single Screen (Strict)
+              </span>
             </div>
-            <p className="panel-subtitle">
-              Strictly restricts the exam to 1 display and blocks external monitors, HDMI cables, and duplicate screens. Recommended for standard exam integrity.
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+              Blocks external displays and duplicate monitors.
             </p>
           </label>
 
           <label
             className={`option-card ${allowedDisplays > 1 || !internalDisplayOnly ? 'option-card-selected' : ''}`}
-            style={{ cursor: disabled ? 'not-allowed' : 'pointer' }}
+            style={{ cursor: disabled ? 'not-allowed' : 'pointer', padding: '0.75rem' }}
           >
-            <div className="option-card__header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <input
                 type="radio"
                 name="displayPolicy"
@@ -522,80 +456,44 @@ export function SebSettingsConfig({
                 checked={allowedDisplays > 1 || !internalDisplayOnly}
                 onChange={() => setDisplayPolicy(false)}
               />
-              <div className="option-card__title">🖥️ Allow Secondary / External Displays</div>
+              <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--color-navy)' }}>
+                🖥️ Allow Dual Monitors
+              </span>
             </div>
-            <p className="panel-subtitle">
-              Allows dual monitors or external screens. Useful if students need one monitor for exam instructions and another for VS Code, Word, or CAD.
+            <p style={{ margin: '0.25rem 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+              Permits secondary screen for code or document viewing.
             </p>
           </label>
         </div>
       </div>
 
-      {/* ── 4. Assistance & Language Tools ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '0.75rem' }}>
-        <div
-          style={{
-            padding: '0.85rem',
-            borderRadius: '0.65rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-          }}
-        >
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: disabled ? 'not-allowed' : 'pointer' }}>
-            <input
-              type="checkbox"
-              disabled={disabled}
-              checked={allowSpellCheck}
-              onChange={(e) =>
-                onChangeSettings({
-                  ...sebSettings,
-                  allowSpellCheck: e.target.checked,
-                })
-              }
-              style={{ width: '1rem', height: '1rem' }}
-            />
-            <div>
-              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9' }}>
-                Allow Spell Checking
-              </span>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-                Enables browser red underline spell-check in essay textboxes
-              </p>
-            </div>
-          </label>
-        </div>
+      {/* ── 4. Language & Assistance Tools ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.5rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', cursor: disabled ? 'not-allowed' : 'pointer' }}>
+          <input
+            type="checkbox"
+            disabled={disabled}
+            checked={allowSpellCheck}
+            onChange={(e) => onChangeSettings({ ...sebSettings, allowSpellCheck: e.target.checked })}
+            style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-blue)' }}
+          />
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>
+            Spell Check in Essays
+          </span>
+        </label>
 
-        <div
-          style={{
-            padding: '0.85rem',
-            borderRadius: '0.65rem',
-            background: 'rgba(255, 255, 255, 0.02)',
-            border: '1px solid rgba(255, 255, 255, 0.06)',
-          }}
-        >
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: disabled ? 'not-allowed' : 'pointer' }}>
-            <input
-              type="checkbox"
-              disabled={disabled}
-              checked={allowDictionaryLookup}
-              onChange={(e) =>
-                onChangeSettings({
-                  ...sebSettings,
-                  allowDictionaryLookup: e.target.checked,
-                })
-              }
-              style={{ width: '1rem', height: '1rem' }}
-            />
-            <div>
-              <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9' }}>
-                Allow Dictionary Lookup
-              </span>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
-                Allows definition lookup for unfamiliar words
-              </p>
-            </div>
-          </label>
-        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: 'var(--color-surface)', border: '1px solid var(--color-border)', cursor: disabled ? 'not-allowed' : 'pointer' }}>
+          <input
+            type="checkbox"
+            disabled={disabled}
+            checked={allowDictionaryLookup}
+            onChange={(e) => onChangeSettings({ ...sebSettings, allowDictionaryLookup: e.target.checked })}
+            style={{ width: '1rem', height: '1rem', accentColor: 'var(--color-blue)' }}
+          />
+          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--color-navy)' }}>
+            Dictionary Lookup
+          </span>
+        </label>
       </div>
     </div>
   );

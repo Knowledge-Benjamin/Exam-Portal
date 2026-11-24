@@ -2,7 +2,7 @@ import { forwardRef } from 'react';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'outline';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
   leftIcon?: ReactNode;
@@ -10,16 +10,17 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variantStyles = {
-  primary: 'bg-[var(--color-primary)] text-white hover:bg-[#0f3f8a] border border-transparent shadow-[0_4px_14px_0_rgba(var(--color-primary-rgb),0.39)] active:scale-[0.98]',
-  secondary: 'bg-white text-zinc-800 border border-zinc-200 hover:bg-zinc-50 shadow-sm active:scale-[0.98]',
-  danger: 'bg-[var(--color-danger)] text-white hover:bg-[#a00505] border border-transparent shadow-sm active:scale-[0.98]',
-  ghost: 'bg-transparent text-zinc-600 hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10',
+  primary: 'bg-[#2563eb] text-white hover:bg-[#1d4ed8] border border-transparent shadow-sm active:scale-[0.98]',
+  secondary: 'bg-[#f1f5f9] text-[#1a2654] border border-[#e2e8f0] hover:bg-[#e2e8f0] shadow-sm active:scale-[0.98]',
+  danger: 'bg-[#dc2626] text-white hover:bg-[#b91c1c] border border-transparent shadow-sm active:scale-[0.98]',
+  ghost: 'bg-transparent text-[#64748b] hover:text-[#1a3a6b] hover:bg-[#f1f5f9] active:scale-[0.98]',
+  outline: 'bg-transparent text-[#2563eb] border border-[#2563eb] hover:bg-[#2563eb]/10 active:scale-[0.98]',
 };
 
 const sizeStyles = {
-  sm: 'h-10 px-4 text-sm',
-  md: 'h-12 px-6 text-[15px]',
-  lg: 'h-14 px-8 text-base',
+  sm: 'h-9 px-3.5 text-xs',
+  md: 'h-11 px-5 text-sm',
+  lg: 'h-13 px-7 text-base',
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -44,9 +45,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={`
           inline-flex items-center justify-center gap-2 
           rounded-xl font-semibold
-          transition-all duration-200
-          focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[var(--color-primary)]
-          disabled:opacity-50 disabled:pointer-events-none
+          transition-all duration-150 cursor-pointer
+          focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] focus-visible:ring-offset-2
+          disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed
           ${variantStyles[variant]} 
           ${sizeStyles[size]} 
           ${className}
@@ -60,7 +61,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           </svg>
         )}
         {!isLoading && leftIcon}
-        <span className="text-white drop-shadow-sm">{children}</span>
+        <span>{children}</span>
         {!isLoading && rightIcon}
       </button>
     );
@@ -68,5 +69,3 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 Button.displayName = 'Button';
-
-

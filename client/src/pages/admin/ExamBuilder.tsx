@@ -166,7 +166,7 @@ export function ExamBuilder() {
             {exam.sebConfigKey ? (
               <div className="card card-compact">
                 <div className="card-body" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div className="form-input" style={{ flex: 1, padding: '0.85rem 1rem', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <div className="form-input" style={{ flex: 1, padding: '0.85rem 1rem', background: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
                     {exam.sebConfigKey.substring(0, 16)}...
                   </div>
                   <button type="button" className="button button--outline" onClick={() => setEditingSebKey(true)}>

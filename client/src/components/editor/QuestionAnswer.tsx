@@ -29,7 +29,7 @@ function MCQAnswer({
 }) {
   const options: string[] = question.options ?? [];
   return (
-    <div className="space-y-2 mt-4">
+    <div className="space-y-2.5 mt-4">
       {options.map((opt, i) => {
         const label = String.fromCharCode(65 + i); // A, B, C, D
         const selected = value === opt;
@@ -39,23 +39,23 @@ function MCQAnswer({
             type="button"
             disabled={readOnly}
             onClick={() => !readOnly && onChange(opt)}
-            className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-200 flex items-center gap-3 group ${
+            className={`w-full text-left px-4 py-3 rounded-xl border transition-all duration-150 flex items-center gap-3 group ${
               selected
-                ? 'bg-[var(--color-primary)]/20 border-[var(--color-primary)] text-white shadow-[0_0_10px_rgba(var(--color-primary-rgb),0.2)]'
-                : 'bg-[var(--color-primary)]/50 border-white/10 text-gray-300 hover:border-white/30 hover:bg-[var(--color-primary)]'
+                ? 'bg-[#eff6ff] border-[#2563eb] text-[#1a3a6b] shadow-xs'
+                : 'bg-white border-[#e2e8f0] text-[#1a2654] hover:border-[#cbd5e1] hover:bg-[#f8fafc]'
             } ${readOnly ? 'cursor-default' : 'cursor-pointer'}`}
           >
-            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shrink-0 border transition-all ${
+            <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 border transition-all ${
               selected
-                ? 'bg-[var(--color-primary)] border-[var(--color-primary)] text-[var(--color-primary)]'
-                : 'border-white/20 text-gray-400 group-hover:border-white/40'
+                ? 'bg-[#2563eb] border-[#2563eb] text-white'
+                : 'border-[#cbd5e1] text-[#64748b] bg-[#f8fafc] group-hover:border-[#94a3b8]'
             }`}>
               {label}
             </span>
-            <span className="text-sm leading-snug">{opt}</span>
+            <span className="text-sm font-medium leading-snug">{opt}</span>
             {selected && (
-              <svg className="w-4 h-4 text-[var(--color-primary)] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              <svg className="w-4 h-4 text-[#2563eb] ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
               </svg>
             )}
           </button>
@@ -83,12 +83,12 @@ function ShortAnswer({
       onChange={(e) => onChange(e.target.value)}
       readOnly={readOnly}
       placeholder="Type your answer here..."
-      className="w-full mt-4 bg-[var(--color-primary)]/50 border border-white/10 text-white placeholder-gray-500 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[var(--color-primary)]/50 focus:ring-1 focus:ring-[var(--color-primary)]/30 transition-all"
+      className="w-full mt-4 bg-white border border-[#e2e8f0] text-[#1a2654] placeholder-[#94a3b8] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/15 transition-all shadow-xs"
     />
   );
 }
 
-// ─── Long Answer (TipTap mini) ────────────────────────────────────────────────
+// ─── Long Answer ─────────────────────────────────────────────────────────────
 
 function LongAnswer({
   value,
@@ -110,7 +110,7 @@ function LongAnswer({
     onUpdate: ({ editor }) => onChange(editor.getHTML()),
     editorProps: {
       attributes: {
-        class: 'essay-prose focus:outline-none min-h-[180px] p-4 text-gray-200 text-sm leading-relaxed',
+        class: 'essay-prose focus:outline-none min-h-[160px] p-4 text-[#1a2654] text-sm leading-relaxed bg-white',
       },
     },
   });
@@ -122,21 +122,21 @@ function LongAnswer({
   }, [value, editor]);
 
   return (
-    <div className="mt-4 border border-white/10 rounded-xl overflow-hidden bg-[var(--color-primary)]/50 focus-within:border-[var(--color-primary)]/40 focus-within:ring-1 focus-within:ring-[var(--color-primary)]/20 transition-all">
+    <div className="mt-4 border border-[#e2e8f0] rounded-xl overflow-hidden bg-white focus-within:border-[#2563eb] focus-within:ring-2 focus-within:ring-[#2563eb]/15 transition-all shadow-xs">
       {!readOnly && <EditorToolbar editor={editor} compact />}
       <EditorContent editor={editor} />
       <style>{`
         .essay-prose p { margin-bottom: 0.5em; }
-        .essay-prose h1, .essay-prose h2, .essay-prose h3 { font-weight: 700; margin-bottom: 0.3em; }
+        .essay-prose h1, .essay-prose h2, .essay-prose h3 { font-weight: 700; color: #1a3a6b; margin-bottom: 0.3em; }
         .essay-prose ul { list-style: disc; padding-left: 1.2rem; margin-bottom: 0.5em; }
         .essay-prose ol { list-style: decimal; padding-left: 1.2rem; margin-bottom: 0.5em; }
-        .essay-prose strong { font-weight: 700; color: white; }
+        .essay-prose strong { font-weight: 700; color: #1a2654; }
         .essay-prose em { font-style: italic; }
         .essay-prose u { text-decoration: underline; }
         .essay-prose p.is-editor-empty:first-child::before {
           content: attr(data-placeholder);
           float: left;
-          color: #6b7280;
+          color: #94a3b8;
           pointer-events: none;
           height: 0;
           font-style: italic;
@@ -160,21 +160,21 @@ export function QuestionAnswer({ question, index, value, onChange, readOnly = fa
   return (
     <div
       id={`question-${question.id}`}
-      className="bg-[var(--color-primary)] border border-white/5 rounded-2xl overflow-hidden shadow-lg scroll-mt-4"
+      className="bg-white border border-[#e2e8f0] rounded-2xl overflow-hidden shadow-xs scroll-mt-4 mb-4"
     >
       {/* Question header */}
-      <div className="bg-[var(--color-primary)]/70 border-b border-white/5 px-6 py-4 flex justify-between items-start gap-4">
+      <div className="bg-[#f8fafc] border-b border-[#e2e8f0] px-6 py-4 flex justify-between items-start gap-4">
         <div className="flex items-start gap-3">
-          <span className="w-8 h-8 rounded-full bg-[var(--color-primary)] text-white text-sm font-black flex items-center justify-center shrink-0 mt-0.5">
+          <span className="w-7 h-7 rounded-full bg-[#2563eb] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
             {index + 1}
           </span>
-          <p className="text-white text-sm leading-relaxed font-medium">{question.prompt}</p>
+          <p className="text-[#1a3a6b] text-sm leading-relaxed font-semibold">{question.prompt}</p>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--color-primary)] bg-[var(--color-primary)]/10 border border-[var(--color-primary)]/20 px-2 py-0.5 rounded">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#2563eb] bg-[#2563eb]/10 px-2 py-0.5 rounded-full">
             {TYPE_LABELS[question.type] ?? question.type}
           </span>
-          <span className="text-[10px] text-gray-400 font-bold">
+          <span className="text-[11px] text-[#64748b] font-semibold">
             {question.marks} mark{question.marks !== 1 ? 's' : ''}
           </span>
         </div>
@@ -195,5 +195,3 @@ export function QuestionAnswer({ question, index, value, onChange, readOnly = fa
     </div>
   );
 }
-
-

@@ -8,11 +8,7 @@ import { ExamEditor } from '../../components/editor/ExamEditor';
 import { QuestionAnswer } from '../../components/editor/QuestionAnswer';
 import { formatCountdown } from '../../utils/formatters';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
-
 type Answers = Record<string, string>;
-
-// ─── Component ───────────────────────────────────────────────────────────────
 
 export function ExamRoom() {
   const { id } = useParams<{ id: string }>();
@@ -44,19 +40,19 @@ export function ExamRoom() {
     exam?.allowFileUpload
   );
 
-  const { tabSwitchCount, mute } = useAntiCheat(examActive, {
+  const { tabSwitchCount } = useAntiCheat(examActive, {
     allowExternalApps,
     onViolation: (type) => {
       const msgs: Record<string, string> = {
-        tab_switch: '⚠ Tab switch detected — this is logged.',
-        window_blur: '⚠ Stay in the exam window.',
-        copy: '⚠ Copying is not allowed.',
-        paste: '⚠ Pasting is not allowed.',
-        devtools: '⚠ Developer tools are not allowed.',
-        print: '⚠ Printing is not allowed.',
-        fullscreen_exit: '⚠ Please stay in fullscreen mode.',
+        tab_switch: '⚠ Tab switch detected and recorded.',
+        window_blur: '⚠ Please stay in the exam window.',
+        copy: '⚠ Copying is disabled.',
+        paste: '⚠ Pasting is disabled.',
+        devtools: '⚠ Developer tools are disabled.',
+        print: '⚠ Printing is disabled.',
+        fullscreen_exit: '⚠ Please remain in fullscreen mode.',
       };
-      setViolationMsg(msgs[type] ?? '⚠ Action not allowed.');
+      setViolationMsg(msgs[type] ?? '⚠ Prohibited action detected.');
       setTimeout(() => setViolationMsg(''), 4000);
     },
   });
@@ -86,7 +82,6 @@ export function ExamRoom() {
 
   useEffect(() => {
     if (forceSubmitMsg) {
-      // Auto-flush draft to server on time-up
       axios.post('/seb/submission/submit', { answers: answersRef.current }, { withCredentials: true }).catch(() => {});
       if (id) {
         try {
@@ -99,32 +94,45 @@ export function ExamRoom() {
   }, [forceSubmitMsg, navigate, id]);
 
   const fetchPdfBlob = async () => {
-    if (!exam?.id) return;
+    if (!id) return;
     setIsPdfLoading(true);
     setPdfError(null);
     try {
-      const response = await axios.get(`/api/exams/${exam.id}/pdf/download`, {
-        withCredentials: true,
+      const response = await axios.get(`/seb/exam/${id}/pdf-blob`, {
         responseType: 'blob',
+        withCredentials: true,
       });
-      console.info('[pdf] fetch completed', {
-        examId: exam.id,
-        status: response.status,
-        size: response.data?.size,
-        type: response.data?.type,
-        headers: {
-          contentType: response.headers['content-type'],
-          contentLength: response.headers['content-length'],
-        },
-      });
+
+      const contentType = String(response.headers['content-type'] || '');
+      if (contentType && !contentType.includes('application/pdf')) {
+        const text = await (response.data as Blob).text();
+        let errorData: any = {};
+        try { errorData = JSON.parse(text); } catch {}
+        setPdfError({
+          message: errorData.error || 'Server did not return a valid PDF.',
+          details: errorData.details || text.substring(0, 300),
+        });
+        return;
+      }
+
       setPdfBlob(response.data);
     } catch (err: any) {
-      const errorMsg = err.message || 'Unknown error';
-      const statusCode = err.response?.status || 'N/A';
-      const errorBody = err.response?.data?.error || JSON.stringify(err.response?.data);
-      const details = `HTTP ${statusCode}: ${errorBody}`;
-      console.error('[pdf] fetch error:', { message: errorMsg, status: statusCode, body: errorBody });
-      setPdfError({ message: 'Failed to load PDF from server', details });
+      let errMsg = 'Failed to load PDF.';
+      let details: string | undefined;
+
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          errMsg = parsed.error || errMsg;
+          details = parsed.details;
+        } catch {}
+      } else {
+        errMsg = err.response?.data?.error || err.message || errMsg;
+        details = err.response?.data?.details;
+      }
+
+      setPdfError({ message: errMsg, details });
     } finally {
       setIsPdfLoading(false);
     }
@@ -132,47 +140,47 @@ export function ExamRoom() {
 
   const fetchExamData = async () => {
     try {
-      const [examRes, qRes, subRes] = await Promise.all([
+      const [examRes, questionsRes, subRes] = await Promise.all([
         axios.get(`/seb/exam/${id}`, { withCredentials: true }),
         axios.get(`/seb/exam/${id}/questions`, { withCredentials: true }),
-        axios.get(`/seb/submission`, { withCredentials: true }),
+        axios.get(`/seb/submission/${id}`, { withCredentials: true }),
       ]);
+
       setExam(examRes.data.exam);
-      setQuestions(qRes.data.questions);
+      setQuestions(questionsRes.data.questions);
+
       const sub = subRes.data.submission;
       setSubmission(sub);
-      
-      let initialAnswers: Answers = sub?.answers || {};
-      try {
-        if (id) {
-          const localDraft = localStorage.getItem(`exam_draft_answers_${id}`);
-          if (localDraft) {
-            const parsed = JSON.parse(localDraft);
-            initialAnswers = { ...initialAnswers, ...parsed };
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to parse local draft answers', e);
-      }
-      setAnswers(initialAnswers);
 
-      if (sub?.isFinal) setError('This exam has already been submitted.');
-      if (qRes.data.questions.length > 0) setActiveQuestionId(qRes.data.questions[0].id);
+      let loadedAnswers: Answers = {};
+      if (sub?.answers) {
+        loadedAnswers = sub.answers;
+      } else {
+        try {
+          const cached = localStorage.getItem(`exam_draft_answers_${id}`);
+          if (cached) {
+            loadedAnswers = JSON.parse(cached);
+          }
+        } catch {}
+      }
+      setAnswers(loadedAnswers);
+
+      if (questionsRes.data.questions?.length > 0) {
+        setActiveQuestionId(questionsRes.data.questions[0].id);
+      }
     } catch (err: any) {
-      setError(err.response?.data?.error ?? 'Failed to load exam. Please re-enter via the SEB link.');
+      setError(err.response?.data?.error || 'Failed to load exam session.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAnswerChange = useCallback((questionId: string, value: string) => {
+  const handleAnswerChange = useCallback((questionId: string, val: string) => {
     setAnswers((prev) => {
-      const next = { ...prev, [questionId]: value };
-      if (id) {
-        try {
-          localStorage.setItem(`exam_draft_answers_${id}`, JSON.stringify(next));
-        } catch {}
-      }
+      const next = { ...prev, [questionId]: val };
+      try {
+        localStorage.setItem(`exam_draft_answers_${id}`, JSON.stringify(next));
+      } catch {}
       return next;
     });
   }, [id]);
@@ -180,49 +188,81 @@ export function ExamRoom() {
   const handleFreeformChange = useCallback((html: string) => {
     setAnswers((prev) => {
       const next = { ...prev, freeform: html };
-      if (id) {
-        try {
-          localStorage.setItem(`exam_draft_answers_${id}`, JSON.stringify(next));
-        } catch {}
-      }
+      try {
+        localStorage.setItem(`exam_draft_answers_${id}`, JSON.stringify(next));
+      } catch {}
       return next;
     });
   }, [id]);
 
-  const blockedExtensions = new Set([
-    '.exe', '.dll', '.bat', '.cmd', '.ps1', '.vbs', '.apk', '.msi', '.com', '.scr', '.pif', '.cpl',
-  ]);
+  const handleFinalSubmit = async () => {
+    if (exam?.allowFileUpload && fileUploadError && !submission?.submissionFileName) {
+      alert('Your file upload is invalid or failed. Please resolve the file error before submitting.');
+      return;
+    }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setUploadSuccess(null);
-    setFileUploadError(null);
-    const file = event.target.files?.[0] ?? null;
+    if (!window.confirm('Submit your examination paper? Once submitted, no further changes can be made.')) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await axios.post(
+        '/seb/submission/submit',
+        { answers },
+        { withCredentials: true }
+      );
+
+      if (id) {
+        try {
+          localStorage.removeItem(`exam_draft_answers_${id}`);
+        } catch {}
+      }
+
+      alert('Exam submitted successfully! You may now exit Safe Exam Browser.');
+      navigate('/', { replace: true });
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to submit exam.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) {
       setSelectedFile(null);
+      setFileUploadError(null);
       return;
     }
 
-    const extension = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')).toLowerCase() : '';
-    if (blockedExtensions.has(extension)) {
+    const blockedExtensions = [
+      '.exe', '.bat', '.cmd', '.sh', '.msi', '.vbs', '.js', '.jar', '.com', '.scr',
+      '.pif', '.application', '.gadget', '.hta', '.cpl', '.msc', '.msp', '.reg',
+      '.ps1', '.psm1', '.psd1', '.ws', '.wsf', '.vb', '.vbe',
+    ];
+
+    const fileNameLower = file.name.toLowerCase();
+    const isBlocked = blockedExtensions.some((ext) => fileNameLower.endsWith(ext));
+    if (isBlocked) {
       setSelectedFile(null);
-      setFileUploadError('Executable files (.exe, .bat, etc.) are blocked for security reasons.');
+      setFileUploadError('Executable and script files are blocked for security.');
       return;
     }
 
-    if (file.size > 50 * 1024 * 1024) {
+    const MAX_FILE_SIZE = 50 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
       setSelectedFile(null);
-      setFileUploadError('File must be smaller than 50MB.');
+      setFileUploadError('File size exceeds the 50MB limit.');
       return;
     }
 
     setSelectedFile(file);
+    setFileUploadError(null);
   };
 
   const handleFileUpload = async () => {
-    if (!selectedFile) {
-      setFileUploadError('Please choose a file to upload.');
-      return;
-    }
+    if (!selectedFile) return;
 
     setIsUploadingFile(true);
     setFileUploadError(null);
@@ -232,71 +272,31 @@ export function ExamRoom() {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('/seb/submission/upload', formData, {
-        withCredentials: true,
+      const response = await axios.post('/seb/submission/upload-file', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        withCredentials: true,
       });
-      setUploadSuccess(`Uploaded ${selectedFile.name}`);
+
+      setUploadSuccess(`Uploaded ${response.data.fileName}`);
+      setSubmission((prev) => prev ? {
+        ...prev,
+        submissionFileId: response.data.fileId,
+        submissionFileName: response.data.fileName,
+      } : null);
       setSelectedFile(null);
-      setSubmission(response.data.submission);
     } catch (err: any) {
-      setFileUploadError(err.response?.data?.error ?? 'Failed to upload file.');
+      setFileUploadError(err.response?.data?.error || 'Failed to upload file.');
     } finally {
       setIsUploadingFile(false);
     }
   };
 
-  const handleFinalSubmit = async () => {
-    if (submission?.isFinal) return;
-
-    const uploadBlocked = Boolean(exam?.allowFileUpload && fileUploadError && !submission?.submissionFileName);
-    if (uploadBlocked) {
-      alert('A file upload error occurred. Please resolve the upload before submitting your exam.');
-      return;
-    }
-
-    const isPdfExam = exam?.questionSource === 'pdf';
-    const currentAnswered = isPdfExam 
-      ? (answers.freeform && answers.freeform !== '<p></p>' ? 1 : 0)
-      : questions.filter(q => Boolean(answers[q.id]?.trim())).length;
-    const totalQCount = isPdfExam ? 1 : questions.length;
-    const unansweredCount = totalQCount - currentAnswered;
-
-    let confirmMsg = 'Submit your exam? You will not be able to make changes after this.';
-    if (unansweredCount > 0) {
-      confirmMsg = `You have ${unansweredCount} unanswered question${unansweredCount > 1 ? 's' : ''}.\n\nAre you sure you want to submit your exam now? You will not be able to return to answer them.`;
-    }
-
-    mute(3000);
-    if (!window.confirm(confirmMsg)) return;
-    setIsSubmitting(true);
-    try {
-      await axios.post('/seb/submission/submit', { answers }, { withCredentials: true });
-      if (id) {
-        try {
-          localStorage.removeItem(`exam_draft_answers_${id}`);
-        } catch {}
-      }
-      mute(3000);
-      alert('Exam submitted successfully! You may now close this window.');
-      navigate('/', { replace: true });
-    } catch (err: any) {
-      mute(2000);
-      alert(err.response?.data?.error ?? 'Failed to submit exam. Please try again.');
-      setIsSubmitting(false);
-    }
-  };
-
   if (isLoading) {
     return (
-      <div className="exam-room-shell">
-        <div className="exam-room-empty-state">
-          <div className="page-panel" style={{ maxWidth: '18rem', width: '100%', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-              <div style={{ width: '3rem', height: '3rem', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'transparent', borderRadius: '999px', animation: 'spin 1s linear infinite' }} />
-            </div>
-            <p style={{ color: '#94a3b8', textAlign: 'center', margin: 0 }}>Loading Exam Environment...</p>
-          </div>
+      <div className="exam-room-shell" style={{ display: 'grid', placeItems: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner" style={{ margin: '0 auto 1rem' }} />
+          <p style={{ color: 'var(--color-navy)', fontWeight: 600 }}>Loading secure exam session...</p>
         </div>
       </div>
     );
@@ -304,19 +304,17 @@ export function ExamRoom() {
 
   if (error || submission?.isFinal) {
     return (
-      <div className="exam-room-shell">
-        <div className="exam-room-empty-state">
-          <div className="page-panel" style={{ maxWidth: '28rem', width: '100%', padding: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '4rem', height: '4rem', borderRadius: '999px', background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.2)', margin: '0 auto 1rem', color: '#f87171', fontSize: '1.5rem' }}>
-              ⚠
-            </div>
-            <h2 style={{ color: 'white', fontSize: '1.25rem', margin: '0', textAlign: 'center' }}>
-              {submission?.isFinal ? 'Already Submitted' : 'Access Denied'}
-            </h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.95rem', lineHeight: 1.6, marginTop: '0.75rem', textAlign: 'center', margin: 0 }}>
-              {error || 'This exam has already been submitted.'}
-            </p>
+      <div className="exam-room-shell" style={{ display: 'grid', placeItems: 'center', padding: '2rem' }}>
+        <div className="card" style={{ maxWidth: '28rem', width: '100%', textAlign: 'center', padding: '2.5rem' }}>
+          <div style={{ width: '3.5rem', height: '3.5rem', borderRadius: '50%', background: 'var(--color-danger-bg)', border: '1px solid var(--color-danger-border)', display: 'grid', placeItems: 'center', margin: '0 auto 1rem', color: 'var(--color-danger)', fontSize: '1.25rem' }}>
+            {submission?.isFinal ? '✓' : '⚠'}
           </div>
+          <h2 style={{ color: 'var(--color-navy)', fontSize: '1.25rem', margin: 0, fontWeight: 700 }}>
+            {submission?.isFinal ? 'Examination Completed' : 'Access Restricted'}
+          </h2>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', lineHeight: 1.5 }}>
+            {error || 'This exam paper has already been submitted.'}
+          </p>
         </div>
       </div>
     );
@@ -333,39 +331,43 @@ export function ExamRoom() {
 
   return (
     <div className="exam-room-shell">
+      {/* Violation Alert Banner */}
       {violationMsg && (
         <div className="exam-room-violation-banner">
           {violationMsg}
           {tabSwitchCount > 0 && (
-            <span style={{ opacity: 0.7, fontSize: '0.75rem', fontWeight: 400, marginLeft: '1rem' }}>
-              ({tabSwitchCount} violation{tabSwitchCount !== 1 ? 's' : ''} recorded)
+            <span style={{ opacity: 0.8, fontSize: '0.75rem', fontWeight: 400, marginLeft: '0.5rem' }}>
+              ({tabSwitchCount} violation{tabSwitchCount !== 1 ? 's' : ''})
             </span>
           )}
         </div>
       )}
 
+      {/* Top Header Bar */}
       <header className="exam-room-header">
         <div className="exam-room-brand">
-          <div className="exam-room-brand-mark">
-            <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-          </div>
+          <img
+            src="/logo_asset.png"
+            alt="Multitech"
+            style={{ width: '36px', height: '36px', objectFit: 'contain' }}
+          />
           <div>
             <h1 className="exam-room-title">{exam.title}</h1>
             <div className="exam-room-meta">
               {submission?.studentName && (
-                <span style={{ color: 'var(--color-primary)', fontWeight: 600 }}>{submission.studentName} · {submission.studentRegNumber}</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-navy)' }}>
+                  {submission.studentName} ({submission.studentRegNumber})
+                </span>
               )}
               <span className="status-dot" />
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: isConnected ? 'var(--color-highlight)' : '#f59e0b' }}>
-                <span className={`status-dot ${isConnected ? 'status-dot--highlight' : 'status-dot--warning'}`} style={{ backgroundColor: isConnected ? undefined : '#f59e0b' }} />
-                {isConnected ? 'Auto-saving' : 'Working offline · Saved on device'}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', color: isConnected ? 'var(--color-success)' : 'var(--color-warning)' }}>
+                <span className="status-dot" style={{ backgroundColor: isConnected ? 'var(--color-success)' : 'var(--color-warning)' }} />
+                {isConnected ? 'Autosaved' : 'Offline Mode'}
               </span>
               {lastSaved && (
                 <>
-                  <span className="status-dot" style={{ background: '#94a3b8' }} />
-                  <span>Saved {new Date(lastSaved).toLocaleTimeString()}</span>
+                  <span className="status-dot" />
+                  <span>Last saved {new Date(lastSaved).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </>
               )}
             </div>
@@ -375,101 +377,94 @@ export function ExamRoom() {
         <div className="exam-room-header-right">
           {!isPdf && (
             <div className="exam-room-progress">
-              <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#94a3b8' }}>Progress</span>
+              <span style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-text-muted)' }}>Progress</span>
               <div className="exam-room-meter">
                 <div className="exam-room-meter-bar">
                   <div className="exam-room-meter-fill" style={{ width: `${progress}%` }} />
                 </div>
-                <span style={{ color: 'var(--color-highlight)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', fontSize: '0.75rem' }}>{progress}%</span>
+                <span style={{ color: 'var(--color-blue)', fontWeight: 700, fontSize: '0.75rem' }}>{progress}%</span>
               </div>
             </div>
           )}
 
+          {/* Timer */}
           <div className="exam-room-timer">
-            <span className="exam-room-timer-label">Time Left</span>
+            <span className="exam-room-timer-label">Time Remaining</span>
             <span className={remainingSeconds !== null && remainingSeconds < 300 ? 'exam-room-timer-value exam-room-timer-value--danger' : 'exam-room-timer-value'}>
               {remainingSeconds !== null ? formatCountdown(remainingSeconds) : '--:--'}
             </span>
           </div>
 
-          <button type="button" onClick={handleFinalSubmit} disabled={isSubmitting} className="button button--highlight" style={{ whiteSpace: 'nowrap' }}>
+          <button
+            type="button"
+            onClick={handleFinalSubmit}
+            disabled={isSubmitting}
+            className="button button--primary"
+            style={{ padding: '0.65rem 1.4rem' }}
+          >
             {isSubmitting ? 'Submitting...' : 'Submit Exam'}
           </button>
         </div>
       </header>
 
+      {/* Main Body */}
       <main className="exam-room-body">
-        <section className="exam-room-sidebar" onCopy={(e) => e.preventDefault()} onCut={(e) => e.preventDefault()} onContextMenu={(e) => e.preventDefault()}>
+        {/* Left pane: Question List or PDF Viewer */}
+        <section
+          className="exam-room-sidebar"
+          onCopy={(e) => e.preventDefault()}
+          onCut={(e) => e.preventDefault()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
           <div className="exam-room-sidebar-inner">
             {isPdf ? (
               exam.pdfPath ? (
-                <div className="page-panel" style={{ flex: 1, minHeight: 0, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--color-surface)' }}>
                   {pdfError && (
-                    <div style={{ marginBottom: '1rem' }}>
-                      <p style={{ margin: 0, color: '#fda4af', fontWeight: 700 }}>{pdfError.message}</p>
-                      {pdfError.details && (
-                        <p style={{ margin: '0.75rem 0 0', color: '#f8c3c3', fontSize: '0.85rem', wordBreak: 'break-word' }}>{pdfError.details}</p>
-                      )}
-                      <button type="button" onClick={() => window.location.reload()} className="button button-secondary" style={{ width: '100%', marginTop: '1rem' }}>
-                        Reload Page
+                    <div style={{ padding: '1rem', background: 'var(--color-danger-bg)', borderBottom: '1px solid var(--color-danger-border)' }}>
+                      <p style={{ margin: 0, color: 'var(--color-danger)', fontWeight: 600, fontSize: '0.85rem' }}>{pdfError.message}</p>
+                      <button type="button" onClick={() => window.location.reload()} className="button button--secondary" style={{ marginTop: '0.5rem', padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}>
+                        Reload PDF
                       </button>
                     </div>
                   )}
+
                   {isPdfLoading && !pdfBlob ? (
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#94a3b8' }}>
-                      <div style={{ width: '3rem', height: '3rem', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'transparent', borderRadius: '999px', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
-                      <p>Loading PDF…</p>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)' }}>
+                      <div className="spinner" style={{ marginBottom: '1rem' }} />
+                      <p style={{ fontSize: '0.875rem' }}>Loading question paper…</p>
                     </div>
-                  ) : pdfBlob ? (
-                    pdfBlobUrl ? (
-                      <div style={{ flex: 1, minHeight: 0, height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                        <object data={pdfBlobUrl} type="application/pdf" style={{ width: '100%', height: '100%', display: 'block', border: 'none' }}>
-                          <div style={{ padding: '1rem', color: '#94a3b8' }}>
-                            Unable to display the PDF in this browser. <a href={pdfBlobUrl} target="_blank" rel="noreferrer" style={{ color: '#7dd3fc', textDecoration: 'underline' }}>Open PDF directly</a>.
-                          </div>
-                        </object>
+                  ) : pdfBlob && pdfBlobUrl ? (
+                    <object data={pdfBlobUrl} type="application/pdf" style={{ width: '100%', height: '100%', display: 'block', border: 'none' }}>
+                      <div style={{ padding: '1.5rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>
+                        Unable to render PDF inside browser window. <a href={pdfBlobUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--color-blue)', textDecoration: 'underline' }}>Open document</a>.
                       </div>
-                    ) : (
-                      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#94a3b8' }}>
-                        <div style={{ width: '3rem', height: '3rem', border: '3px solid rgba(255,255,255,0.15)', borderTopColor: 'transparent', borderRadius: '999px', animation: 'spin 1s linear infinite', marginBottom: '1rem' }} />
-                        <p>Preparing PDF viewer…</p>
-                      </div>
-                    )
+                    </object>
                   ) : (
-                    <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', color: '#94a3b8' }}>
-                      <p style={{ margin: 0 }}>No PDF loaded yet. Please refresh or contact your instructor.</p>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-muted)', fontSize: '0.875rem' }}>
+                      No question paper loaded. Please refresh or contact exam supervisor.
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="exam-room-empty-state" style={{ minHeight: 0, padding: '2rem' }}>
-                  <div>
-                    <div style={{ width: '4rem', height: '4rem', borderRadius: '999px', background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem', color: '#f87171', fontSize: '1.5rem' }}>
-                      !
-                    </div>
-                    <p style={{ margin: 0 }}>No question paper uploaded for this exam.</p>
-                  </div>
+                <div className="exam-room-empty-state">
+                  <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>No question paper uploaded for this exam.</p>
                 </div>
               )
             ) : (
               <div style={{ display: 'flex', flex: 1, minHeight: 0, flexDirection: 'column' }}>
-                <div className="page-panel" style={{ margin: 0, borderRadius: 0, background: 'transparent', border: 'none', padding: 0 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '1rem 0', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-                    <div>
-                      <p style={{ margin: 0, fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.2em', color: '#7dd3fc' }}>Questions</p>
-                      <p style={{ margin: '0.5rem 0 0', color: '#94a3b8', fontSize: '0.75rem' }}>{answeredCount} of {questions.length} answered</p>
-                    </div>
-                  </div>
+                <div style={{ padding: '1rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--color-blue)' }}>
+                    Questions ({questions.length})
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    {answeredCount} of {questions.length} completed
+                  </span>
                 </div>
-                <div style={{ flex: 1, minHeight: 0, overflow: 'auto', padding: '1rem' }} className="custom-scrollbar">
+                <div className="exam-room-list-wrapper">
                   {questions.map((q, i) => {
                     const answered = !!answers[q.id];
                     const isActive = activeQuestionId === q.id;
-                    const buttonClasses = [
-                      'exam-room-question-button',
-                      isActive ? 'exam-room-question-button--active' : '',
-                      answered ? 'exam-room-question-button--answered' : '',
-                    ].filter(Boolean).join(' ');
                     return (
                       <button
                         key={q.id}
@@ -478,12 +473,18 @@ export function ExamRoom() {
                           setActiveQuestionId(q.id);
                           document.getElementById(`question-${q.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                         }}
-                        className={buttonClasses}
+                        className={`exam-room-question-button ${isActive ? 'exam-room-question-button--active' : ''} ${answered ? 'exam-room-question-button--answered' : ''}`}
                       >
-                        <span className="exam-room-question-badge">{answered ? '✓' : i + 1}</span>
-                        <div style={{ minWidth: 0 }}>
-                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{q.prompt}</p>
-                          <p style={{ margin: '0.35rem 0 0', color: '#94a3b8', fontSize: '0.75rem' }}>{q.marks} mark{q.marks !== 1 ? 's' : ''} · {q.type.replace('_', ' ')}</p>
+                        <span className="exam-room-question-badge">
+                          {answered ? '✓' : i + 1}
+                        </span>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-navy)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {q.prompt}
+                          </p>
+                          <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
+                            {q.marks} mark{q.marks !== 1 ? 's' : ''}
+                          </span>
                         </div>
                       </button>
                     );
@@ -492,82 +493,78 @@ export function ExamRoom() {
               </div>
             )}
 
+            {/* Supporting File Upload Box (if permitted) */}
             {exam.allowFileUpload && (
-              <div className="page-panel" style={{ marginTop: '1rem', padding: '1rem' }}>
-                <h3 style={{ margin: '0 0 0.5rem', fontSize: '0.95rem', fontWeight: 700 }}>Upload Supporting File</h3>
-                <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.4 }}>
-                  Upload a file for your instructor to review. Executable and script files are blocked.
-                </p>
-                <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                  <input
-                    type="file"
-                    accept=".pdf,.txt,.html,.htm,.sql,.csv,.doc,.docx,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.zip"
-                    onChange={handleFileSelect}
-                    disabled={!examActive || isUploadingFile}
-                    className="form-input"
-                  />
-                  {selectedFile && (
-                    <p style={{ margin: 0, color: '#d1fae5', fontSize: '0.9rem' }}>
-                      Selected file: {selectedFile.name} ({Math.round(selectedFile.size / 1024)} KB)
-                    </p>
-                  )}
-                  {fileUploadError && (
-                    <p style={{ margin: 0, color: '#fecaca', fontSize: '0.9rem' }}>{fileUploadError}</p>
-                  )}
-                  {uploadSuccess && (
-                    <p style={{ margin: 0, color: '#bbf7d0', fontSize: '0.9rem' }}>{uploadSuccess}</p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleFileUpload}
-                    disabled={!examActive || isUploadingFile || !selectedFile}
-                    className="button button--secondary"
-                  >
-                    {isUploadingFile ? 'Uploading...' : 'Upload File'}
-                  </button>
+              <div style={{ padding: '1rem', borderTop: '1px solid var(--color-border)', background: 'var(--color-bg)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <strong style={{ fontSize: '0.85rem', color: 'var(--color-navy)' }}>Attach Solution File</strong>
                   {submission?.submissionFileName && (
-                    <div style={{ background: 'rgba(15, 23, 42, 0.9)', borderRadius: '0.75rem', padding: '0.75rem', border: '1px solid rgba(148, 163, 184, 0.15)' }}>
-                      <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.85rem' }}>
-                        Uploaded file: <strong>{submission.submissionFileName}</strong>
-                      </p>
-                    </div>
+                    <span className="status-pill status-pill--info" style={{ fontSize: '0.65rem' }}>Uploaded</span>
                   )}
                 </div>
+                <input
+                  type="file"
+                  accept=".pdf,.txt,.html,.htm,.sql,.csv,.doc,.docx,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.zip"
+                  onChange={handleFileSelect}
+                  disabled={!examActive || isUploadingFile}
+                  className="form-input"
+                  style={{ fontSize: '0.78rem', padding: '0.4rem 0.6rem' }}
+                />
+                {selectedFile && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {selectedFile.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleFileUpload}
+                      disabled={isUploadingFile}
+                      className="button button--primary"
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                    >
+                      {isUploadingFile ? 'Uploading...' : 'Upload'}
+                    </button>
+                  </div>
+                )}
+                {fileUploadError && (
+                  <p style={{ margin: '0.35rem 0 0', color: 'var(--color-danger)', fontSize: '0.75rem' }}>{fileUploadError}</p>
+                )}
+                {uploadSuccess && (
+                  <p style={{ margin: '0.35rem 0 0', color: 'var(--color-success)', fontSize: '0.75rem' }}>{uploadSuccess}</p>
+                )}
               </div>
             )}
           </div>
         </section>
 
+        {/* Right pane: Answer Form or Document Editor */}
         <section className="exam-room-content">
           <div className="exam-room-content-inner">
             {isPdf ? (
               <ExamEditor content={answers.freeform ?? ''} onChange={handleFreeformChange} />
             ) : (
-              <div className="exam-room-panel">
-                <div className="exam-room-panel-header">
-                  <h2>Answer Sheet</h2>
-                  <p>{isPdf ? 'Write freely — reference question numbers from the paper on the left.' : 'Answer each question below. Your work saves automatically.'}</p>
-                </div>
-                <div>
-                  {questions.map((q, i) => (
-                    <QuestionAnswer key={q.id} question={q} index={i} value={answers[q.id] ?? ''} onChange={handleAnswerChange} />
-                  ))}
-                </div>
-                <div className="exam-room-submit-row">
+              <div>
+                {questions.map((q, i) => (
+                  <QuestionAnswer
+                    key={q.id}
+                    question={q}
+                    index={i}
+                    value={answers[q.id] ?? ''}
+                    onChange={handleAnswerChange}
+                  />
+                ))}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem', paddingBottom: '2rem' }}>
                   <button
                     type="button"
                     onClick={handleFinalSubmit}
-                    disabled={isSubmitting || Boolean(exam?.allowFileUpload && fileUploadError && !submission?.submissionFileName)}
-                    className="exam-room-submit-button"
+                    disabled={isSubmitting}
+                    className="button button--primary"
+                    style={{ padding: '0.85rem 2.25rem', fontSize: '0.95rem' }}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Exam'}
+                    {isSubmitting ? 'Submitting...' : 'Submit Examination Paper'}
                   </button>
                 </div>
-                {exam.allowFileUpload && fileUploadError && !submission?.submissionFileName && (
-                  <p style={{ marginTop: '0.75rem', color: '#fecaca', fontSize: '0.9rem' }}>
-                    Your file upload failed. Fix the upload or remove the file before submitting.
-                  </p>
-                )}
               </div>
             )}
           </div>
@@ -576,5 +573,3 @@ export function ExamRoom() {
     </div>
   );
 }
-
-

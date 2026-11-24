@@ -1,361 +1,131 @@
+/* ─── Design Tokens — Multitech Brand System ──────────────────────────────── */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --color-primary: #0052cc;
-  --color-danger: #ef4444;
-  --color-action: #0052cc;
-  --color-highlight: #2563eb;
-  --color-primary-rgb: 0, 82, 204;
-  --color-danger-rgb: 239, 68, 68;
-  --color-action-rgb: 0, 82, 204;
-  --color-highlight-rgb: 37, 99, 235;
-  --accent: var(--color-action);
-  --accent-bg: rgba(var(--color-action-rgb), 0.1);
-  --accent-border: rgba(var(--color-action-rgb), 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* Brand Colors */
+  --color-navy:          #1a3a6b;
+  --color-navy-dark:     #102b4e;
+  --color-navy-light:    #2a4f8f;
+  --color-blue:          #2563eb;
+  --color-blue-dark:     #1d4ed8;
+  --color-blue-light:    #3b82f6;
+  --color-accent-gold:   #e4c66e;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Semantic Aliases (used by existing code as --color-primary etc.) */
+  --color-primary:       #2563eb;
+  --color-primary-dark:  #1d4ed8;
+  --color-primary-light: #3b82f6;
+  --color-secondary:     #1a3a6b;
+  --color-highlight:     #2563eb;
+  --color-danger:        #dc2626;
+  --color-action:        #2563eb;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
+  --color-primary-rgb:   37, 99, 235;
+  --color-danger-rgb:    220, 38, 38;
+
+  /* Surfaces */
+  --color-bg:            #f7f9fc;
+  --color-bg-alt:        #eef2f7;
+  --color-surface:       #ffffff;
+  --color-surface-alt:   #f1f5f9;
+
+  /* Borders */
+  --color-border:        #e2e8f0;
+  --color-border-strong: #cbd5e1;
+
+  /* Text */
+  --color-text:          #1a2654;
+  --color-text-secondary:#4a6fa5;
+  --color-text-muted:    #64748b;
+  --color-text-faint:    #94a3b8;
+
+  /* Status */
+  --color-success:       #16a34a;
+  --color-success-bg:    #f0fdf4;
+  --color-success-border:#bbf7d0;
+  --color-warning:       #d97706;
+  --color-warning-bg:    #fffbeb;
+  --color-warning-border:#fde68a;
+  --color-danger-bg:     #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-info:          #0ea5e9;
+  --color-info-bg:       #f0f9ff;
+  --color-info-border:   #bae6fd;
+
+  /* Typography */
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  /* Font sizes */
+  --font-size-xs:   0.75rem;
+  --font-size-sm:   0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg:   1.125rem;
+  --font-size-xl:   1.25rem;
+  --font-size-2xl:  1.5rem;
+  --font-size-3xl:  1.875rem;
+
+  /* Font weights */
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+  --font-weight-extrabold:800;
+
+  /* Spacing */
+  --spacing-xs:  0.25rem;
+  --spacing-sm:  0.5rem;
+  --spacing-md:  1rem;
+  --spacing-lg:  1.5rem;
+  --spacing-xl:  2rem;
+  --spacing-2xl: 3rem;
+
+  /* Borders */
+  --border-radius-sm: 6px;
+  --border-radius-md: 10px;
+  --border-radius-lg: 14px;
+  --border-radius-xl: 20px;
+
+  /* Shadows */
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm:  0 1px 4px rgba(0,0,0,0.06);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg:  0 10px 28px rgba(0,0,0,0.10);
+  --shadow-xl:  0 20px 48px rgba(0,0,0,0.12);
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-base: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
+
+  /* Z-index */
+  --z-dropdown: 1000;
+  --z-sticky:   1100;
+  --z-fixed:    1200;
+  --z-modal:    1400;
+
+  font: 16px/1.6 var(--sans);
+  letter-spacing: 0.01em;
+  color-scheme: light;
+  color: var(--color-text);
+  background: var(--color-bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: var(--color-action);
-    --accent-bg: rgba(var(--color-action-rgb), 0.15);
-    --accent-border: rgba(var(--color-action-rgb), 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
 }
 
 body {
   margin: 0;
 }
 
-h1,
-h2 {
+h1, h2, h3, h4, h5, h6 {
   font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-.dashboard-layout h1,
-.dashboard-layout h2,
-.dashboard-layout h3,
-.dashboard-layout h4,
-.dashboard-layout h5,
-.dashboard-layout h6 {
-  color: white;
-}
-
-.dashboard-layout .exam-admin-title {
-  font-size: 0.875rem;
-}
-
-.dashboard-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
-  border-radius: 28px;
-}
-
-/* Scoped typography to avoid global overrides of utility classes.
-   Use the `.site-typography` wrapper on pages/components that need
-   large, display-style headings. This prevents generic `h1`/`h2`/`p`
-   rules from overriding Tailwind utilities elsewhere. */
-.site-typography h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-}
-@media (max-width: 1024px) {
-  .site-typography h1 {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-
-.site-typography h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-}
-@media (max-width: 1024px) {
-  .site-typography h2 {
-    font-size: 20px;
-  }
-}
-
-.site-typography p {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-navy);
   margin: 0;
 }
 
-/* Sidebar nav animated underline/overline */
-.nav-link-animated {
-  position: relative;
-  overflow: visible;
-}
-.nav-link-animated::before,
-.nav-link-animated::after {
-  content: "";
-  position: absolute;
-  left: 12%;
-  right: 12%;
-  height: 2px;
-  background: var(--color-primary);
-  transform: scaleX(0);
-  transition: transform 280ms cubic-bezier(.2,.9,.3,1);
-  pointer-events: none;
-}
-.nav-link-animated::before {
-  bottom: 10px;
-  transform-origin: left center;
-}
-.nav-link-animated::after {
-  top: 10px;
-  transform-origin: right center;
-}
-.nav-link-animated:hover::before,
-.nav-link-animated:focus::before,
-.nav-link-animated[aria-current="page"]::before {
-  transform: scaleX(1);
-}
-.nav-link-animated:hover::after,
-.nav-link-animated:focus::after,
-.nav-link-animated[aria-current="page"]::after {
-  transform: scaleX(1);
-}
-/* Alternate direction for even links */
-.nav-link-animated:nth-of-type(even)::before {
-  transform-origin: right center;
-}
-.nav-link-animated:nth-of-type(even)::after {
-  transform-origin: left center;
-}
-/* Sidebar collapsed adjustments */
-aside {
-  transition: width 300ms ease;
-}
-.nav-link-animated span {
-  transition: opacity 180ms ease, width 180ms ease;
-}
-.nav-link-animated svg {
-  flex-shrink: 0;
-}
-
-.app-root code,
-.app-root .counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-.app-root code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
-}
-
-.app-root .counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-}
-.app-root .counter:hover {
-  border-color: var(--accent-border);
-}
-.app-root .counter:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-.app-root #app {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-/* Navigation link hover effect with underline and overline */
+/* ─── Animated nav underline (from Multitech site) ───────────────────────── */
 .nav-link-animated {
   position: relative;
   overflow: visible;
@@ -365,61 +135,39 @@ aside {
 .nav-link-animated::after {
   content: '';
   position: absolute;
-  height: 2px;
-  background: currentColor;
   left: 12px;
   right: 12px;
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  height: 2px;
+  background: var(--color-blue);
+  transform: scaleX(0);
+  transition: transform 280ms cubic-bezier(.2,.9,.3,1);
+  pointer-events: none;
 }
 
 .nav-link-animated::before {
   bottom: 8px;
-  transform: scaleX(0);
-  transform-origin: left;
+  transform-origin: left center;
 }
 
 .nav-link-animated::after {
   top: 8px;
-  transform: scaleX(0);
-  transform-origin: right;
+  transform-origin: right center;
 }
 
-.nav-link-animated:hover::before {
-  transform: scaleX(1);
-}
-
+.nav-link-animated:hover::before,
 .nav-link-animated:hover::after {
   transform: scaleX(1);
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
+/* ─── Scrollbar (subtle) ──────────────────────────────────────────────────── */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
 }
 
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+.scrollbar-thin::-webkit-scrollbar { width: 6px; }
+.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 999px;
 }
-
-

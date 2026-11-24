@@ -44,7 +44,6 @@ export function CreateExam() {
     },
   });
 
-  // Fetch verified courses from Multitech Web System ERP
   useEffect(() => {
     let mounted = true;
     setIsLoadingCourses(true);
@@ -64,7 +63,6 @@ export function CreateExam() {
     };
   }, []);
 
-  // Handle outside click to close dropdown
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -101,68 +99,62 @@ export function CreateExam() {
     setFormData((prev) => ({
       ...prev,
       erpCourseCode: course.course_code,
-      title: prev.title ? prev.title : `${course.name} (${course.course_code})`,
+      title: prev.title || `${course.course_code} - ${course.name}`,
     }));
     setIsDropdownOpen(false);
   };
 
-  const isLockedFromSSO = !!new URLSearchParams(location.search).get('erpCourseCode');
-
-  const webSystemUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:5173/lecturer/courses'
-    : 'https://portal.multitech.ac.ug/lecturer/courses';
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (!formData.erpCourseCode.trim()) {
+      setError('Please provide or select a course unit code');
+      return;
+    }
     setError('');
+    setIsLoading(true);
 
     try {
-      const startTimeISO = new Date(formData.startTime).toISOString();
-      const payload = { ...formData, startTime: startTimeISO };
-      const { data } = await api.post('/exams', payload);
-      navigate(`/dashboard/exams/${data.exam.id}`);
+      const { data } = await api.post('/exams', formData);
+      navigate(`/dashboard/exams/${data.exam.id}/builder`);
     } catch (err: any) {
-      setError(err.error || 'Failed to create exam');
+      setError(err?.error || 'Failed to create examination');
     } finally {
       setIsLoading(false);
     }
   };
 
+  const isLockedFromSSO = Boolean(new URLSearchParams(location.search).get('erpCourseCode'));
+  const webSystemUrl = typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? 'http://localhost:5173/lecturer/courses'
+    : 'https://portal.multitech.ac.ug/lecturer/courses';
+
   return (
     <div className="settings-page">
       <div className="breadcrumb">
         <button type="button" className="breadcrumb-link" onClick={() => navigate('/dashboard')}>
-          DASHBOARD
+          Dashboard
         </button>
         <span>/</span>
-        <button type="button" className="breadcrumb-link" onClick={() => navigate('/dashboard')}>
-          EXAMS
-        </button>
-        <span>/</span>
-        <span style={{ color: '#93c5fd' }}>CREATE</span>
+        <span style={{ color: 'var(--color-blue)', fontWeight: 600 }}>Create Exam</span>
       </div>
 
-      <header className="page-header">
-        <div className="page-heading-row">
-          <h2 className="page-title">Create New Exam</h2>
-          <div className="page-underline" />
-        </div>
-        <p className="page-subtitle">Configure a new secure assessment environment synchronized with Multitech Web System.</p>
+      <header className="page-header" style={{ marginBottom: '1rem' }}>
+        <h1 className="page-title">Create Examination</h1>
+        <p className="page-subtitle">Set up course assessment and Safe Exam Browser security.</p>
       </header>
 
       <div className="settings-panel">
-        {error && <div className="form-error">{error}</div>}
+        {error && <div className="form-error" style={{ marginBottom: '1rem' }}>{error}</div>}
 
         <form onSubmit={handleSubmit} className="form-stack">
           {/* Course Unit Integration */}
           <div className="form-group" ref={dropdownRef} style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
               <label className="form-label" htmlFor="erpCourseCode" style={{ margin: 0 }}>
-                Course Code (Multitech Web System / ERP Link)
+                Course Unit (Multitech ERP)
               </label>
               {isLoadingCourses && (
-                <span style={{ fontSize: '0.75rem', color: '#38bdf8' }}>Syncing courses...</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-blue)' }}>Syncing courses...</span>
               )}
             </div>
 
@@ -177,9 +169,9 @@ export function CreateExam() {
                   setFormData({ ...formData, erpCourseCode: e.target.value });
                   setIsDropdownOpen(true);
                 }}
-                placeholder="e.g. BIT1101 or search by course name..."
-                className={`form-input ${isLockedFromSSO ? 'readonly-locked' : ''}`}
-                style={isLockedFromSSO ? { backgroundColor: 'rgba(0,0,0,0.2)', cursor: 'not-allowed', color: '#94a3b8' } : {}}
+                placeholder="Search by course code or name..."
+                className="form-input"
+                style={isLockedFromSSO ? { backgroundColor: 'var(--color-bg-alt)', cursor: 'not-allowed' } : {}}
               />
               {!isLockedFromSSO && (
                 <button
@@ -192,9 +184,9 @@ export function CreateExam() {
                     transform: 'translateY(-50%)',
                     background: 'none',
                     border: 'none',
-                    color: '#94a3b8',
+                    color: 'var(--color-text-faint)',
                     cursor: 'pointer',
-                    fontSize: '0.85rem',
+                    fontSize: '0.75rem',
                   }}
                 >
                   ▼
@@ -202,7 +194,7 @@ export function CreateExam() {
               )}
             </div>
 
-            {/* Course suggestions dropdown */}
+            {/* Course dropdown */}
             {isDropdownOpen && !isLockedFromSSO && (
               <div
                 style={{
@@ -211,10 +203,10 @@ export function CreateExam() {
                   left: 0,
                   right: 0,
                   marginTop: '4px',
-                  background: '#0f1d38',
-                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  background: 'var(--color-surface)',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '10px',
-                  boxShadow: '0 12px 30px rgba(0, 0, 0, 0.45)',
+                  boxShadow: 'var(--shadow-lg)',
                   maxHeight: '260px',
                   overflowY: 'auto',
                   zIndex: 50,
@@ -228,46 +220,46 @@ export function CreateExam() {
                       style={{
                         padding: '10px 14px',
                         cursor: 'pointer',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: '1px solid var(--color-border)',
                         transition: 'background 0.15s ease',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(56, 189, 248, 0.12)')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg-alt)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontWeight: 600, color: '#f8fafc', fontSize: '0.88rem' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--color-navy)', fontSize: '0.88rem' }}>
                           {c.course_code} · {c.name}
                         </span>
                         {c.credits && (
-                          <span style={{ fontSize: '0.72rem', color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)', padding: '1px 6px', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--color-blue)', background: 'rgba(37,99,235,0.08)', padding: '1px 6px', borderRadius: '4px' }}>
                             {c.credits} Credits
                           </span>
                         )}
                       </div>
                       {c.programme_name && (
-                        <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: '#94a3b8' }}>
+                        <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
                           {c.programme_name}
                         </p>
                       )}
                     </div>
                   ))
                 ) : (
-                  <div style={{ padding: '12px 14px', color: '#94a3b8', fontSize: '0.82rem' }}>
-                    No matching courses found in ERP. You can proceed with custom code <strong>{formData.erpCourseCode}</strong>.
+                  <div style={{ padding: '12px 14px', color: 'var(--color-text-muted)', fontSize: '0.82rem' }}>
+                    No matching ERP courses found. Custom code: <strong>{formData.erpCourseCode}</strong>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Linked Course Card Preview */}
-            {matchedCourse ? (
+            {/* Matched course summary */}
+            {matchedCourse && (
               <div
                 style={{
-                  marginTop: '0.75rem',
-                  padding: '0.85rem 1rem',
-                  borderRadius: '0.65rem',
-                  background: 'rgba(16, 185, 129, 0.08)',
-                  border: '1px solid rgba(16, 185, 129, 0.3)',
+                  marginTop: '0.65rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '8px',
+                  background: 'var(--color-success-bg)',
+                  border: '1px solid var(--color-success-border)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -275,72 +267,36 @@ export function CreateExam() {
                 }}
               >
                 <div style={{ minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ color: '#10b981', fontWeight: 700, fontSize: '0.85rem' }}>
-                      ✓ Verified Multitech ERP Course Unit
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ color: 'var(--color-success)', fontWeight: 700, fontSize: '0.82rem' }}>
+                      ✓ Verified ERP Course
                     </span>
-                    <span style={{ fontSize: '0.75rem', padding: '1px 6px', borderRadius: '4px', background: 'rgba(16, 185, 129, 0.2)', color: '#a7f3d0' }}>
+                    <span style={{ fontSize: '0.72rem', padding: '1px 5px', borderRadius: '4px', background: 'rgba(22,163,74,0.15)', color: 'var(--color-success)', fontWeight: 600 }}>
                       {matchedCourse.course_code}
                     </span>
                   </div>
-                  <h4 style={{ margin: '0.2rem 0', fontSize: '0.95rem', color: '#ffffff', fontWeight: 600 }}>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--color-navy)', fontWeight: 600, marginTop: '2px' }}>
                     {matchedCourse.name}
-                  </h4>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#cbd5e1' }}>
-                    {matchedCourse.programme_name || 'Academic Programme'}
-                    {matchedCourse.credits ? ` · ${matchedCourse.credits} Credits` : ''}
-                    {matchedCourse.target_year ? ` · Year ${matchedCourse.target_year}` : ''}
-                    {matchedCourse.target_semester ? ` Sem ${matchedCourse.target_semester}` : ''}
-                  </p>
+                  </div>
                 </div>
                 <a
                   href={webSystemUrl}
                   target="_blank"
                   rel="noreferrer"
                   style={{
-                    fontSize: '0.78rem',
-                    color: '#38bdf8',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-blue)',
                     textDecoration: 'none',
-                    whiteSpace: 'nowrap',
-                    padding: '0.35rem 0.65rem',
-                    borderRadius: '0.4rem',
-                    background: 'rgba(56, 189, 248, 0.1)',
-                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    fontWeight: 600,
                   }}
                 >
-                  View in Web System ↗
+                  View in ERP ↗
                 </a>
               </div>
-            ) : formData.erpCourseCode.trim() ? (
-              <div
-                style={{
-                  marginTop: '0.75rem',
-                  padding: '0.7rem 0.9rem',
-                  borderRadius: '0.5rem',
-                  background: 'rgba(56, 189, 248, 0.05)',
-                  border: '1px solid rgba(56, 189, 248, 0.2)',
-                  fontSize: '0.8rem',
-                  color: '#93c5fd',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <span>
-                  ℹ Custom course code: <strong>{formData.erpCourseCode}</strong>. This course will be registered and mapped in the Multitech Web System when published.
-                </span>
-                <a
-                  href={webSystemUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ color: '#38bdf8', textDecoration: 'none', marginLeft: '0.5rem', fontSize: '0.78rem' }}
-                >
-                  Web System Courses ↗
-                </a>
-              </div>
-            ) : null}
+            )}
           </div>
 
+          {/* Title */}
           <div className="form-group">
             <label className="form-label" htmlFor="title">
               Exam Title
@@ -355,39 +311,37 @@ export function CreateExam() {
             />
           </div>
 
+          {/* Description */}
           <div className="form-group">
             <label className="form-label" htmlFor="description">
-              Description (optional)
+              Instructions for Students (optional)
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Instructions or information for students"
-              rows={3}
+              placeholder="Brief instructions or paper notice"
+              rows={2}
               className="form-input"
             />
           </div>
 
-          {/* Assessment Type & Grade Contribution */}
-          <div className="form-group" style={{ background: 'rgba(255,255,255,0.02)', padding: '1.25rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <label className="form-label" style={{ marginBottom: '0.4rem', fontWeight: 700 }}>
-              Assessment Classification &amp; Grade Weight
+          {/* Assessment Type & Grade Weight */}
+          <div style={{ background: 'var(--color-bg)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
+            <label className="form-label" style={{ marginBottom: '0.5rem', fontWeight: 700, color: 'var(--color-navy)' }}>
+              Assessment Classification
             </label>
-            <p className="panel-subtitle" style={{ marginBottom: '1rem', fontSize: '0.85rem' }}>
-              Determines whether this assessment flows into Coursework or the Final Exam component on the university transcript.
-            </p>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
               <label style={{
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '10px',
-                padding: '1rem',
+                padding: '0.85rem',
                 borderRadius: '10px',
-                border: `2px solid ${formData.assessmentType === 'final_exam' ? 'var(--color-primary, #0052cc)' : 'rgba(255,255,255,0.1)'}`,
-                background: formData.assessmentType === 'final_exam' ? 'rgba(0, 82, 204, 0.12)' : 'rgba(0,0,0,0.15)',
-                cursor: 'pointer'
+                border: `2px solid ${formData.assessmentType === 'final_exam' ? 'var(--color-blue)' : 'var(--color-border)'}`,
+                background: formData.assessmentType === 'final_exam' ? 'rgba(37,99,235,0.06)' : 'var(--color-surface)',
+                cursor: 'pointer',
               }}>
                 <input
                   type="radio"
@@ -395,14 +349,14 @@ export function CreateExam() {
                   value="final_exam"
                   checked={formData.assessmentType === 'final_exam'}
                   onChange={() => setFormData({ ...formData, assessmentType: 'final_exam', weightPercentage: 60 })}
-                  style={{ marginTop: '3px' }}
+                  style={{ marginTop: '2px', accentColor: 'var(--color-blue)' }}
                 />
                 <div>
-                  <strong style={{ display: 'block', fontSize: '0.95rem', color: '#f8fafc' }}>
+                  <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-navy)' }}>
                     🎓 Final Examination
                   </strong>
-                  <span style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4, display: 'block', marginTop: '3px' }}>
-                    End-of-term examination. Populates the <strong>Exam Mark</strong> component (Default: 60%).
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                    Default weight: 60% of total grade
                   </span>
                 </div>
               </label>
@@ -411,11 +365,11 @@ export function CreateExam() {
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: '10px',
-                padding: '1rem',
+                padding: '0.85rem',
                 borderRadius: '10px',
-                border: `2px solid ${formData.assessmentType === 'coursework' ? 'var(--color-primary, #0052cc)' : 'rgba(255,255,255,0.1)'}`,
-                background: formData.assessmentType === 'coursework' ? 'rgba(0, 82, 204, 0.12)' : 'rgba(0,0,0,0.15)',
-                cursor: 'pointer'
+                border: `2px solid ${formData.assessmentType === 'coursework' ? 'var(--color-blue)' : 'var(--color-border)'}`,
+                background: formData.assessmentType === 'coursework' ? 'rgba(37,99,235,0.06)' : 'var(--color-surface)',
+                cursor: 'pointer',
               }}>
                 <input
                   type="radio"
@@ -423,46 +377,43 @@ export function CreateExam() {
                   value="coursework"
                   checked={formData.assessmentType === 'coursework'}
                   onChange={() => setFormData({ ...formData, assessmentType: 'coursework', weightPercentage: 40 })}
-                  style={{ marginTop: '3px' }}
+                  style={{ marginTop: '2px', accentColor: 'var(--color-blue)' }}
                 />
                 <div>
-                  <strong style={{ display: 'block', fontSize: '0.95rem', color: '#f8fafc' }}>
-                    📝 Continuous Assessment / Test (CAT)
+                  <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--color-navy)' }}>
+                    📝 Continuous Assessment (CAT)
                   </strong>
-                  <span style={{ fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4, display: 'block', marginTop: '3px' }}>
-                    Midterm test, quiz, or practical. Populates the <strong>Coursework Mark</strong> component (Default: 40%).
+                  <span style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                    Default weight: 40% of total grade
                   </span>
                 </div>
               </label>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <label htmlFor="weightPercentage" style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 600 }}>
-                Grading Weight:
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <label htmlFor="weightPercentage" style={{ fontSize: '0.82rem', color: 'var(--color-text)', fontWeight: 600 }}>
+                Weight (%):
               </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <input
-                  id="weightPercentage"
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={formData.weightPercentage ?? (formData.assessmentType === 'coursework' ? 40 : 60)}
-                  onChange={(e) => setFormData({ ...formData, weightPercentage: parseInt(e.target.value) || 0 })}
-                  className="form-input"
-                  style={{ width: '80px', textAlign: 'center', padding: '6px 10px', fontWeight: 700 }}
-                />
-                <span style={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.88rem' }}>% of overall course grade</span>
-              </div>
+              <input
+                id="weightPercentage"
+                type="number"
+                min="1"
+                max="100"
+                value={formData.weightPercentage ?? (formData.assessmentType === 'coursework' ? 40 : 60)}
+                onChange={(e) => setFormData({ ...formData, weightPercentage: parseInt(e.target.value) || 0 })}
+                className="form-input"
+                style={{ width: '70px', textAlign: 'center', padding: '5px 8px', fontWeight: 700 }}
+              />
+              <span style={{ color: 'var(--color-text-muted)', fontSize: '0.82rem' }}>% of course total</span>
             </div>
           </div>
 
+          {/* Question Source */}
           <div className="form-group">
-            <label className="form-label">Question Source</label>
-            <div className="settings-grid">
-              <label
-                className={`option-card ${formData.questionSource === 'builder' ? 'option-card-selected' : ''}`}
-              >
-                <div className="option-card__header">
+            <label className="form-label">Format</label>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.75rem' }}>
+              <label className={`option-card ${formData.questionSource === 'builder' ? 'option-card-selected' : ''}`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="radio"
                     name="questionSource"
@@ -470,17 +421,17 @@ export function CreateExam() {
                     checked={formData.questionSource === 'builder'}
                     onChange={() => setFormData((prev) => ({ ...prev, questionSource: 'builder' }))}
                   />
-                  <div className="option-card__title">Question Builder</div>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-navy)' }}>
+                    Question Builder
+                  </span>
                 </div>
-                <p className="panel-subtitle">
-                  Create questions directly using the interactive portal tools.
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                  Interactive questions (MCQ, short answer, essay).
                 </p>
               </label>
 
-              <label
-                className={`option-card ${formData.questionSource === 'pdf' ? 'option-card-selected' : ''}`}
-              >
-                <div className="option-card__header">
+              <label className={`option-card ${formData.questionSource === 'pdf' ? 'option-card-selected' : ''}`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="radio"
                     name="questionSource"
@@ -488,15 +439,18 @@ export function CreateExam() {
                     checked={formData.questionSource === 'pdf'}
                     onChange={() => setFormData((prev) => ({ ...prev, questionSource: 'pdf' }))}
                   />
-                  <div className="option-card__title">Upload PDF</div>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--color-navy)' }}>
+                    PDF Exam Paper
+                  </span>
                 </div>
-                <p className="panel-subtitle">
-                  Upload an existing PDF document containing the questions.
+                <p style={{ margin: '0.25rem 0 0', fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>
+                  Upload an existing PDF exam question paper.
                 </p>
               </label>
             </div>
           </div>
 
+          {/* Schedule */}
           <div className="form-grid">
             <div className="form-group">
               <label className="form-label" htmlFor="startTime">
@@ -529,27 +483,20 @@ export function CreateExam() {
             </div>
           </div>
 
+          {/* Safe Exam Browser Settings */}
           <div
             style={{
-              marginTop: '1.5rem',
+              marginTop: '1rem',
               padding: '1.25rem',
-              borderRadius: '0.85rem',
-              background: 'rgba(255, 255, 255, 0.02)',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '12px',
+              background: 'var(--color-bg)',
+              border: '1px solid var(--color-border)',
             }}
           >
-            <div style={{ marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span className="status-pill status-pill--highlight" style={{ fontSize: '0.72rem' }}>
-                  SAFE EXAM BROWSER SETTINGS
-                </span>
-              </div>
-              <h3 style={{ margin: '0.4rem 0 0', fontSize: '1.15rem', color: '#fff', fontWeight: 600 }}>
-                External Software & Exam Security Environment
-              </h3>
-              <p className="panel-subtitle" style={{ margin: '0.2rem 0 0' }}>
-                Configure whether this exam allows coding in VS Code, writing in Word, Excel spreadsheets, and student file attachment uploads.
-              </p>
+            <div style={{ marginBottom: '1rem' }}>
+              <span className="status-pill status-pill--highlight" style={{ fontSize: '0.7rem' }}>
+                Safe Exam Browser Environment
+              </span>
             </div>
 
             <SebSettingsConfig
@@ -560,12 +507,12 @@ export function CreateExam() {
             />
           </div>
 
-          <div className="form-actions">
+          <div className="form-actions" style={{ marginTop: '1rem' }}>
             <button type="button" className="button button--secondary" onClick={() => navigate(-1)}>
               Cancel
             </button>
-            <button type="submit" disabled={isLoading} className="button button--primary button-full">
-              {isLoading ? 'Creating...' : 'Create Exam'}
+            <button type="submit" disabled={isLoading} className="button button--primary">
+              {isLoading ? 'Creating...' : 'Continue to Content Builder →'}
             </button>
           </div>
         </form>

@@ -187,14 +187,14 @@ export function DashboardLayout() {
               className="sidebar-nav-link sidebar-erp-link"
               title={isSidebarCollapsed ? 'Multitech Web System (ERP)' : undefined}
             >
-              <span className="sidebar-nav-icon" style={{ color: '#38bdf8' }}>
+              <span className="sidebar-nav-icon" style={{ color: 'var(--color-blue)' }}>
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </span>
               {!isSidebarCollapsed && (
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                  <span className="sidebar-nav-label" style={{ color: '#38bdf8' }}>Multitech ERP</span>
+                  <span className="sidebar-nav-label" style={{ color: 'var(--color-blue)', fontWeight: 600 }}>Multitech ERP</span>
                   <span className="sidebar-erp-badge">Live</span>
                 </div>
               )}

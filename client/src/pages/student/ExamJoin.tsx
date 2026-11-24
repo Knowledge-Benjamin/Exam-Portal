@@ -9,7 +9,6 @@ export function ExamJoin() {
   const { token } = useParams<{ token: string }>();
   const navigate = useNavigate();
 
-  // PIN digits stored as an array of strings ('0'-'9' or '')
   const [digits, setDigits] = useState<string[]>(Array(PIN_LENGTH).fill(''));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -20,7 +19,6 @@ export function ExamJoin() {
 
   const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(PIN_LENGTH).fill(null));
 
-  // Auto-focus first box on mount
   useEffect(() => {
     inputRefs.current[0]?.focus();
   }, []);
@@ -59,10 +57,9 @@ export function ExamJoin() {
   };
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const val = e.target.value.replace(/\D/g, ''); // digits only
+    const val = e.target.value.replace(/\D/g, '');
     if (!val) return;
 
-    // Handle paste: fill from current index
     const chars = val.split('').slice(0, PIN_LENGTH - idx);
     const next = [...digits];
     chars.forEach((c, i) => {
@@ -101,7 +98,6 @@ export function ExamJoin() {
       );
 
       if (res.data.ok) {
-        // Show verified identity card briefly, then navigate
         setVerified({
           studentName: res.data.studentName,
           studentRegNumber: res.data.studentRegNumber,
@@ -111,16 +107,15 @@ export function ExamJoin() {
           navigate(`/exam/${res.data.examId}`, {
             state: { examToken: res.data.examToken },
           });
-        }, 1800);
+        }, 1500);
       }
     } catch (err: any) {
       const msg =
         err.response?.data?.error ||
         err.response?.data?.message ||
         err.message ||
-        'Verification failed. Please try again.';
+        'Invalid PIN. Please check and try again.';
       setError(msg);
-      // Clear pin so student can re-enter
       setDigits(Array(PIN_LENGTH).fill(''));
       setTimeout(() => focusAt(0), 0);
     } finally {
@@ -130,76 +125,51 @@ export function ExamJoin() {
 
   return (
     <div className="auth-page">
-      <div className="auth-page__background" aria-hidden="true">
-        <div className="auth-page__circle auth-page__circle--top" />
-        <div className="auth-page__circle auth-page__circle--bottom" />
-      </div>
-
       <div className="auth-content">
-        {/* Header */}
-        <div className="page-header" style={{ textAlign: 'center' }}>
-          <div className="page-title-row">
-            <div>
-              <h1 className="page-title">Join Exam</h1>
-              <p className="page-copy">Enter your 6-digit Exam PIN to begin</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="page-panel page-panel-hero">
-          {/* Icon */}
-          <div className="auth-icon-box">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-              />
-            </svg>
+        <div className="page-panel" style={{ textAlign: 'center', padding: '2.5rem 2rem' }}>
+          {/* Institution Header */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.75rem' }}>
+            <img
+              src="/logo_asset.png"
+              alt="Multitech Business School"
+              style={{ width: '64px', height: '64px', objectFit: 'contain', marginBottom: '0.75rem' }}
+            />
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em', color: 'var(--color-navy)', textTransform: 'uppercase' }}>
+              Multitech Business School
+            </span>
+            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--color-navy)', marginTop: '0.2rem' }}>
+              Exam Verification
+            </h1>
           </div>
 
-          {/* Error */}
           {error && (
-            <div className="alert-panel" role="alert">
+            <div className="alert-panel" role="alert" style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
               <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <span>{error}</span>
             </div>
           )}
 
-          {/* Verified identity card */}
           {verified ? (
             <div className="pin-verified-card">
               <div className="pin-verified-check">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M5 13l4 4L19 7"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                 </svg>
               </div>
-              <p className="pin-verified-label">Identity Verified</p>
+              <p className="pin-verified-label">Verified</p>
               <p className="pin-verified-name">{verified.studentName}</p>
               <p className="pin-verified-reg">{verified.studentRegNumber}</p>
-              <p className="pin-verified-source">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style={{ width: '0.9rem', height: '0.9rem', display: 'inline', marginRight: '0.3rem', verticalAlign: 'middle' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-                Verified via Multitech Web System · Starting exam…
-              </p>
+              <p className="pin-verified-source">Starting your assessment now…</p>
             </div>
           ) : (
             <>
-              {/* PIN input boxes */}
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
+                Enter your 6-digit PIN from the student portal
+              </p>
+
+              {/* PIN Inputs */}
               <div className="pin-input-group" role="group" aria-label="6-digit exam PIN">
                 {digits.map((digit, idx) => (
                   <input
@@ -207,7 +177,7 @@ export function ExamJoin() {
                     ref={(el) => { inputRefs.current[idx] = el; }}
                     type="text"
                     inputMode="numeric"
-                    maxLength={6} // allow paste of full pin into first box
+                    maxLength={6}
                     value={digit}
                     aria-label={`PIN digit ${idx + 1}`}
                     className={`pin-digit${digit ? ' pin-digit--filled' : ''}`}
@@ -221,8 +191,8 @@ export function ExamJoin() {
                 ))}
               </div>
 
-              {/* Submit button */}
-              <div className="form-actions" style={{ marginTop: '1.5rem' }}>
+              {/* Action Button */}
+              <div style={{ marginTop: '1.75rem' }}>
                 <Button
                   type="button"
                   className="button button-primary button-full"
@@ -230,27 +200,16 @@ export function ExamJoin() {
                   onClick={handleJoin}
                   disabled={!isFull || isLoading}
                 >
-                  {isLoading ? 'Verifying…' : 'Verify & Enter Exam'}
+                  {isLoading ? 'Verifying…' : 'Enter Exam'}
                 </Button>
               </div>
 
-              {/* Help text */}
-              <div className="pin-help">
+              <div className="pin-help" style={{ marginTop: '1.5rem', textAlign: 'left' }}>
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>
-                  Need your PIN?{' '}
-                  Log into your{' '}
-                  <strong>Multitech Student Portal</strong>,{' '}
-                  open <em>Online Exams</em>, and click{' '}
-                  <strong>Generate Exam PIN</strong>.{' '}
-                  Each PIN is single-use and expires in 1 hour.
+                  Log into <strong>Student Portal &rarr; Online Exams</strong> to get your PIN.
                 </span>
               </div>
             </>

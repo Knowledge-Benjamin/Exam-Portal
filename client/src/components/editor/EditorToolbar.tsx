@@ -24,10 +24,10 @@ function ToolbarBtn({
       onMouseDown={(e) => { e.preventDefault(); onClick(); }}
       disabled={disabled}
       title={title}
-      className={`h-8 min-w-[32px] px-2 rounded text-sm font-medium transition-all select-none flex items-center justify-center ${
+      className={`h-8 min-w-[32px] px-2 rounded-lg text-xs font-semibold transition-all select-none flex items-center justify-center cursor-pointer ${
         active
-          ? 'bg-[var(--color-primary)] text-white shadow-[0_0_8px_rgba(var(--color-primary-rgb),0.3)]'
-          : 'text-gray-300 hover:bg-white/10 hover:text-white'
+          ? 'bg-[#2563eb] text-white shadow-xs'
+          : 'text-[#475569] hover:bg-[#e2e8f0] hover:text-[#0f172a]'
       } disabled:opacity-30 disabled:cursor-not-allowed`}
     >
       {children}
@@ -36,14 +36,14 @@ function ToolbarBtn({
 }
 
 function Sep() {
-  return <div className="w-px h-5 bg-white/10 mx-1 shrink-0" />;
+  return <div className="w-px h-5 bg-[#e2e8f0] mx-1 shrink-0" />;
 }
 
 export function EditorToolbar({ editor, compact = false }: ToolbarProps) {
   if (!editor) return null;
 
   return (
-    <div className={`flex flex-wrap items-center gap-0.5 bg-[var(--color-primary)] border-b border-white/10 px-3 py-1.5 ${compact ? 'text-xs' : ''}`}>
+    <div className={`flex flex-wrap items-center gap-1 bg-[#ffffff] border-b border-[#e2e8f0] px-3 py-1.5 ${compact ? 'text-xs' : ''}`}>
       {/* History */}
       <ToolbarBtn title="Undo (Ctrl+Z)" onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()}>
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 010 16H3m0-16l4-4m-4 4l4 4"/></svg>
@@ -58,13 +58,13 @@ export function EditorToolbar({ editor, compact = false }: ToolbarProps) {
       {!compact && (
         <>
           <ToolbarBtn title="Heading 1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}>
-            <span className="font-black text-[13px]">H1</span>
+            <span className="font-bold text-[12px]">H1</span>
           </ToolbarBtn>
           <ToolbarBtn title="Heading 2" active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
-            <span className="font-black text-[13px]">H2</span>
+            <span className="font-bold text-[12px]">H2</span>
           </ToolbarBtn>
           <ToolbarBtn title="Heading 3" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>
-            <span className="font-black text-[13px]">H3</span>
+            <span className="font-bold text-[12px]">H3</span>
           </ToolbarBtn>
           <Sep />
         </>
@@ -72,7 +72,7 @@ export function EditorToolbar({ editor, compact = false }: ToolbarProps) {
 
       {/* Inline formatting */}
       <ToolbarBtn title="Bold (Ctrl+B)" active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
-        <span className="font-black text-[13px]">B</span>
+        <span className="font-bold text-[13px]">B</span>
       </ToolbarBtn>
       <ToolbarBtn title="Italic (Ctrl+I)" active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
         <span className="italic font-semibold text-[13px]">I</span>
@@ -104,25 +104,11 @@ export function EditorToolbar({ editor, compact = false }: ToolbarProps) {
 
       {/* Lists */}
       <ToolbarBtn title="Bullet List" active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 6h11M9 12h11M9 18h11M5 6h.01M5 12h.01M5 18h.01"/></svg>
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
       </ToolbarBtn>
       <ToolbarBtn title="Numbered List" active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 6h11M9 12h11M9 18h11M4 6h1m0 0v1m0-1V5m0 2h1M4 12h1m0 0h1m-1 0v2m0-2v-1m0 3v-1M4 18h1m0 0h1m-1 0V17m1 1h1"/></svg>
+        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 6h13M7 12h13M7 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
       </ToolbarBtn>
-
-      {!compact && (
-        <>
-          <Sep />
-          <ToolbarBtn title="Block Quote" active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-          </ToolbarBtn>
-          <ToolbarBtn title="Horizontal Rule" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-            <span className="text-[11px] tracking-widest font-bold">—</span>
-          </ToolbarBtn>
-        </>
-      )}
     </div>
   );
 }
-
-

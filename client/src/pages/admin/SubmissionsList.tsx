@@ -158,7 +158,7 @@ export function SubmissionsList() {
 
   if (isLoading) return (
     <div className="page-content submission-placeholder" style={{ minHeight: '24rem' }}>
-      <div className="submission-list-item-title" style={{ width: '18rem', height: '1.25rem', background: 'rgba(255,255,255,0.08)', marginBottom: '1.25rem' }} />
+      <div className="submission-list-item-title" style={{ width: '18rem', height: '1.25rem', background: 'var(--color-border)', marginBottom: '1.25rem' }} />
       <div className="submission-layout" style={{ minHeight: '16rem' }}>
         <div className="panel-card panel-card--accent" style={{ minHeight: '100%' }} />
         <div className="panel-card panel-card--accent" style={{ minHeight: '100%' }} />
@@ -320,7 +320,7 @@ export function SubmissionsList() {
               </div>
 
               {selectedSubmission.answers?.freeform ? (
-                <div className="panel-card panel-card--accent essay-content" style={{ color: '#cbd5e1', lineHeight: 1.7, fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.answers.freeform) }} />
+                <div className="panel-card panel-card--accent essay-content" style={{ color: 'var(--color-text)', lineHeight: 1.7, fontSize: '0.95rem' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.answers.freeform) }} />
               ) : (
                 questions.map((q, idx) => (
                   <div key={q.id} className="panel-card panel-card--accent">
@@ -332,12 +332,12 @@ export function SubmissionsList() {
                         {q.marks} Mark{q.marks !== 1 ? 's' : ''}
                       </span>
                     </div>
-                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '1rem', border: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ marginTop: '1rem', padding: '1rem', background: 'var(--color-bg)', borderRadius: '1rem', border: '1px solid var(--color-border)' }}>
                       <p className="status-label" style={{ marginBottom: '0.75rem' }}>Student's Answer</p>
                       {selectedSubmission.answers?.[q.id] ? (
                         q.type === 'long_answer'
-                          ? <div className="essay-content" style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.answers[q.id]) }} />
-                          : <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>{selectedSubmission.answers[q.id]}</p>
+                          ? <div className="essay-content" style={{ color: 'var(--color-text)', fontSize: '0.95rem', lineHeight: '1.7' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedSubmission.answers[q.id]) }} />
+                          : <p style={{ color: 'var(--color-text)', fontSize: '0.95rem', lineHeight: '1.7' }}>{selectedSubmission.answers[q.id]}</p>
                       ) : (
                         <p className="panel-subtitle">No answer provided.</p>
                       )}
@@ -397,7 +397,7 @@ export function SubmissionsList() {
       </div>
       <style>{`
         .essay-content p { margin: 0.5em 0; }
-        .essay-content h1, .essay-content h2, .essay-content h3, .essay-content h4, .essay-content h5, .essay-content h6 { font-weight: 700; margin: 0.75em 0 0.5em 0; color: #cbd5e1; }
+        .essay-content h1, .essay-content h2, .essay-content h3, .essay-content h4, .essay-content h5, .essay-content h6 { font-weight: 700; margin: 0.75em 0 0.5em 0; color: var(--color-text); }
         .essay-content strong, .essay-content b { font-weight: 700; color: #e2e8f0; }
         .essay-content em, .essay-content i { font-style: italic; }
         .essay-content u { text-decoration: underline; }

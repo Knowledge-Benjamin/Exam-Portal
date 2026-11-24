@@ -50,160 +50,211 @@ export function UserManagement() {
       await api.post('/auth/register', formData);
       setIsModalOpen(false);
       setFormData({ fullName: '', email: '', password: '', role: 'teacher' });
-      fetchUsers(); // Refresh the list
+      fetchUsers();
     } catch (err: any) {
-      setFormError(err.error || 'Failed to create user. Check the password complexity.');
+      setFormError(err.error || 'Failed to create user. Check password complexity.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      <div className="flex justify-between items-center bg-[var(--color-primary)] p-8 rounded-3xl relative overflow-hidden">
-        <div className="relative z-10">
-          <h1 className="text-3xl font-black text-white mb-2">User Management</h1>
-          <p className="text-gray-300">View and manage system administrators, teachers, and students.</p>
+    <div className="settings-page">
+      {/* Header Strip */}
+      <div className="dash-header-strip">
+        <div className="dash-header-left">
+          <div className="dash-badge-pill">
+            <span className="dash-badge-dot" />
+            Administration
+          </div>
+          <h1 className="dash-heading">User Management</h1>
+          <p className="dash-subheading">Manage institutional accounts for administrators, lecturers, and staff.</p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="relative z-10 px-6 py-3 bg-[var(--color-action)] text-[var(--color-primary)] rounded-xl font-bold hover:bg-opacity-90 transition-all flex items-center gap-2 transform hover:scale-105 active:scale-95"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Add New User
-        </button>
+        <div className="dash-header-right">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="btn-dash-create"
+          >
+            <svg className="btn-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Add New User
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-xl">
-          {error}
+        <div className="dash-alert dash-alert-error">
+          <span>✕</span>
+          <span>{error}</span>
         </div>
       )}
 
-      <div className="bg-[var(--color-primary)] rounded-3xl p-6 overflow-x-auto shadow-xl">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-[var(--color-secondary)]">
-              <th className="py-4 text-sm font-bold text-gray-400 uppercase tracking-wider">Name</th>
-              <th className="py-4 text-sm font-bold text-gray-400 uppercase tracking-wider">Email</th>
-              <th className="py-4 text-sm font-bold text-gray-400 uppercase tracking-wider">Role</th>
-              <th className="py-4 text-sm font-bold text-gray-400 uppercase tracking-wider">Joined</th>
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={4} className="py-12 text-center text-gray-400">Loading users...</td>
+      {/* Users Table Card */}
+      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+            <thead>
+              <tr style={{ background: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+                <th style={{ padding: '12px 20px', fontWeight: 700, color: 'var(--color-navy)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Name</th>
+                <th style={{ padding: '12px 20px', fontWeight: 700, color: 'var(--color-navy)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Email</th>
+                <th style={{ padding: '12px 20px', fontWeight: 700, color: 'var(--color-navy)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Role</th>
+                <th style={{ padding: '12px 20px', fontWeight: 700, color: 'var(--color-navy)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Joined</th>
               </tr>
-            ) : users.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="py-12 text-center text-gray-400">No users found.</td>
-              </tr>
-            ) : (
-              users.map((user) => (
-                <tr key={user.id} className="border-b border-[var(--color-secondary)] last:border-0 hover:bg-[var(--color-secondary)] transition-colors">
-                  <td className="py-4 font-medium text-white">{user.fullName}</td>
-                  <td className="py-4 text-gray-300">{user.email}</td>
-                  <td className="py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                      user.role === 'teacher' ? 'bg-[var(--color-action)] text-[var(--color-primary)]' :
-                      'bg-blue-500/20 text-blue-400'
-                    }`}>
-                      {user.role.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="py-4 text-gray-400 text-sm">
-                    {new Date(user.createdAt).toLocaleDateString()}
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                    Loading users...
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={4} style={{ padding: '3rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                    No users found.
+                  </td>
+                </tr>
+              ) : (
+                users.map((user) => (
+                  <tr
+                    key={user.id}
+                    style={{
+                      borderBottom: '1px solid var(--color-border)',
+                      transition: 'background 0.15s ease',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--color-bg)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <td style={{ padding: '14px 20px', fontWeight: 600, color: 'var(--color-navy)' }}>
+                      {user.fullName}
+                    </td>
+                    <td style={{ padding: '14px 20px', color: 'var(--color-text-muted)' }}>
+                      {user.email}
+                    </td>
+                    <td style={{ padding: '14px 20px' }}>
+                      <span className={`status-pill ${
+                        user.role === 'admin' ? 'status-pill--danger' :
+                        user.role === 'teacher' ? 'status-pill--highlight' :
+                        'status-pill--muted'
+                      }`} style={{ fontSize: '0.68rem' }}>
+                        {user.role === 'teacher' ? 'Lecturer' : user.role === 'admin' ? 'Administrator' : 'Student'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '14px 20px', color: 'var(--color-text-faint)', fontSize: '0.8rem' }}>
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
+      {/* Add User Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-[var(--color-primary)] border border-[var(--color-secondary)] rounded-3xl w-full max-w-md p-8 shadow-2xl relative">
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 100,
+          display: 'grid',
+          placeItems: 'center',
+          padding: '1.5rem',
+          background: 'rgba(16, 43, 78, 0.45)',
+          backdropFilter: 'blur(6px)',
+        }}>
+          <div className="card" style={{ width: '100%', maxWidth: '420px', boxShadow: 'var(--shadow-xl)', position: 'relative' }}>
             <button
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors"
+              style={{
+                position: 'absolute',
+                top: '1.25rem',
+                right: '1.25rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-text-faint)',
+                cursor: 'pointer',
+                fontSize: '1.25rem',
+              }}
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              ✕
             </button>
 
-            <h2 className="text-2xl font-bold text-white mb-6">Add New User</h2>
+            <h2 className="page-title" style={{ fontSize: '1.25rem', marginBottom: '1.25rem' }}>Add User</h2>
 
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">Full Name</label>
+            <form onSubmit={handleRegister} className="form-stack">
+              <div className="form-group">
+                <label className="form-label">Full Name</label>
                 <input
                   type="text"
                   required
                   value={formData.fullName}
                   onChange={e => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full bg-[var(--color-secondary)] border-2 border-transparent focus:border-[var(--color-action)] text-white px-4 py-3 rounded-xl transition-colors outline-none"
-                  placeholder="John Doe"
+                  className="form-input"
+                  placeholder="e.g. Dr. Jane Smith"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">Email</label>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
                 <input
                   type="email"
                   required
                   value={formData.email}
                   onChange={e => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full bg-[var(--color-secondary)] border-2 border-transparent focus:border-[var(--color-action)] text-white px-4 py-3 rounded-xl transition-colors outline-none"
-                  placeholder="john@example.com"
+                  className="form-input"
+                  placeholder="jane.smith@multitech.ac.ug"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">Password</label>
+              <div className="form-group">
+                <label className="form-label">Password</label>
                 <input
                   type="password"
                   required
                   minLength={8}
                   value={formData.password}
                   onChange={e => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full bg-[var(--color-secondary)] border-2 border-transparent focus:border-[var(--color-action)] text-white px-4 py-3 rounded-xl transition-colors outline-none"
-                  placeholder="Must contain 1 uppercase & 1 number"
+                  className="form-input"
+                  placeholder="Min 8 chars, 1 uppercase, 1 number"
                 />
-                <p className="text-xs text-gray-500 mt-2">Min 8 chars, 1 uppercase letter, 1 number.</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-300 mb-2">Role</label>
+              <div className="form-group">
+                <label className="form-label">Role</label>
                 <select
                   value={formData.role}
                   onChange={e => setFormData({ ...formData, role: e.target.value as any })}
-                  className="w-full bg-[var(--color-secondary)] border-2 border-transparent focus:border-[var(--color-action)] text-white px-4 py-3 rounded-xl transition-colors outline-none appearance-none cursor-pointer"
+                  className="form-input"
                 >
-                  <option value="student">Student</option>
-                  <option value="teacher">Teacher</option>
+                  <option value="teacher">Lecturer / Teacher</option>
                   <option value="admin">Administrator</option>
+                  <option value="student">Student</option>
                 </select>
               </div>
 
               {formError && (
-                <div className="text-red-400 text-sm mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
-                  {formError}
+                <div className="dash-alert dash-alert-error" style={{ fontSize: '0.82rem', padding: '0.65rem 0.9rem' }}>
+                  <span>✕</span>
+                  <span>{formError}</span>
                 </div>
               )}
 
-              <div className="pt-6">
+              <div className="form-actions" style={{ marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="button button--secondary"
+                >
+                  Cancel
+                </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 bg-[var(--color-action)] hover:bg-opacity-90 text-[var(--color-primary)] font-black text-lg rounded-xl transition-all disabled:opacity-50"
+                  className="button button--primary"
                 >
-                  {isSubmitting ? 'Creating User...' : 'Create User'}
+                  {isSubmitting ? 'Creating...' : 'Create User'}
                 </button>
               </div>
             </form>
