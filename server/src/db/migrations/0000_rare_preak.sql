@@ -1,7 +1,27 @@
-CREATE TYPE "public"."exam_status" AS ENUM('draft', 'active', 'closed');--> statement-breakpoint
-CREATE TYPE "public"."question_source" AS ENUM('pdf', 'builder');--> statement-breakpoint
-CREATE TYPE "public"."question_type" AS ENUM('short_answer', 'long_answer', 'multiple_choice');--> statement-breakpoint
-CREATE TYPE "public"."user_role" AS ENUM('admin', 'teacher', 'student');--> statement-breakpoint
+DO $$ BEGIN
+    CREATE TYPE "public"."exam_status" AS ENUM('draft', 'active', 'closed');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+    CREATE TYPE "public"."question_source" AS ENUM('pdf', 'builder');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+    CREATE TYPE "public"."question_type" AS ENUM('short_answer', 'long_answer', 'multiple_choice');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
+DO $$ BEGIN
+    CREATE TYPE "public"."user_role" AS ENUM('admin', 'teacher', 'student');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
 CREATE TABLE "exam_enrollments" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"exam_id" uuid NOT NULL,

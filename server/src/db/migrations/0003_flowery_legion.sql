@@ -1,4 +1,9 @@
-CREATE TYPE "public"."exam_room_event_type" AS ENUM('joined', 'left', 'reconnected');--> statement-breakpoint
+DO $$ BEGIN
+    CREATE TYPE "public"."exam_room_event_type" AS ENUM('joined', 'left', 'reconnected');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+--> statement-breakpoint
 CREATE TABLE "exam_room_events" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"exam_id" uuid NOT NULL,
